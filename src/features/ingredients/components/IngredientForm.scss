@@ -1,0 +1,27 @@
+@use '../../../styles/variables' as *;
+
+.ingredient-form {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-unit;
+  padding: calc($spacing-unit * 2);
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: 10px;
+
+  &__fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: calc($spacing-unit * 2);
+
+    @media (max-width: 480px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  &__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: $spacing-unit;
+  }
+}

@@ -1,0 +1,112 @@
+@use '../../../styles/variables' as *;
+
+.pantry-list {
+  display: flex;
+  flex-direction: column;
+  gap: calc($spacing-unit * 2.5);
+
+  &__header {
+    h1 {
+      font-size: 1.75rem;
+      font-weight: 800;
+      margin: 0;
+    }
+  }
+
+  &__group {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-unit;
+  }
+
+  &__group-title {
+    font-size: 0.8125rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: $color-text-muted;
+    margin: 0;
+    padding-bottom: calc($spacing-unit / 2);
+    border-bottom: 1px solid $color-border;
+  }
+
+  &__rows {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+}
+
+.pantry-row {
+  display: flex;
+  align-items: center;
+  gap: $spacing-unit;
+
+  &__checkbox {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: $color-accent;
+    flex-shrink: 0;
+  }
+  padding: calc($spacing-unit * 0.75) $spacing-unit;
+  border-radius: 6px;
+
+  @media (hover: hover) {
+    &:hover {
+      background: $color-surface;
+    }
+  }
+
+  &--out {
+    opacity: 0.5;
+  }
+
+  &__name {
+    flex: 1;
+    font-size: 0.9375rem;
+  }
+
+  &__badges {
+    display: flex;
+    align-items: center;
+    gap: calc($spacing-unit / 2);
+    flex-wrap: wrap;
+  }
+
+  &__expiry {
+    font-size: 0.8rem;
+    color: $color-text-muted;
+  }
+
+  &__controls {
+    display: flex;
+    gap: calc($spacing-unit / 2);
+  }
+
+  &__low-btn {
+    background: none;
+    border: 1px solid $color-border;
+    border-radius: 4px;
+    cursor: pointer;
+    padding: 2px 6px;
+    font-size: 0.875rem;
+    color: $color-text-muted;
+
+    &--active {
+      background: $color-warning-bg;
+      border-color: $color-warning-border;
+      color: $color-warning;
+    }
+
+    @media (hover: hover) {
+      &:hover {
+        background: $color-warning-bg;
+      }
+    }
+
+    &:active {
+      box-shadow: inset 0 2px 4px $color-shadow;
+    }
+  }
+}

@@ -9,11 +9,14 @@ function App() {
           <NavLink to="/" end>
             <TranslatedText id="nav.home" />
           </NavLink>
-          <NavLink to="/profile">
-            <TranslatedText id="nav.profile" />
+          <NavLink to="/recipes">
+            <TranslatedText id="nav.recipes" />
           </NavLink>
-          <NavLink to="/components">
-            <TranslatedText id="nav.components" />
+          <NavLink to="/ingredients">
+            <TranslatedText id="nav.ingredients" />
+          </NavLink>
+          <NavLink to="/pantry">
+            <TranslatedText id="nav.pantry" />
           </NavLink>
         </nav>
         <div className="app__actions">

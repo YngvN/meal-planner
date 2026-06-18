@@ -4,6 +4,9 @@
     "translations": {
       "nav": {
         "home": "Home",
+        "recipes": "Recipes",
+        "ingredients": "Ingredients",
+        "pantry": "Pantry",
         "profile": "Profile",
         "components": "Components"
       },
@@ -20,6 +23,123 @@
         "passwordLabel": "Password",
         "signIn": "Sign in",
         "signingIn": "Signing in…"
+      },
+      "common": {
+        "save": "Save",
+        "cancel": "Cancel",
+        "delete": "Delete",
+        "edit": "Edit",
+        "add": "Add",
+        "back": "Back",
+        "search": "Search",
+        "filter": "Filter",
+        "loading": "Loading…",
+        "error": "Something went wrong. Please try again.",
+        "actions": "Actions",
+        "confirmDelete": "Are you sure you want to delete this? This action cannot be undone.",
+        "confirmDeleteTitle": "Confirm deletion"
+      },
+      "recipes": {
+        "title": "Recipes",
+        "addRecipe": "Add Recipe",
+        "editRecipe": "Edit Recipe",
+        "viewRecipe": "View Recipe",
+        "search": "Search recipes…",
+        "noResults": "No recipes found. Try adjusting your filters.",
+        "portions": "Portions",
+        "prepTime": "Prep time",
+        "cookTime": "Cook time",
+        "totalTime": "Total time",
+        "minutes": "min",
+        "skillLevel": "Skill level",
+        "cuisineTypes": "Cuisine types",
+        "ingredients": "Ingredients",
+        "instructions": "Instructions",
+        "notes": "Notes",
+        "tags": "Tags",
+        "equipment": "Equipment",
+        "nutrition": "Nutrition (per serving)",
+        "missingFromPantry": "Not in pantry",
+        "favorite": "Add to favorites",
+        "unfavorite": "Remove from favorites",
+        "skill": {
+          "beginner": "Beginner",
+          "intermediate": "Intermediate",
+          "advanced": "Advanced"
+        },
+        "mealTag": {
+          "breakfast": "Breakfast",
+          "lunch": "Lunch",
+          "dinner": "Dinner",
+          "snack": "Snack",
+          "dessert": "Dessert"
+        },
+        "filters": {
+          "show": "Filters",
+          "hide": "Hide filters",
+          "dietary": "Dietary",
+          "mealType": "Meal type",
+          "skill": "Skill level",
+          "anySkill": "Any skill level",
+          "favoritesOnly": "Favorites only"
+        },
+        "form": {
+          "basics": "Basic info",
+          "title": "Title",
+          "description": "Description",
+          "tags": "Tags & categories",
+          "addCuisine": "Add cuisine…",
+          "addTag": "Add tag…",
+          "addEquipment": "Add equipment…",
+          "selectIngredient": "Select ingredient…",
+          "addIngredient": "Add ingredient",
+          "addStep": "Add step",
+          "stepDescription": "Describe this step…",
+          "timer": "Timer",
+          "notesPlaceholder": "Personal tips, modifications, things to remember…"
+        },
+        "nutrients": {
+          "calories": "Calories",
+          "protein": "Protein",
+          "carbs": "Carbs",
+          "fat": "Fat",
+          "fiber": "Fiber"
+        }
+      },
+      "ingredients": {
+        "title": "Ingredients",
+        "addIngredient": "Add Ingredient",
+        "search": "Search ingredients…",
+        "noResults": "No ingredients found.",
+        "name": "Name",
+        "category": "Category",
+        "categories": {
+          "produce": "Produce",
+          "dairy": "Dairy",
+          "meat": "Meat",
+          "seafood": "Seafood",
+          "pantry": "Pantry",
+          "frozen": "Frozen",
+          "bakery": "Bakery",
+          "beverages": "Beverages",
+          "other": "Other"
+        },
+        "form": {
+          "nameRequired": "Name is required."
+        }
+      },
+      "pantry": {
+        "title": "Pantry",
+        "search": "Search pantry…",
+        "inStock": "In stock",
+        "outOfStock": "Out of stock",
+        "low": "Low",
+        "expiringSoon": "Expiring soon",
+        "expires": "Expires",
+        "markLow": "Mark as running low",
+        "whatCanIMake": "What can I make?",
+        "readyToMake": "Ready to make",
+        "missing": "Missing {{count}} ingredient(s)"
       }
     }
   },
@@ -28,6 +148,9 @@
     "translations": {
       "nav": {
         "home": "Hjem",
+        "recipes": "Oppskrifter",
+        "ingredients": "Ingredienser",
+        "pantry": "Pantry",
         "profile": "Profil",
         "components": "Komponenter"
       },
@@ -44,6 +167,123 @@
         "passwordLabel": "Passord",
         "signIn": "Logg inn",
         "signingIn": "Logger inn…"
+      },
+      "common": {
+        "save": "Lagre",
+        "cancel": "Avbryt",
+        "delete": "Slett",
+        "edit": "Rediger",
+        "add": "Legg til",
+        "back": "Tilbake",
+        "search": "Søk",
+        "filter": "Filtrer",
+        "loading": "Laster…",
+        "error": "Noe gikk galt. Prøv igjen.",
+        "actions": "Handlinger",
+        "confirmDelete": "Er du sikker på at du vil slette dette? Handlingen kan ikke angres.",
+        "confirmDeleteTitle": "Bekreft sletting"
+      },
+      "recipes": {
+        "title": "Oppskrifter",
+        "addRecipe": "Legg til oppskrift",
+        "editRecipe": "Rediger oppskrift",
+        "viewRecipe": "Se oppskrift",
+        "search": "Søk etter oppskrifter…",
+        "noResults": "Ingen oppskrifter funnet. Prøv å justere filtrene.",
+        "portions": "Porsjoner",
+        "prepTime": "Forberedelsestid",
+        "cookTime": "Koketid",
+        "totalTime": "Total tid",
+        "minutes": "min",
+        "skillLevel": "Ferdighetsnivå",
+        "cuisineTypes": "Kjøkkentyper",
+        "ingredients": "Ingredienser",
+        "instructions": "Fremgangsmåte",
+        "notes": "Notater",
+        "tags": "Tagger",
+        "equipment": "Utstyr",
+        "nutrition": "Ernæring (per porsjon)",
+        "missingFromPantry": "Ikke på lager",
+        "favorite": "Legg til som favoritt",
+        "unfavorite": "Fjern fra favoritter",
+        "skill": {
+          "beginner": "Nybegynner",
+          "intermediate": "Middels",
+          "advanced": "Avansert"
+        },
+        "mealTag": {
+          "breakfast": "Frokost",
+          "lunch": "Lunsj",
+          "dinner": "Middag",
+          "snack": "Snacks",
+          "dessert": "Dessert"
+        },
+        "filters": {
+          "show": "Filtre",
+          "hide": "Skjul filtre",
+          "dietary": "Kosthold",
+          "mealType": "Måltidstype",
+          "skill": "Ferdighetsnivå",
+          "anySkill": "Alle nivåer",
+          "favoritesOnly": "Kun favoritter"
+        },
+        "form": {
+          "basics": "Grunnleggende info",
+          "title": "Tittel",
+          "description": "Beskrivelse",
+          "tags": "Tagger og kategorier",
+          "addCuisine": "Legg til kjøkkentype…",
+          "addTag": "Legg til tagg…",
+          "addEquipment": "Legg til utstyr…",
+          "selectIngredient": "Velg ingrediens…",
+          "addIngredient": "Legg til ingrediens",
+          "addStep": "Legg til steg",
+          "stepDescription": "Beskriv dette steget…",
+          "timer": "Timer",
+          "notesPlaceholder": "Personlige tips, endringer, ting å huske…"
+        },
+        "nutrients": {
+          "calories": "Kalorier",
+          "protein": "Protein",
+          "carbs": "Karbohydrater",
+          "fat": "Fett",
+          "fiber": "Fiber"
+        }
+      },
+      "ingredients": {
+        "title": "Ingredienser",
+        "addIngredient": "Legg til ingrediens",
+        "search": "Søk etter ingredienser…",
+        "noResults": "Ingen ingredienser funnet.",
+        "name": "Navn",
+        "category": "Kategori",
+        "categories": {
+          "produce": "Frukt og grønt",
+          "dairy": "Meieriprodukter",
+          "meat": "Kjøtt",
+          "seafood": "Sjømat",
+          "pantry": "Tørrmat",
+          "frozen": "Frossenmat",
+          "bakery": "Bakervarer",
+          "beverages": "Drikke",
+          "other": "Annet"
+        },
+        "form": {
+          "nameRequired": "Navn er påkrevd."
+        }
+      },
+      "pantry": {
+        "title": "Pantry",
+        "search": "Søk i pantry…",
+        "inStock": "På lager",
+        "outOfStock": "Ikke på lager",
+        "low": "Lite igjen",
+        "expiringSoon": "Utløper snart",
+        "expires": "Utløper",
+        "markLow": "Merk som lite igjen",
+        "whatCanIMake": "Hva kan jeg lage?",
+        "readyToMake": "Klar til å lage",
+        "missing": "Mangler {{count}} ingrediens(er)"
       }
     }
   }

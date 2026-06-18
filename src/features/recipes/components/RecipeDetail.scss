@@ -1,0 +1,169 @@
+@use '../../../styles/variables' as *;
+
+.recipe-detail {
+  display: flex;
+  flex-direction: column;
+  gap: calc($spacing-unit * 3);
+  max-width: 800px;
+
+  &__actions-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: $spacing-unit;
+  }
+
+  &__action-group {
+    display: flex;
+    gap: $spacing-unit;
+    flex-wrap: wrap;
+  }
+
+  &__header {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-unit;
+  }
+
+  &__title {
+    font-size: 2rem;
+    font-weight: 800;
+    margin: 0;
+  }
+
+  &__description {
+    font-size: 1.0625rem;
+    color: $color-text-muted;
+    margin: 0;
+    line-height: 1.6;
+  }
+
+  &__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: calc($spacing-unit * 2);
+    padding: calc($spacing-unit * 2);
+    background: $color-surface;
+    border: 1px solid $color-border;
+    border-radius: 10px;
+  }
+
+  &__meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  &__meta-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: $color-text-muted;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  &__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: calc($spacing-unit / 2);
+  }
+
+  &__section {
+    h2 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin: 0 0 calc($spacing-unit * 1.5);
+    }
+  }
+
+  &__ingredient-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: calc($spacing-unit / 2);
+  }
+
+  &__ingredient {
+    display: flex;
+    align-items: center;
+    gap: $spacing-unit;
+    padding: calc($spacing-unit * 0.75) $spacing-unit;
+    border-radius: 6px;
+    background: $color-surface;
+
+    &--missing {
+      background: $color-warning-bg;
+    }
+  }
+
+  &__ingredient-status {
+    font-size: 1rem;
+    flex-shrink: 0;
+  }
+
+  &__steps {
+    display: flex;
+    flex-direction: column;
+    gap: calc($spacing-unit * 2);
+    padding-left: calc($spacing-unit * 2.5);
+    margin: 0;
+  }
+
+  &__step {
+    p {
+      margin: 0;
+      line-height: 1.6;
+    }
+  }
+
+  &__step-timer {
+    display: inline-block;
+    margin-top: calc($spacing-unit / 2);
+    font-size: 0.875rem;
+    color: $color-text-muted;
+  }
+
+  &__notes {
+    color: $color-text-muted;
+    line-height: 1.6;
+    margin: 0;
+    font-style: italic;
+  }
+
+  &__nutrition {
+    display: flex;
+    flex-wrap: wrap;
+    gap: calc($spacing-unit * 2);
+    padding: calc($spacing-unit * 2);
+    background: $color-surface;
+    border: 1px solid $color-border;
+    border-radius: 10px;
+  }
+
+  &__nutrient {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+
+    span {
+      font-size: 0.75rem;
+      color: $color-text-muted;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    strong {
+      font-size: 1rem;
+    }
+  }
+
+  &__modal-actions {
+    display: flex;
+    gap: $spacing-unit;
+    justify-content: flex-end;
+    margin-top: calc($spacing-unit * 2);
+  }
+}

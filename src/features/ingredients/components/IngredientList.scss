@@ -1,0 +1,71 @@
+@use '../../../styles/variables' as *;
+
+.ingredient-list {
+  display: flex;
+  flex-direction: column;
+  gap: calc($spacing-unit * 2);
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: $spacing-unit;
+    flex-wrap: wrap;
+
+    h1 {
+      font-size: 1.75rem;
+      font-weight: 800;
+      margin: 0;
+    }
+  }
+
+  &__table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9375rem;
+
+    th {
+      text-align: left;
+      padding: $spacing-unit calc($spacing-unit * 1.5);
+      border-bottom: 2px solid $color-border;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: $color-text-muted;
+    }
+
+    td {
+      padding: $spacing-unit calc($spacing-unit * 1.5);
+      border-bottom: 1px solid $color-border;
+      vertical-align: middle;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    @media (hover: hover) {
+      tbody tr:hover td {
+        background: $color-surface;
+      }
+    }
+  }
+
+  &__category {
+    font-size: 0.8125rem;
+    color: $color-text-muted;
+    text-transform: capitalize;
+  }
+
+  &__actions {
+    display: flex;
+    gap: calc($spacing-unit / 2);
+  }
+
+  &__empty {
+    text-align: center;
+    color: $color-text-muted;
+    padding: calc($spacing-unit * 3) 0 !important;
+  }
+}

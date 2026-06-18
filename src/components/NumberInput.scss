@@ -1,0 +1,74 @@
+@use '../styles/variables' as *;
+
+.number-input-field {
+  display: flex;
+  flex-direction: column;
+  gap: calc($spacing-unit / 2);
+
+  label {
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  &__error {
+    color: $color-error;
+    font-size: 0.875rem;
+    margin: 0;
+  }
+}
+
+.number-input {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid $color-border;
+  border-radius: 6px;
+  overflow: hidden;
+
+  &__step {
+    padding: $spacing-unit calc($spacing-unit * 1.25);
+    background: $color-surface;
+    border: none;
+    cursor: pointer;
+    font-size: 1.1rem;
+    line-height: 1;
+    color: $color-text;
+
+    &:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    @media (hover: hover) {
+      &:hover:not(:disabled) {
+        background: $color-surface-hover;
+      }
+    }
+
+    &:active:not(:disabled) {
+      box-shadow: inset 0 2px 4px $color-shadow;
+    }
+  }
+
+  &__field {
+    width: 4ch;
+    text-align: center;
+    border: none;
+    border-left: 1px solid $color-border;
+    border-right: 1px solid $color-border;
+    padding: $spacing-unit calc($spacing-unit / 2);
+    font-size: 1rem;
+    font-family: inherit;
+    background: $color-bg;
+    color: $color-text;
+
+    // Hide native spinners — we use our own stepper buttons
+    &::-webkit-inner-spin-button,
+    &::-webkit-outer-spin-button {
+      appearance: none;
+    }
+
+    &:focus {
+      outline: none;
+    }
+  }
+}

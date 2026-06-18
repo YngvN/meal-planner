@@ -3,6 +3,7 @@
 ## Documentation
 - Document code with comments and JSDoc almost always — functions, components, hooks, types, and non-trivial logic should have a JSDoc block describing purpose, params, and return values.
 - Keep comments accurate and up to date when changing code.
+- Always use english, even if the user is writing in norwegian.
 
 ## Reuse before creating
 - Before writing new code, check for existing reusable pieces and use/extend them instead of duplicating:
@@ -11,6 +12,7 @@
   - `src/utils/` — pure helper functions
   - `src/lib/` — integration clients (e.g. `axiosClient.ts`)
 - If a new component is genuinely reusable, add it to `src/components/` and export it from `src/components/index.ts`, and add a preview to `src/pages/Components.tsx`.
+- Check the tech stack in the readme for possible useful code
 
 ## File structure
 - Prefer splitting code into multiple small, focused files over one large file.
@@ -18,6 +20,8 @@
 
 ## Styling
 - New components should have a light mode / dark mode if applicable
+- On touch devices, hover-only effects can get "stuck" after a tap and cause visual bugs. Wrap `:hover` (and `:focus-visible` styles that mimic hover, e.g. lift/scale transforms) in `@media (hover: hover)` so they only apply on devices that support real hovering.
+- Give clickable elements (buttons, and anything styled/acting like one) a pressed/`:active` state using an inset `box-shadow` (e.g. `box-shadow: inset 0 2px 4px $color-shadow`) so the element looks pushed down while clicked, or while a finger is held on it on touch devices.
 
 ## Internationalization (i18n)
 - All user-facing text lives in `src/i18n/languages.json`, keyed by language code (e.g. `en`, `no`), each with a `label` and a nested `translations` object.
