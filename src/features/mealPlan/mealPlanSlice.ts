@@ -42,7 +42,7 @@ const mealPlanSlice = createSlice({
       })
       .addCase(fetchMealPlan.fulfilled, (state, action) => {
         state.status = 'idle'
-        state.items = action.payload
+        state.items = Array.isArray(action.payload) ? action.payload : []
       })
       .addCase(fetchMealPlan.rejected, (state, action) => {
         state.status = 'failed'

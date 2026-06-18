@@ -40,7 +40,7 @@ const pantrySlice = createSlice({
       })
       .addCase(fetchPantry.fulfilled, (state, action) => {
         state.status = 'idle'
-        state.items = action.payload
+        state.items = Array.isArray(action.payload) ? action.payload : []
       })
       .addCase(fetchPantry.rejected, (state, action) => {
         state.status = 'failed'
@@ -62,7 +62,7 @@ const pantrySlice = createSlice({
 
     builder
       .addCase(bulkUpdatePantry.fulfilled, (state, action) => {
-        state.items = action.payload
+        state.items = Array.isArray(action.payload) ? action.payload : state.items
       })
       .addCase(bulkUpdatePantry.rejected, (state, action) => {
         state.error = action.error.message ?? 'Failed to update pantry'

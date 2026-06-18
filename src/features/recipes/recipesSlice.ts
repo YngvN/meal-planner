@@ -54,7 +54,7 @@ const recipesSlice = createSlice({
       })
       .addCase(fetchRecipes.fulfilled, (state, action) => {
         state.status = 'idle'
-        state.items = action.payload
+        state.items = Array.isArray(action.payload) ? action.payload : []
       })
       .addCase(fetchRecipes.rejected, (state, action) => {
         state.status = 'failed'
