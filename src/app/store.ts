@@ -4,6 +4,7 @@ import ingredientsReducer from '../features/ingredients/ingredientsSlice'
 import mealPlanReducer from '../features/mealPlan/mealPlanSlice'
 import pantryReducer from '../features/pantry/pantrySlice'
 import recipesReducer from '../features/recipes/recipesSlice'
+import settingsReducer from '../features/settings/settingsSlice'
 import shoppingListReducer from '../features/shoppingList/shoppingListSlice'
 
 export const store = configureStore({
@@ -14,7 +15,18 @@ export const store = configureStore({
     pantry: pantryReducer,
     mealPlan: mealPlanReducer,
     shoppingList: shoppingListReducer,
+    settings: settingsReducer,
   },
+})
+
+// Persist settings to localStorage on every state change.
+store.subscribe(() => {
+  const { settings } = store.getState()
+  try {
+    localStorage.setItem('meal-planner-settings', JSON.stringify(settings))
+  } catch {
+    // Ignore write errors (e.g. private browsing quota exceeded)
+  }
 })
 
 export type RootState = ReturnType<typeof store.getState>

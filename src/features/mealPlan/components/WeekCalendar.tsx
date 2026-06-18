@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '../../../components'
 import { useAppDispatch, useAppSelector } from '../../../app/hooks'
 import { useLanguage } from '../../../i18n'
+import { suggestForSlot } from '../utils/scoring'
 import { addPlannedMeal, removePlannedMeal } from '../mealPlanSlice'
 import { MEAL_SLOT_ORDER, type MealSlot, type PlannedMeal } from '../types'
 import { RecipePicker } from './RecipePicker'
@@ -32,20 +33,31 @@ function getWeekDays(monday: Date): Date[] {
   })
 }
 
+/** ISO date string for today, computed once at module load. */
 const TODAY_STRING = toDateString(new Date())
 
+/** Number of future days (from today) for which suggestions are computed. */
+const SUGGESTION_HORIZON_DAYS = 7
+
+/** How many days ahead is "expiring soon" for the scoring boost. */
+const EXPIRY_WINDOW_DAYS = 5
+
 /**
- * Weekly meal planning calendar. Shows Mon–Sun with four meal slots per day.
- * Users can add or remove planned meals from each slot.
+ * Weekly meal planning calendar. Shows Mon–Sun with the user's chosen meal slots per day.
+ * Empty future slots show an auto-suggested recipe (when enabled in settings) with a ✓ button
+ * to accept or … to pick a different recipe.
  */
 export function WeekCalendar() {
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
   const { t } = useLanguage()
 
-  const plannedMeals = useAppSelector((s) => s.mealPlan.items)
+  const allPlannedMeals = useAppSelector((s) => s.mealPlan.items)
   const recipes = useAppSelector((s) => s.recipes.items)
-  const recipeMap = new Map(recipes.map((r) => [r.id, r]))
+  const pantryItems = useAppSelector((s) => s.pantry.items)
+  const { visibleSlots, autoSuggestEnabled, scoringFactors } = useAppSelector(
+    (s) => s.settings.mealPlanner,
+  )
 
   const [weekStart, setWeekStart] = useState(() => getWeekStart(new Date()))
   const [picking, setPicking] = useState<{ date: string; slot: MealSlot } | null>(null)
@@ -71,9 +83,95 @@ export function WeekCalendar() {
     })
   }
 
-  /** Meals for a specific date+slot. */
+  const recipeMap = useMemo(() => new Map(recipes.map((r) => [r.id, r])), [recipes])
+
+  /** Meals for a specific date+slot from the full plan. */
   function getMeal(dateStr: string, slot: MealSlot): PlannedMeal | undefined {
-    return plannedMeals.find((m) => m.date === dateStr && m.slot === slot)
+    return allPlannedMeals.find((m) => m.date === dateStr && m.slot === slot)
+  }
+
+  /**
+   * Scoring context — built once per render from Redux state.
+   * Covers all slots in the next SUGGESTION_HORIZON_DAYS days.
+   */
+  const suggestions = useMemo(() => {
+    if (!autoSuggestEnabled || recipes.length === 0) return new Map<string, (typeof recipes)[0]>()
+
+    // Horizon: today + SUGGESTION_HORIZON_DAYS days
+    const horizonEnd = new Date(TODAY_STRING + 'T00:00:00')
+    horizonEnd.setDate(horizonEnd.getDate() + SUGGESTION_HORIZON_DAYS)
+    const horizonEndStr = toDateString(horizonEnd)
+
+    // Pantry sets
+    const pantryInStockIds = new Set(pantryItems.filter((p) => p.inStock).map((p) => p.ingredientId))
+    const expiryThreshold = new Date(TODAY_STRING + 'T00:00:00')
+    expiryThreshold.setDate(expiryThreshold.getDate() + EXPIRY_WINDOW_DAYS)
+    const expiringIds = new Set(
+      pantryItems
+        .filter((p) => p.expiresAt && new Date(p.expiresAt) <= expiryThreshold)
+        .map((p) => p.ingredientId),
+    )
+
+    // Per-recipe usage counts and last-used dates from all history
+    const usageCounts = new Map<string, number>()
+    const lastUsedDates = new Map<string, string>()
+    for (const meal of allPlannedMeals) {
+      usageCounts.set(meal.recipeId, (usageCounts.get(meal.recipeId) ?? 0) + 1)
+      const prev = lastUsedDates.get(meal.recipeId)
+      if (!prev || meal.date > prev) lastUsedDates.set(meal.recipeId, meal.date)
+    }
+
+    const result = new Map<string, (typeof recipes)[0]>()
+
+    // Iterate every day in the visible week
+    for (const day of weekDays) {
+      const dateStr = toDateString(day)
+      if (dateStr < TODAY_STRING || dateStr > horizonEndStr) continue
+
+      // Week context: all meals already planned in the same calendar week
+      const weekStart7 = toDateString(getWeekStart(day))
+      const weekEnd7 = toDateString(weekDays[6])
+      const weekMeals = allPlannedMeals.filter(
+        (m) => m.date >= weekStart7 && m.date <= weekEnd7,
+      )
+      const weekRecipeIds = weekMeals.map((m) => m.recipeId)
+      const weekIngredientIds = new Set<string>()
+      for (const meal of weekMeals) {
+        const r = recipeMap.get(meal.recipeId)
+        if (r) for (const ing of r.ingredients) weekIngredientIds.add(ing.ingredientId)
+      }
+
+      for (const slot of visibleSlots) {
+        if (allPlannedMeals.some((m) => m.date === dateStr && m.slot === slot)) continue
+
+        const suggestion = suggestForSlot(slot, recipes, {
+          factors: scoringFactors,
+          pantryInStockIds,
+          expiringIds,
+          weekIngredientIds,
+          weekRecipeIds,
+          usageCounts,
+          lastUsedDates,
+        })
+
+        if (suggestion) result.set(`${dateStr}::${slot}`, suggestion)
+      }
+    }
+
+    return result
+  }, [
+    autoSuggestEnabled,
+    recipes,
+    pantryItems,
+    allPlannedMeals,
+    visibleSlots,
+    scoringFactors,
+    weekDays,
+    recipeMap,
+  ])
+
+  async function handleAccept(dateStr: string, slot: MealSlot, recipeId: string) {
+    await dispatch(addPlannedMeal({ date: dateStr, slot, recipeId }))
   }
 
   async function handlePick(recipeId: string) {
@@ -85,6 +183,9 @@ export function WeekCalendar() {
   function handleRemove(meal: PlannedMeal) {
     dispatch(removePlannedMeal(meal.id))
   }
+
+  // Honour user-defined slot order (preserve MEAL_SLOT_ORDER sort for display)
+  const orderedVisibleSlots = MEAL_SLOT_ORDER.filter((s) => visibleSlots.includes(s))
 
   return (
     <div className="week-calendar">
@@ -102,24 +203,27 @@ export function WeekCalendar() {
         {weekDays.map((day) => {
           const dateStr = toDateString(day)
           const isToday = dateStr === TODAY_STRING
+          const isPast = dateStr < TODAY_STRING
           const dayLabel = day.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric' })
 
           return (
             <div
               key={dateStr}
-              className={`week-calendar__day${isToday ? ' week-calendar__day--today' : ''}`}
+              className={`week-calendar__day${isToday ? ' week-calendar__day--today' : ''}${isPast ? ' week-calendar__day--past' : ''}`}
             >
               <h3 className="week-calendar__day-label">{dayLabel}</h3>
 
-              {MEAL_SLOT_ORDER.map((slot) => {
+              {orderedVisibleSlots.map((slot) => {
                 const meal = getMeal(dateStr, slot)
                 const recipe = meal ? recipeMap.get(meal.recipeId) : undefined
+                const suggestion = !meal && !isPast ? suggestions.get(`${dateStr}::${slot}`) : undefined
 
                 return (
                   <div key={slot} className="week-calendar__slot">
                     <span className="week-calendar__slot-name">{t(`mealPlan.slot.${slot}`)}</span>
 
                     {meal && recipe ? (
+                      /* ── Filled slot ── */
                       <div className="week-calendar__meal">
                         {recipe.imageUrl && (
                           <img
@@ -132,7 +236,7 @@ export function WeekCalendar() {
                         <button
                           type="button"
                           className="week-calendar__meal-title"
-                          onClick={() => navigate(`/recipes/${recipe.id}`)}
+                          onClick={() => navigate(`/recipes/${recipe.id}?mealId=${meal.id}`)}
                         >
                           {recipe.title}
                         </button>
@@ -145,7 +249,39 @@ export function WeekCalendar() {
                           ×
                         </button>
                       </div>
-                    ) : (
+                    ) : suggestion && autoSuggestEnabled ? (
+                      /* ── Suggestion chip ── */
+                      <div className="week-calendar__suggestion">
+                        {suggestion.imageUrl && (
+                          <img
+                            src={suggestion.imageUrl}
+                            alt=""
+                            className="week-calendar__suggestion-thumb"
+                            loading="lazy"
+                          />
+                        )}
+                        <span className="week-calendar__suggestion-title">{suggestion.title}</span>
+                        <button
+                          type="button"
+                          className="week-calendar__suggestion-accept"
+                          onClick={() => handleAccept(dateStr, slot, suggestion.id)}
+                          aria-label={t('mealPlan.acceptSuggestion')}
+                          title={t('mealPlan.acceptSuggestion')}
+                        >
+                          ✓
+                        </button>
+                        <button
+                          type="button"
+                          className="week-calendar__suggestion-override"
+                          onClick={() => setPicking({ date: dateStr, slot })}
+                          aria-label={t('mealPlan.overrideSuggestion')}
+                          title={t('mealPlan.overrideSuggestion')}
+                        >
+                          …
+                        </button>
+                      </div>
+                    ) : !isPast ? (
+                      /* ── Empty future slot ── */
                       <button
                         type="button"
                         className="week-calendar__add"
@@ -154,7 +290,7 @@ export function WeekCalendar() {
                       >
                         + {t('mealPlan.addMeal')}
                       </button>
-                    )}
+                    ) : null}
                   </div>
                 )
               })}

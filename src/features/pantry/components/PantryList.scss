@@ -41,6 +41,17 @@
   display: flex;
   align-items: center;
   gap: $spacing-unit;
+  padding: calc($spacing-unit * 0.75) $spacing-unit;
+  border-radius: 6px;
+  cursor: pointer;
+
+  &__check-area {
+    display: flex;
+    align-items: center;
+    padding: 4px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
 
   &__checkbox {
     width: 16px;
@@ -49,13 +60,15 @@
     accent-color: $color-accent;
     flex-shrink: 0;
   }
-  padding: calc($spacing-unit * 0.75) $spacing-unit;
-  border-radius: 6px;
 
   @media (hover: hover) {
     &:hover {
       background: $color-surface;
     }
+  }
+
+  &:active {
+    box-shadow: inset 0 2px 4px $color-shadow;
   }
 
   &--out {
@@ -72,6 +85,13 @@
     align-items: center;
     gap: calc($spacing-unit / 2);
     flex-wrap: wrap;
+  }
+
+  &__qty {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: $color-text-muted;
+    white-space: nowrap;
   }
 
   &__expiry {

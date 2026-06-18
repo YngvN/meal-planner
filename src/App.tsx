@@ -24,6 +24,9 @@ function App() {
           <NavLink to="/shopping-list">
             <TranslatedText id="nav.shoppingList" />
           </NavLink>
+          <NavLink to="/settings">
+            <TranslatedText id="nav.settings" />
+          </NavLink>
         </nav>
         <div className="app__actions">
           <LanguageSwitcher />

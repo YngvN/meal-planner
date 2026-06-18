@@ -107,7 +107,7 @@ export function Home() {
       <section className="home__section">
         <h2 className="home__section-title">{t('home.nextMeal')}</h2>
         {nextMeal && nextMealRecipe ? (
-          <div className="home__next-meal" onClick={() => navigate(`/recipes/${nextMealRecipe.id}`)} role="button" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && navigate(`/recipes/${nextMealRecipe.id}`)}>
+          <div className="home__next-meal" onClick={() => navigate(`/recipes/${nextMealRecipe.id}?mealId=${nextMeal.id}`)} role="button" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && navigate(`/recipes/${nextMealRecipe.id}?mealId=${nextMeal.id}`)}>
             {nextMealRecipe.imageUrl && (
               <img src={nextMealRecipe.imageUrl} alt="" className="home__next-meal-img" />
             )}

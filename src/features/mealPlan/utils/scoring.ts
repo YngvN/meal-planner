@@ -1,4 +1,3 @@
-import type { PantryItem } from '../../pantry/types'
 import type { Recipe } from '../../recipes/types'
 import type { ScoringFactors } from '../../settings/types'
 import type { MealSlot } from '../types'
@@ -6,9 +5,6 @@ import type { MealSlot } from '../types'
 /** Number of days considered "recent" for the recency penalty tiers. */
 const RECENT_HARD = 7
 const RECENT_SOFT = 14
-
-/** Number of days an ingredient must be expiring within to trigger the expiry boost. */
-const EXPIRY_WINDOW_DAYS = 5
 
 /** Weights assigned to each scoring factor (must sum to 1). */
 const FACTOR_WEIGHTS: Record<keyof ScoringFactors, number> = {
@@ -106,69 +102,33 @@ export function scoreRecipe(args: ScoreArgs): number {
   )
 }
 
-/**
- * Builds the sets and maps needed by scoreRecipe from raw Redux state.
- * Call once per render, pass the result into scoreRecipe for each recipe.
- */
-export function buildScoringContext(
-  pantryItems: PantryItem[],
-  weekMeals: import('../types').PlannedMeal[],
-  recipes: Recipe[],
-  todayStr: string,
-): {
-  pantryInStockIds: Set<string>
-  expiringIds: Set<string>
-  weekIngredientIds: Set<string>
-  weekRecipeIds: string[]
+/** Extended args for suggestForSlot — passes usage maps instead of per-recipe values. */
+type SuggestArgs = Omit<ScoreArgs, 'recipe' | 'slot' | 'usageCount' | 'lastUsedDate'> & {
   usageCounts: Map<string, number>
   lastUsedDates: Map<string, string>
-} {
-  const pantryInStockIds = new Set(
-    pantryItems.filter((p) => p.inStock).map((p) => p.ingredientId),
-  )
-
-  const expiryThreshold = new Date(todayStr + 'T00:00:00')
-  expiryThreshold.setDate(expiryThreshold.getDate() + EXPIRY_WINDOW_DAYS)
-  const expiringIds = new Set(
-    pantryItems
-      .filter((p) => p.expiresAt && new Date(p.expiresAt) <= expiryThreshold)
-      .map((p) => p.ingredientId),
-  )
-
-  const recipeMap = new Map(recipes.map((r) => [r.id, r]))
-  const weekIngredientIds = new Set<string>()
-  const weekRecipeIds: string[] = []
-  for (const meal of weekMeals) {
-    weekRecipeIds.push(meal.recipeId)
-    const recipe = recipeMap.get(meal.recipeId)
-    if (recipe) {
-      for (const ing of recipe.ingredients) weekIngredientIds.add(ing.ingredientId)
-    }
-  }
-
-  // Usage counts and last-used dates derived from all meal plan entries
-  const usageCounts = new Map<string, number>()
-  const lastUsedDates = new Map<string, string>()
-  // weekMeals here is just the current week's meals; pass allMeals from caller
-  // (named weekMeals for brevity but should be the full mealPlan.items)
-
-  return { pantryInStockIds, expiringIds, weekIngredientIds, weekRecipeIds, usageCounts, lastUsedDates }
 }
 
 /**
  * Returns the best recipe suggestion for a given slot, or null if no suitable
- * recipe can be found.
+ * recipe can be found. Resolves per-recipe usageCount / lastUsedDate from maps.
  */
 export function suggestForSlot(
   slot: MealSlot,
   recipes: Recipe[],
-  scoreArgs: Omit<ScoreArgs, 'recipe' | 'slot'>,
+  args: SuggestArgs,
 ): Recipe | null {
+  const { usageCounts, lastUsedDates, ...rest } = args
   let best: Recipe | null = null
   let bestScore = -1
 
   for (const recipe of recipes) {
-    const score = scoreRecipe({ ...scoreArgs, recipe, slot })
+    const score = scoreRecipe({
+      ...rest,
+      recipe,
+      slot,
+      usageCount: usageCounts.get(recipe.id) ?? 0,
+      lastUsedDate: lastUsedDates.get(recipe.id) ?? null,
+    })
     if (score > bestScore) {
       bestScore = score
       best = recipe

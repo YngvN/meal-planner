@@ -1,0 +1,147 @@
+@use '../styles/variables' as *;
+
+.settings-page {
+  display: flex;
+  flex-direction: column;
+  gap: calc($spacing-unit * 4);
+
+  h1 {
+    margin: 0;
+  }
+
+  &__section {
+    display: flex;
+    flex-direction: column;
+    gap: calc($spacing-unit * 3);
+  }
+
+  &__section-title {
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 700;
+    padding-bottom: $spacing-unit;
+    border-bottom: 1px solid $color-border;
+  }
+
+  &__field {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-unit;
+
+    &--indented {
+      padding-left: calc($spacing-unit * 2);
+      border-left: 2px solid $color-border;
+    }
+  }
+
+  &__label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: $color-text-muted;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  &__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: calc($spacing-unit * 0.75);
+  }
+
+  // ── Toggle switch ────────────────────────────────────────────────────────
+
+  &__toggle-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    padding: calc($spacing-unit * 1.25) calc($spacing-unit * 1.5);
+    background: $color-surface;
+    border-radius: 10px;
+    border: 1px solid $color-border;
+    user-select: none;
+
+    @media (hover: hover) {
+      &:hover {
+        background: $color-surface-hover;
+      }
+    }
+  }
+
+  &__toggle {
+    position: relative;
+    width: 44px;
+    height: 24px;
+    background: $color-border;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    flex-shrink: 0;
+
+    &--on {
+      background: $color-accent;
+    }
+
+    &:active {
+      box-shadow: inset 0 2px 4px $color-shadow;
+    }
+  }
+
+  &__toggle-knob {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 18px;
+    height: 18px;
+    background: $color-accent-contrast;
+    border-radius: 50%;
+    transition: transform 0.2s ease;
+
+    .settings-page__toggle--on & {
+      transform: translateX(20px);
+    }
+  }
+
+  // ── Factor list ─────────────────────────────────────────────────────────
+
+  &__factor-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  &__factor-item {
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  &__factor-label {
+    display: flex;
+    align-items: center;
+    gap: $spacing-unit;
+    padding: calc($spacing-unit * 0.875) $spacing-unit;
+    cursor: pointer;
+    font-size: 0.9375rem;
+    background: $color-surface;
+
+    @media (hover: hover) {
+      &:hover {
+        background: $color-surface-hover;
+      }
+    }
+  }
+
+  &__factor-checkbox {
+    width: 17px;
+    height: 17px;
+    flex-shrink: 0;
+    cursor: pointer;
+    accent-color: $color-accent;
+  }
+}

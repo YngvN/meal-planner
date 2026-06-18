@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Alert, Badge, Button, Modal, Spinner } from '../../../components'
 import { useAppDispatch, useAppSelector } from '../../../app/hooks'
 import { useLanguage } from '../../../i18n'
@@ -7,6 +7,7 @@ import type { Ingredient } from '../../ingredients/types'
 import type { NutritionalValues } from '../../shared/types'
 import { deleteRecipe, fetchRecipeById, toggleFavorite } from '../recipesSlice'
 import type { Recipe, RecipeIngredient } from '../types'
+import { MealDoneModal } from './MealDoneModal'
 import './RecipeDetail.scss'
 
 /**
@@ -117,7 +118,11 @@ export function RecipeDetail({ recipeId }: RecipeDetailProps) {
   const pantryItems = useAppSelector((s) => s.pantry.items)
   const ingredients = useAppSelector((s) => s.ingredients.items)
 
+  const [searchParams] = useSearchParams()
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [showMealDone, setShowMealDone] = useState(false)
+
+  const mealId = searchParams.get('mealId') ?? undefined
 
   useEffect(() => {
     dispatch(fetchRecipeById(recipeId))
@@ -159,6 +164,9 @@ export function RecipeDetail({ recipeId }: RecipeDetailProps) {
           ← {t('common.back')}
         </Button>
         <div className="recipe-detail__action-group">
+          <Button onClick={() => setShowMealDone(true)}>
+            ✓ {t('recipes.mealDone')}
+          </Button>
           <Button
             variant="secondary"
             onClick={() => dispatch(toggleFavorite(recipe.id))}
@@ -305,6 +313,14 @@ export function RecipeDetail({ recipeId }: RecipeDetailProps) {
             />
           ) : null}
         </section>
+      )}
+
+      {showMealDone && (
+        <MealDoneModal
+          recipe={recipe}
+          mealId={mealId}
+          onClose={() => setShowMealDone(false)}
+        />
       )}
 
       <Modal

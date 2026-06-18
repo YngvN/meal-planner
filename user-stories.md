@@ -81,11 +81,12 @@ Legend: ✅ Built · 🔨 Planned (next phase) · 💡 Planned (future) · ⬜ N
 ## Epic 3: Meal Planning
 
 ### Calendar & Scheduling
-- 🔨 Weekly meal calendar view
+- ✅ Weekly meal calendar view (Mon–Sun, prev/next week navigation)
 - ⬜ Monthly meal calendar view
-- 🔨 Assign recipes to specific dates and meal times
-- 🔨 Drag and drop recipes onto calendar days
-- 🔨 Remove or reschedule planned meals
+- ✅ Assign recipes to specific dates and meal times (breakfast, lunch, dinner, snack)
+- ⬜ Drag and drop recipes onto calendar days
+- ✅ Remove planned meals (× button per slot)
+- ✅ Choose which meal slots are visible (Settings)
 - ⬜ Portions planned vs. household size indicator
 
 ### Meal Plan Templates
@@ -94,9 +95,11 @@ Legend: ✅ Built · 🔨 Planned (next phase) · 💡 Planned (future) · ⬜ N
 - 💡 Name and organise templates
 
 ### Smart Suggestions
-- 💡 "What can I make tonight?" — considers pantry, time, and difficulty
-- 💡 Recommend recipes not cooked recently (variety)
-- 💡 Suggest recipes that use leftover / expiring ingredients
+- ✅ Auto-suggest recipes for empty slots based on pantry, leftovers, expiry, recency, favourites, and slot type
+- ✅ Accept a suggestion with one tap (✓ button) or override with a custom pick (… button)
+- ✅ Toggle auto-suggest on/off in Settings
+- ✅ Enable/disable individual suggestion factors in Settings
+- ✅ Track how often each recipe has been used (derived from meal plan history)
 
 ### Household Management
 - 💡 Set household size (auto-scales recipes)
@@ -108,26 +111,26 @@ Legend: ✅ Built · 🔨 Planned (next phase) · 💡 Planned (future) · ⬜ N
 ## Epic 4: Shopping List Management
 
 ### Shopping List Generation
-- 🔨 Auto-generate shopping list from meal plan
-- 🔨 Aggregate quantities across multiple recipes
-- 🔨 Exclude ingredients already in pantry
-- 🔨 Manually add non-recipe items to shopping list
+- ✅ Auto-generate shopping list from meal plan
+- ✅ Aggregate quantities across multiple recipes (scaled to portions)
+- ✅ Exclude ingredients already in pantry (in-stock items hidden)
+- ✅ Manually add non-recipe items to shopping list
 
 ### Shopping List Organisation
-- 🔨 Group shopping list by store section (produce, dairy, etc.)
-- 🔨 Show which recipe(s) each item is for
+- ✅ Group shopping list by store section (produce, dairy, etc.)
+- ✅ Show which recipe(s) each item is for
 - 💡 Reorder sections to match preferred store layout
 
 ### Shopping Mode
-- 🔨 Check off items as purchased
-- 🔨 Uncheck items if put back
-- 🔨 Completed vs. remaining item count
-- 🔨 Checked items automatically update pantry inventory
+- ✅ Check off items as purchased
+- ✅ Uncheck items if put back
+- ✅ Checked items automatically update pantry inventory ("Mark as purchased" batch action)
+- ⬜ Completed vs. remaining item count displayed prominently
 
 ### Shopping List Management
-- 🔨 Manually remove items
-- 🔨 Edit quantities on the list
-- 🔨 Clear entire list after shopping
+- ✅ Manually remove items
+- ✅ Clear entire list after shopping
+- ⬜ Edit quantities on derived items
 - 💡 Save past shopping lists for reference
 
 ---
@@ -158,9 +161,10 @@ Legend: ✅ Built · 🔨 Planned (next phase) · 💡 Planned (future) · ⬜ N
 - ⬜ Budget alerts
 
 ### Usage Insights
-- 💡 Most-cooked recipes
-- 💡 Recipes not made recently
-- 💡 Most-used ingredients
+- ✅ Recipe usage count and last-used date (derived from meal plan history, used by auto-suggest)
+- 💡 Most-cooked recipes view
+- 💡 Recipes not made recently view
+- 💡 Most-used ingredients view
 
 ---
 
@@ -172,6 +176,10 @@ Legend: ✅ Built · 🔨 Planned (next phase) · 💡 Planned (future) · ⬜ N
 - 💡 Disliked ingredients list
 
 ### System Preferences
+- ✅ Choose which meal slots are visible in the planner (Settings page)
+- ✅ Toggle meal auto-suggest on/off (Settings page)
+- ✅ Enable/disable individual suggestion scoring factors (Settings page)
+- ✅ Settings persist across page reloads (localStorage)
 - ⬜ Default portion size
 - ⬜ Measurement system (metric / imperial)
 - ⬜ Customise store sections for shopping list
@@ -191,6 +199,8 @@ These are gaps identified during development that are worth tracking:
 - ✅ Ingredient image (imageUrl field, shown in list + combobox)
 - ✅ Ingredient search combobox with create-on-enter in recipe form
 - ✅ "Things to do" dashboard widget for incomplete ingredient data
+- ✅ "Next meal" dashboard widget showing the next planned meal
+- ✅ Settings page (/settings) with meal planner preferences
 - ⬜ Interactive portion scaling widget on recipe detail page
 - ⬜ Allergen warning badges on recipe cards and in recipe detail
 - ⬜ Barcode scanner for adding pantry items while shopping

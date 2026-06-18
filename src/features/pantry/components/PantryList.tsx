@@ -4,6 +4,7 @@ import { useAppDispatch, useAppSelector } from '../../../app/hooks'
 import { useLanguage } from '../../../i18n'
 import { fetchIngredients } from '../../ingredients/ingredientsSlice'
 import { fetchPantry, updatePantryItem } from '../pantrySlice'
+import { PantryDetailModal } from './PantryDetailModal'
 import './PantryList.scss'
 
 /** Snapshot of the current time taken once when the module first loads. */
@@ -28,6 +29,7 @@ export function PantryList() {
   const ingredients = useAppSelector((s) => s.ingredients.items)
 
   const [search, setSearch] = useState('')
+  const [detailIngredientId, setDetailIngredientId] = useState<string | null>(null)
 
   useEffect(() => {
     if (ingredients.length === 0) dispatch(fetchIngredients())
@@ -93,19 +95,33 @@ export function PantryList() {
                 <div
                   key={ingredient.id}
                   className={['pantry-row', !pantryItem.inStock && 'pantry-row--out'].filter(Boolean).join(' ')}
+                  onClick={() => setDetailIngredientId(ingredient.id)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => e.key === 'Enter' && setDetailIngredientId(ingredient.id)}
+                  aria-label={t('pantry.editItem')}
                 >
-                  <input
-                    type="checkbox"
-                    id={`stock-${ingredient.id}`}
-                    checked={pantryItem.inStock}
-                    onChange={(e) => handleToggle(ingredient.id, e.target.checked)}
-                    className="pantry-row__checkbox"
-                  />
-                  <label htmlFor={`stock-${ingredient.id}`} className="pantry-row__name">
-                    {ingredient.name}
+                  {/* Label wraps only the checkbox so clicking the name doesn't toggle it */}
+                  <label
+                    className="pantry-row__check-area"
+                    onClick={(e) => e.stopPropagation()}
+                    aria-label={pantryItem.inStock ? t('pantry.inStock') : t('pantry.outOfStock')}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={pantryItem.inStock}
+                      onChange={(e) => handleToggle(ingredient.id, e.target.checked)}
+                      className="pantry-row__checkbox"
+                    />
                   </label>
+                  <span className="pantry-row__name">{ingredient.name}</span>
 
                   <div className="pantry-row__badges">
+                    {pantryItem.quantity !== undefined && (
+                      <span className="pantry-row__qty">
+                        {pantryItem.quantity}{pantryItem.unit ? ` ${pantryItem.unit}` : ''}
+                      </span>
+                    )}
                     {pantryItem.isLow && (
                       <Badge variant="warning">{t('pantry.low')}</Badge>
                     )}
@@ -123,7 +139,7 @@ export function PantryList() {
                     <button
                       type="button"
                       className={['pantry-row__low-btn', pantryItem.isLow && 'pantry-row__low-btn--active'].filter(Boolean).join(' ')}
-                      onClick={() => handleLowToggle(ingredient.id, !pantryItem.isLow)}
+                      onClick={(e) => { e.stopPropagation(); handleLowToggle(ingredient.id, !pantryItem.isLow) }}
                       title={t('pantry.markLow')}
                     >
                       ⚠
@@ -135,6 +151,12 @@ export function PantryList() {
           </div>
         </section>
       ))}
+      {detailIngredientId && (
+        <PantryDetailModal
+          ingredientId={detailIngredientId}
+          onClose={() => setDetailIngredientId(null)}
+        />
+      )}
     </div>
   )
 }

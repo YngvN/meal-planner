@@ -9,6 +9,7 @@
         "pantry": "Pantry",
         "mealPlan": "Meal Planner",
         "shoppingList": "Shopping List",
+        "settings": "Settings",
         "profile": "Profile",
         "components": "Components"
       },
@@ -48,6 +49,7 @@
         "back": "Back",
         "search": "Search",
         "filter": "Filter",
+        "name": "Name",
         "loading": "Loading…",
         "error": "Something went wrong. Please try again.",
         "actions": "Actions",
@@ -143,7 +145,15 @@
           "carbs": "Carbs",
           "fat": "Fat",
           "fiber": "Fiber"
-        }
+        },
+        "mealDone": "Meal is done",
+        "mealDoneTitle": "Mark meal as done",
+        "mealDoneConfirm": "Confirm & update pantry",
+        "removeFromPlan": "Remove from meal plan",
+        "willHave": "Will have",
+        "currentlyHave": "Currently have",
+        "recipeUses": "Recipe uses",
+        "unitsMismatch": "Units differ — enter manually"
       },
       "ingredients": {
         "title": "Ingredients",
@@ -188,7 +198,42 @@
         "markLow": "Mark as running low",
         "whatCanIMake": "What can I make?",
         "readyToMake": "Ready to make",
-        "missing": "Missing {{count}} ingredient(s)"
+        "missing": "Missing {{count}} ingredient(s)",
+        "editItem": "Edit pantry item",
+        "quantity": "Quantity",
+        "unit": "Unit",
+        "expiryDate": "Expiry date",
+        "noExpiry": "No expiry date",
+        "unitGroups": {
+          "weight": "Weight",
+          "volume": "Volume",
+          "count": "Count"
+        },
+        "unitLabels": {
+          "g": "g — grams",
+          "kg": "kg — kilograms",
+          "oz": "oz — ounces",
+          "lb": "lb — pounds",
+          "ml": "ml — millilitres",
+          "dl": "dl — decilitres",
+          "L": "L — litres",
+          "tsp": "tsp — teaspoon",
+          "tbsp": "tbsp — tablespoon",
+          "flOz": "fl oz — fluid ounces",
+          "cup": "cup",
+          "pint": "pint",
+          "quart": "quart",
+          "pcs": "pcs — pieces",
+          "bunch": "bunch",
+          "can": "can",
+          "bottle": "bottle",
+          "bag": "bag",
+          "box": "box",
+          "pack": "pack",
+          "slice": "slice",
+          "clove": "clove",
+          "head": "head"
+        }
       },
       "mealPlan": {
         "title": "Meal Planner",
@@ -197,11 +242,30 @@
         "addMeal": "Add meal",
         "noMeal": "No meal planned",
         "pickRecipe": "Pick a recipe",
+        "suggestion": "Suggested",
+        "acceptSuggestion": "Accept suggestion",
+        "overrideSuggestion": "Pick a different recipe",
         "slot": {
           "breakfast": "Breakfast",
           "lunch": "Lunch",
           "dinner": "Dinner",
           "snack": "Snack"
+        }
+      },
+      "settings": {
+        "title": "Settings",
+        "mealPlanner": "Meal Planner",
+        "visibleSlots": "Visible meal slots",
+        "autoSuggest": "Suggest meals for empty slots",
+        "scoringFactors": "Suggestion factors",
+        "factors": {
+          "pantryMatch": "Prioritise recipes I can already make",
+          "leftoverIngredients": "Use ingredients already opened this week",
+          "prioritizeExpiring": "Use ingredients expiring soon",
+          "avoidRepetition": "Avoid the same recipe twice in a week",
+          "recencyPenalty": "Avoid recently used recipes",
+          "favoriteBoost": "Boost favourites",
+          "slotAffinity": "Match recipe type to meal slot"
         }
       },
       "shoppingList": {
@@ -229,6 +293,7 @@
         "pantry": "Pantry",
         "mealPlan": "Måltidsplanlegger",
         "shoppingList": "Handleliste",
+        "settings": "Innstillinger",
         "profile": "Profil",
         "components": "Komponenter"
       },
@@ -268,6 +333,7 @@
         "back": "Tilbake",
         "search": "Søk",
         "filter": "Filtrer",
+        "name": "Navn",
         "loading": "Laster…",
         "error": "Noe gikk galt. Prøv igjen.",
         "actions": "Handlinger",
@@ -363,7 +429,15 @@
           "carbs": "Karbohydrater",
           "fat": "Fett",
           "fiber": "Fiber"
-        }
+        },
+        "mealDone": "Måltid ferdig",
+        "mealDoneTitle": "Merk måltid som ferdig",
+        "mealDoneConfirm": "Bekreft og oppdater pantry",
+        "removeFromPlan": "Fjern fra måltidsplan",
+        "willHave": "Vil ha",
+        "currentlyHave": "Har nå",
+        "recipeUses": "Oppskrift bruker",
+        "unitsMismatch": "Enheter er ulike — skriv inn manuelt"
       },
       "ingredients": {
         "title": "Ingredienser",
@@ -408,7 +482,42 @@
         "markLow": "Merk som lite igjen",
         "whatCanIMake": "Hva kan jeg lage?",
         "readyToMake": "Klar til å lage",
-        "missing": "Mangler {{count}} ingrediens(er)"
+        "missing": "Mangler {{count}} ingrediens(er)",
+        "editItem": "Rediger pantry-vare",
+        "quantity": "Mengde",
+        "unit": "Enhet",
+        "expiryDate": "Utløpsdato",
+        "noExpiry": "Ingen utløpsdato",
+        "unitGroups": {
+          "weight": "Vekt",
+          "volume": "Volum",
+          "count": "Antall"
+        },
+        "unitLabels": {
+          "g": "g — gram",
+          "kg": "kg — kilogram",
+          "oz": "oz — unse",
+          "lb": "lb — pund",
+          "ml": "ml — milliliter",
+          "dl": "dl — desiliter",
+          "L": "L — liter",
+          "tsp": "ts — teskje",
+          "tbsp": "ss — spiseskje",
+          "flOz": "fl oz — flytende unse",
+          "cup": "kopp",
+          "pint": "pint",
+          "quart": "quart",
+          "pcs": "stk — stykk",
+          "bunch": "bunt",
+          "can": "boks",
+          "bottle": "flaske",
+          "bag": "pose",
+          "box": "eske",
+          "pack": "pakke",
+          "slice": "skive",
+          "clove": "fedd",
+          "head": "hode"
+        }
       },
       "mealPlan": {
         "title": "Måltidsplanlegger",
@@ -417,11 +526,30 @@
         "addMeal": "Legg til måltid",
         "noMeal": "Ingen måltid planlagt",
         "pickRecipe": "Velg en oppskrift",
+        "suggestion": "Forslag",
+        "acceptSuggestion": "Godta forslag",
+        "overrideSuggestion": "Velg en annen oppskrift",
         "slot": {
           "breakfast": "Frokost",
           "lunch": "Lunsj",
           "dinner": "Middag",
           "snack": "Snacks"
+        }
+      },
+      "settings": {
+        "title": "Innstillinger",
+        "mealPlanner": "Måltidsplanlegger",
+        "visibleSlots": "Synlige måltider",
+        "autoSuggest": "Foreslå måltider for tomme plasser",
+        "scoringFactors": "Forslagsfaktorer",
+        "factors": {
+          "pantryMatch": "Prioriter oppskrifter jeg allerede kan lage",
+          "leftoverIngredients": "Bruk ingredienser allerede åpnet denne uken",
+          "prioritizeExpiring": "Bruk ingredienser som utløper snart",
+          "avoidRepetition": "Unngå samme oppskrift to ganger i uken",
+          "recencyPenalty": "Unngå nylig brukte oppskrifter",
+          "favoriteBoost": "Boost favoritter",
+          "slotAffinity": "Match oppskriftstype til måltid"
         }
       },
       "shoppingList": {

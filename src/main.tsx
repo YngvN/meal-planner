@@ -14,6 +14,7 @@ import { Profile } from './pages/Profile'
 import { RecipeDetailPage } from './pages/RecipeDetailPage'
 import { RecipeFormPage } from './pages/RecipeFormPage'
 import { Recipes } from './pages/Recipes'
+import { Settings } from './pages/Settings'
 import { ShoppingList } from './pages/ShoppingList'
 import './styles/global.scss'
 
@@ -31,6 +32,7 @@ const router = createBrowserRouter([
       { path: 'pantry', element: <Pantry /> },
       { path: 'meal-plan', element: <MealPlan /> },
       { path: 'shopping-list', element: <ShoppingList /> },
+      { path: 'settings', element: <Settings /> },
       { path: 'profile', element: <Profile /> },
       { path: 'components', element: <Components /> },
     ],
