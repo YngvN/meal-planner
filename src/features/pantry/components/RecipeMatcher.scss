@@ -20,8 +20,7 @@
 
 .matcher-card {
   position: relative;
-  border: 1px solid $color-border;
-  border-radius: 10px;
+  border-bottom: 1px solid $color-border;
   overflow: hidden;
 
   &--ready {

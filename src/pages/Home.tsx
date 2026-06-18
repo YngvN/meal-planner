@@ -9,6 +9,8 @@ import { MEAL_SLOT_ORDER } from '../features/mealPlan/types'
 import { RecipeMatcher } from '../features/pantry/components/RecipeMatcher'
 import { fetchPantry } from '../features/pantry/pantrySlice'
 import { fetchRecipes } from '../features/recipes/recipesSlice'
+import { TranslationTodo } from '../features/ai/components/TranslationTodo'
+import { localizedIngredientName } from '../features/shared/localize'
 import { useLanguage } from '../i18n'
 import './Home.scss'
 
@@ -39,7 +41,7 @@ function getMissingFields(ing: Ingredient): string[] {
 export function Home() {
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
 
   const recipes = useAppSelector((s) => s.recipes.items)
   const ingredients = useAppSelector((s) => s.ingredients.items)
@@ -115,7 +117,7 @@ export function Home() {
               <span className="home__next-meal-when">
                 {dateLabel(nextMeal.date)} · {t(`mealPlan.slot.${nextMeal.slot}`)}
               </span>
-              <span className="home__next-meal-title">{nextMealRecipe.title}</span>
+              <span className="home__next-meal-title">{nextMealRecipe.titleI18n?.[language] || nextMealRecipe.title}</span>
               <span className="home__next-meal-meta">
                 {nextMealRecipe.portions} {t('recipes.portions').toLowerCase()} · {nextMealRecipe.prepTimeMinutes + nextMealRecipe.cookTimeMinutes} {t('recipes.minutes')}
               </span>
@@ -155,7 +157,7 @@ export function Home() {
 
               return (
                 <li key={item.ingredientId} className="home__expiry-item">
-                  <span className="home__expiry-name">{ing.name}</span>
+                  <span className="home__expiry-name">{localizedIngredientName(ing, language)}</span>
                   <Badge variant={isUrgent ? 'error' : 'warning'}>
                     {t('home.daysLeft', { count: String(days) })}
                   </Badge>
@@ -191,7 +193,7 @@ export function Home() {
                   {ing.imageUrl && (
                     <img src={ing.imageUrl} alt="" className="home__todo-thumb" />
                   )}
-                  <span className="home__todo-name">{ing.name}</span>
+                  <span className="home__todo-name">{localizedIngredientName(ing, language)}</span>
                   <span className="home__todo-missing">
                     {t('home.missingData', { items: missing.map((k) => t(`ingredients.${k}`)).join(', ') })}
                   </span>
@@ -208,6 +210,9 @@ export function Home() {
           </>
         )}
       </section>
+
+      {/* ── Needs translation ─────────────────────────────────────────────── */}
+      <TranslationTodo />
     </div>
   )
 }

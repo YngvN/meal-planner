@@ -1,0 +1,18 @@
+# Netlify build + functions configuration.
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+  functions = "netlify/functions"
+
+# NOTE: never put ANTHROPIC_API_KEY here — this file is committed to git.
+# Set it in Netlify: Site settings → Environment variables (encrypted), or in a
+# gitignored .env for local `netlify dev`.
+
+# SPA fallback: serve index.html for client-side routes.
+# Functions register their own /api/ai/* paths (via each function's config.path),
+# which take precedence over this catch-all.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

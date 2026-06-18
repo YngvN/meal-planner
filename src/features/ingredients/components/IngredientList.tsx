@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { Alert, Badge, Button, Modal, SearchBar, Spinner } from '../../../components'
 import { useAppDispatch, useAppSelector } from '../../../app/hooks'
 import { useLanguage } from '../../../i18n'
+import { localizedIngredientName } from '../../shared/localize'
 import { deleteIngredient, fetchIngredients } from '../ingredientsSlice'
 import type { Ingredient } from '../types'
 import { IngredientForm } from './IngredientForm'
@@ -15,7 +16,7 @@ import './IngredientList.scss'
  */
 export function IngredientList() {
   const dispatch = useAppDispatch()
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   const { items: ingredients, status, error } = useAppSelector((s) => s.ingredients)
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -62,30 +63,16 @@ export function IngredientList() {
       <table className="ingredient-list__table">
         <thead>
           <tr>
-            <th className="ingredient-list__th-img" aria-label={t('ingredients.imageUrl')} />
             <th>{t('ingredients.name')}</th>
             <th>{t('ingredients.category')}</th>
-            <th>{t('ingredients.defaultExpiryDays')}</th>
             <th>{t('common.actions')}</th>
           </tr>
         </thead>
         <tbody>
           {filtered.map((ing) => (
             <tr key={ing.id}>
-              <td className="ingredient-list__td-img">
-                {ing.imageUrl ? (
-                  <img
-                    src={ing.imageUrl}
-                    alt={ing.name}
-                    className="ingredient-list__thumb"
-                    loading="lazy"
-                  />
-                ) : (
-                  <span className="ingredient-list__no-img" aria-hidden />
-                )}
-              </td>
               <td>
-                {ing.name}
+                {localizedIngredientName(ing, language)}
                 {ing.subproducts && ing.subproducts.length > 0 && (
                   <Badge variant="neutral">{ing.subproducts.length}</Badge>
                 )}
@@ -95,9 +82,7 @@ export function IngredientList() {
                   {t(`ingredients.categories.${ing.category}`)}
                 </span>
               </td>
-              <td className="ingredient-list__expiry">
-                {ing.defaultExpiryDays ? `${ing.defaultExpiryDays}d` : '—'}
-              </td>
+
               <td className="ingredient-list__actions">
                 <Button variant="secondary" onClick={() => setManualEdit(ing)}>
                   {t('common.edit')}

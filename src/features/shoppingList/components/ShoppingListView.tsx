@@ -8,6 +8,7 @@ import { updatePantryItem } from '../../pantry/pantrySlice'
 import type { PlannedMeal } from '../../mealPlan/types'
 import type { Recipe } from '../../recipes/types'
 import { useLanguage } from '../../../i18n'
+import { localizedIngredientName } from '../../shared/localize'
 import {
   addManualItem,
   clearAll,
@@ -70,7 +71,7 @@ function buildDerivedItems(
 export function ShoppingListView() {
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
 
   const plannedMeals = useAppSelector((s) => s.mealPlan.items)
   const recipes = useAppSelector((s) => s.recipes.items)
@@ -181,7 +182,10 @@ export function ShoppingListView() {
               const ing = ingredientMap.get(item.ingredientId)
               const checked = checkedIds.includes(item.ingredientId)
               const recipeNames = item.recipeIds
-                .map((id) => recipeMap.get(id)?.title)
+                .map((id) => {
+                  const r = recipeMap.get(id)
+                  return r ? r.titleI18n?.[language] || r.title : undefined
+                })
                 .filter(Boolean)
                 .join(', ')
 
@@ -197,7 +201,7 @@ export function ShoppingListView() {
                       onChange={() => handleCheck(item.ingredientId)}
                       className="shopping-list-view__checkbox"
                     />
-                    <span className="shopping-list-view__name">{ing?.name ?? item.ingredientId}</span>
+                    <span className="shopping-list-view__name">{ing ? localizedIngredientName(ing, language) : item.ingredientId}</span>
                   </label>
                   <span className="shopping-list-view__qty">
                     {Math.round(item.quantity * 10) / 10} {item.unit}

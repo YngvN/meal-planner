@@ -17,13 +17,17 @@ interface RecipePickerProps {
  * Modal that lets the user search and pick a recipe to assign to a date + slot.
  */
 export function RecipePicker({ date, slot, onPick, onClose }: RecipePickerProps) {
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   const recipes = useAppSelector((s) => s.recipes.items)
   const [search, setSearch] = useState('')
 
-  const filtered = recipes.filter((r) =>
-    r.title.toLowerCase().includes(search.toLowerCase()),
-  )
+  const filtered = recipes.filter((r) => {
+    const term = search.toLowerCase()
+    return (
+      r.title.toLowerCase().includes(term) ||
+      (r.titleI18n?.[language]?.toLowerCase().includes(term) ?? false)
+    )
+  })
 
   const dateLabel = new Date(date + 'T12:00:00').toLocaleDateString(undefined, {
     weekday: 'long',
@@ -52,7 +56,7 @@ export function RecipePicker({ date, slot, onPick, onClose }: RecipePickerProps)
                 />
               )}
               <div className="recipe-picker__info">
-                <span className="recipe-picker__title">{recipe.title}</span>
+                <span className="recipe-picker__title">{recipe.titleI18n?.[language] || recipe.title}</span>
                 <span className="recipe-picker__meta">
                   {recipe.portions} {t('recipes.portions').toLowerCase()} · {recipe.prepTimeMinutes + recipe.cookTimeMinutes} {t('recipes.minutes')}
                 </span>

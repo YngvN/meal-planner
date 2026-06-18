@@ -1,3 +1,5 @@
+[![Netlify Status](https://api.netlify.com/api/v1/badges/4bd675a0-035f-4080-aaf4-966fcab2b79a/deploy-status)](https://app.netlify.com/projects/hungri/deploys)
+
 # Meal Planner
 
 A personal meal planning application built with Vite + React + TypeScript. Plan your week, browse recipes, track your pantry, and generate shopping lists automatically.
@@ -24,6 +26,8 @@ A personal meal planning application built with Vite + React + TypeScript. Plan 
 - **[Axios](https://axios-http.com/)** — HTTP client (`src/lib/axiosClient.ts`).
 - **[Sass](https://sass-lang.com/)** — component styling with light/dark theme variables (`src/styles`).
 - **[Framer Motion](https://www.framer.com/motion/)** — animations (e.g. the `TranslatedText` fade transition).
+- **[@anthropic-ai/sdk](https://github.com/anthropics/anthropic-sdk-typescript)** — Claude API client, used **only** by the Netlify Functions in `netlify/functions/ai-*` (translation, nutrition-label scanning, recipe-photo transcription), served at `/api/ai/*`. The API key stays server-side.
+- **[@netlify/functions](https://docs.netlify.com/functions/overview/)** — types for the serverless AI functions.
 - **[ESLint](https://eslint.org/)** — linting.
 
 ## Getting started

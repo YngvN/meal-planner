@@ -71,6 +71,14 @@ export interface Recipe {
   isFavorite: boolean
   /** URL to a cover/hero image for this recipe. */
   imageUrl?: string
+  /** Translated titles keyed by language code. Falls back to `title` when missing. */
+  titleI18n?: Record<string, string>
+  /** Translated descriptions keyed by language code. Falls back to `description`. */
+  descriptionI18n?: Record<string, string>
+  /** Translated notes keyed by language code. Falls back to `notes`. */
+  notesI18n?: Record<string, string>
+  /** Translated instruction step descriptions, parallel to `instructions` order, keyed by language code. */
+  instructionsI18n?: Record<string, string[]>
   createdAt: string
   updatedAt: string
 }

@@ -7,6 +7,8 @@ import type { Ingredient } from '../../ingredients/types'
 import type { NutritionalValues } from '../../shared/types'
 import { deleteRecipe, fetchRecipeById, toggleFavorite } from '../recipesSlice'
 import type { Recipe, RecipeIngredient } from '../types'
+import { ALL_UNIT_KEYS, convertUnit, getUnitDimension, roundConverted } from '../../shared/units'
+import { localizedIngredientName, localizedSubproductName, localizeRecipe } from '../../shared/localize'
 import { MealDoneModal } from './MealDoneModal'
 import './RecipeDetail.scss'
 
@@ -112,15 +114,17 @@ interface RecipeDetailProps {
 export function RecipeDetail({ recipeId }: RecipeDetailProps) {
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
 
-  const { selectedRecipe: recipe, status, error } = useAppSelector((s) => s.recipes)
+  const { selectedRecipe: rawRecipe, status, error } = useAppSelector((s) => s.recipes)
   const pantryItems = useAppSelector((s) => s.pantry.items)
   const ingredients = useAppSelector((s) => s.ingredients.items)
 
   const [searchParams] = useSearchParams()
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [showMealDone, setShowMealDone] = useState(false)
+  // ingredientId → target unit key selected in the toggle
+  const [convertedUnits, setConvertedUnits] = useState<Map<string, string>>(new Map())
 
   const mealId = searchParams.get('mealId') ?? undefined
 
@@ -130,19 +134,21 @@ export function RecipeDetail({ recipeId }: RecipeDetailProps) {
 
   if (status === 'loading') return <Spinner />
   if (status === 'failed') return <Alert variant="error">{error ?? t('common.error')}</Alert>
-  if (!recipe) return null
+  if (!rawRecipe) return null
 
+  const recipe = localizeRecipe(rawRecipe, language)
   const pantryMap = new Map(pantryItems.map((p) => [p.ingredientId, p]))
   const ingredientMap = new Map(ingredients.map((i) => [i.id, i]))
 
   function getIngredientName(ri: RecipeIngredient) {
     const ing = ingredientMap.get(ri.ingredientId)
     if (!ing) return ri.ingredientId
+    const baseName = localizedIngredientName(ing, language)
     if (ri.subproductId) {
       const sp = ing.subproducts?.find((s) => s.id === ri.subproductId)
-      if (sp) return `${ing.name} — ${sp.name}`
+      if (sp) return `${baseName} — ${localizedSubproductName(sp, language)}`
     }
-    return ing.name
+    return baseName
   }
 
   function isInPantry(ingredientId: string) {
@@ -198,7 +204,7 @@ export function RecipeDetail({ recipeId }: RecipeDetailProps) {
 
         {recipe.source && (
           <p className="recipe-detail__source">
-            <span className="recipe-detail__source-label">{t('recipes.source')}: </span>
+            <span className="recipe-detail__source-label">{t('recipes.source.source')}: </span>
             {recipe.source.type === 'website' && recipe.source.url ? (
               <a href={recipe.source.url} target="_blank" rel="noopener noreferrer">
                 {recipe.source.name}
@@ -254,17 +260,60 @@ export function RecipeDetail({ recipeId }: RecipeDetailProps) {
         <ul className="recipe-detail__ingredient-list">
           {recipe.ingredients.map((ri) => {
             const inPantry = isInPantry(ri.ingredientId)
+            const ing = ingredientMap.get(ri.ingredientId)
+            const targetUnit = convertedUnits.get(ri.ingredientId)
+            const convertedQty = targetUnit
+              ? convertUnit(ri.quantity, ri.unit, targetUnit, ing?.density)
+              : null
+
+            // Only offer target units that are in the same or cross dimension
+            const fromDim = getUnitDimension(ri.unit)
+            const compatibleUnits = fromDim
+              ? ALL_UNIT_KEYS.filter((u) => {
+                  if (u === ri.unit) return false
+                  const toDim = getUnitDimension(u)
+                  if (!toDim || toDim === 'count') return false
+                  if (toDim === fromDim) return true
+                  // Cross-dimension only if density is set
+                  return ing?.density !== undefined
+                })
+              : []
+
             return (
               <li
                 key={`${ri.ingredientId}-${ri.subproductId ?? ''}`}
                 className={['recipe-detail__ingredient', !inPantry && 'recipe-detail__ingredient--missing'].filter(Boolean).join(' ')}
               >
                 <span className="recipe-detail__ingredient-status">{inPantry ? '✓' : '✗'}</span>
-                <span>
-                  <strong>{ri.quantity} {ri.unit}</strong> {getIngredientName(ri)}
+                <span className="recipe-detail__ingredient-qty">
+                  <strong>{ri.quantity} {ri.unit}</strong>
+                  {convertedQty !== null && targetUnit && (
+                    <span className="recipe-detail__ingredient-converted">
+                      ≈ {roundConverted(convertedQty)} {targetUnit}
+                    </span>
+                  )}
                 </span>
+                <span className="recipe-detail__ingredient-name">{getIngredientName(ri)}</span>
                 {!inPantry && (
                   <Badge variant="warning">{t('recipes.missingFromPantry')}</Badge>
+                )}
+                {compatibleUnits.length > 0 && (
+                  <select
+                    className="recipe-detail__unit-toggle"
+                    value={targetUnit ?? ''}
+                    onChange={(e) => {
+                      const next = new Map(convertedUnits)
+                      if (e.target.value) next.set(ri.ingredientId, e.target.value)
+                      else next.delete(ri.ingredientId)
+                      setConvertedUnits(next)
+                    }}
+                    aria-label={t('converter.convertTo')}
+                  >
+                    <option value="">⇄</option>
+                    {compatibleUnits.map((u) => (
+                      <option key={u} value={u}>{u}</option>
+                    ))}
+                  </select>
                 )}
               </li>
             )
@@ -300,7 +349,7 @@ export function RecipeDetail({ recipeId }: RecipeDetailProps) {
 
       {(recipe.nutrition || calculatedNutrition) && (
         <section className="recipe-detail__section">
-          <h2>{t('recipes.nutrition')}</h2>
+          <h2>{t('recipes.nutrition.nutrition')}</h2>
           {recipe.nutrition ? (
             <NutritionBlock
               nutrition={recipe.nutrition}

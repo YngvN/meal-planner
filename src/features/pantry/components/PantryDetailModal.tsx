@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Button, Modal } from '../../../components'
 import { useAppDispatch, useAppSelector } from '../../../app/hooks'
 import { useLanguage } from '../../../i18n'
+import { localizedIngredientName } from '../../shared/localize'
 import { updatePantryItem } from '../pantrySlice'
 import './PantryDetailModal.scss'
 
@@ -27,7 +28,7 @@ interface PantryDetailModalProps {
  */
 export function PantryDetailModal({ ingredientId, onClose }: PantryDetailModalProps) {
   const dispatch = useAppDispatch()
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
 
   const ingredient = useAppSelector((s) => s.ingredients.items.find((i) => i.id === ingredientId))
   const pantryItem = useAppSelector((s) =>
@@ -56,7 +57,7 @@ export function PantryDetailModal({ ingredientId, onClose }: PantryDetailModalPr
     onClose()
   }
 
-  const title = ingredient?.name ?? ingredientId
+  const title = ingredient ? localizedIngredientName(ingredient, language) : ingredientId
 
   return (
     <Modal open onClose={onClose} title={t('pantry.editItem')}>

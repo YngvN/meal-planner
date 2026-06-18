@@ -26,13 +26,11 @@
 
   &__day {
     background: $color-surface;
-    border-radius: 10px;
     overflow: hidden;
-    border: 1px solid $color-border;
 
     &--today {
+      border: 1px solid $color-border;
       border-color: $color-accent;
-      box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent) 20%, transparent);
     }
   }
 

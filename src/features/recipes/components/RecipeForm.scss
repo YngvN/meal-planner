@@ -41,6 +41,14 @@
     }
   }
 
+  &__section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: $spacing-unit;
+    flex-wrap: wrap;
+  }
+
   &__row {
     display: flex;
     flex-direction: column;

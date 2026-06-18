@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { Badge, Button } from '../../../components'
 import { useAppDispatch } from '../../../app/hooks'
 import { useLanguage } from '../../../i18n'
+import { localizeRecipe } from '../../shared/localize'
 import { toggleFavorite } from '../recipesSlice'
 import type { Recipe } from '../types'
 import './RecipeCard.scss'
@@ -14,10 +15,11 @@ interface RecipeCardProps {
  * Compact recipe card shown in the recipe list grid.
  * Displays cover image (if set), title, key metadata, dietary tags, and a favorite toggle.
  */
-export function RecipeCard({ recipe }: RecipeCardProps) {
+export function RecipeCard({ recipe: rawRecipe }: RecipeCardProps) {
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
+  const recipe = localizeRecipe(rawRecipe, language)
   const totalMinutes = recipe.prepTimeMinutes + recipe.cookTimeMinutes
 
   function handleFavorite(e: React.MouseEvent) {

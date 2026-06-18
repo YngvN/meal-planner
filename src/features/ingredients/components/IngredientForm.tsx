@@ -3,6 +3,7 @@ import { Alert, Button, Input, NumberInput, Select } from '../../../components'
 import { useAppDispatch } from '../../../app/hooks'
 import { useLanguage } from '../../../i18n'
 import { createIngredient, updateIngredient } from '../ingredientsSlice'
+import { NutritionScanButton } from '../../ai/components/NutritionScanButton'
 import type { Ingredient, IngredientCategory, SubProduct } from '../types'
 import './IngredientForm.scss'
 
@@ -29,6 +30,7 @@ export function IngredientForm({ ingredient, onDone }: IngredientFormProps) {
   const [category, setCategory] = useState<IngredientCategory>(ingredient?.category ?? 'other')
   const [defaultExpiryDays, setDefaultExpiryDays] = useState(ingredient?.defaultExpiryDays ?? 0)
   const [imageUrl, setImageUrl] = useState(ingredient?.imageUrl ?? '')
+  const [density, setDensity] = useState<string>(String(ingredient?.density ?? ''))
 
   // Nutrition per 100g
   const [calories, setCalories] = useState<string>(String(ingredient?.nutrition?.calories ?? ''))
@@ -99,6 +101,7 @@ export function IngredientForm({ ingredient, onDone }: IngredientFormProps) {
       nutrition: hasNutrition ? nutritionPayload : undefined,
       subproducts: subproducts.filter((sp) => sp.name.trim()),
       imageUrl: imageUrl.trim() || undefined,
+      density: parseOptionalNumber(density),
     }
 
     try {
@@ -171,7 +174,19 @@ export function IngredientForm({ ingredient, onDone }: IngredientFormProps) {
       </div>
 
       <div className="ingredient-form__section">
-        <h4 className="ingredient-form__section-title">{t('ingredients.nutrition')}</h4>
+        <div className="ingredient-form__section-header">
+          <h4 className="ingredient-form__section-title">{t('ingredients.nutrition')}</h4>
+          <NutritionScanButton
+            onResult={(n) => {
+              if (n.calories !== undefined) setCalories(String(n.calories))
+              if (n.protein !== undefined) setProtein(String(n.protein))
+              if (n.carbs !== undefined) setCarbs(String(n.carbs))
+              if (n.fat !== undefined) setFat(String(n.fat))
+              if (n.fiber !== undefined) setFiber(String(n.fiber))
+            }}
+            onError={(msg) => setError(msg)}
+          />
+        </div>
         <div className="ingredient-form__nutrition-grid">
           <Input
             id="ing-calories"
@@ -214,6 +229,20 @@ export function IngredientForm({ ingredient, onDone }: IngredientFormProps) {
             value={fiber}
             onChange={(e) => setFiber(e.target.value)}
           />
+        </div>
+
+        <div className="ingredient-form__density-row">
+          <Input
+            id="ing-density"
+            label={t('ingredients.density')}
+            type="number"
+            min="0"
+            step="0.01"
+            value={density}
+            onChange={(e) => setDensity(e.target.value)}
+            placeholder="e.g. 1.0"
+          />
+          <span className="ingredient-form__density-hint">{t('ingredients.densityHint')}</span>
         </div>
       </div>
 

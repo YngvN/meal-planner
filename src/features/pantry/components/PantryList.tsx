@@ -3,6 +3,8 @@ import { Alert, Badge, SearchBar, Spinner } from '../../../components'
 import { useAppDispatch, useAppSelector } from '../../../app/hooks'
 import { useLanguage } from '../../../i18n'
 import { fetchIngredients } from '../../ingredients/ingredientsSlice'
+import { localizedIngredientName } from '../../shared/localize'
+import { roundConverted } from '../../shared/units'
 import { fetchPantry, updatePantryItem } from '../pantrySlice'
 import { PantryDetailModal } from './PantryDetailModal'
 import './PantryList.scss'
@@ -23,7 +25,7 @@ function isExpiringSoon(expiresAt: string | undefined): boolean {
  */
 export function PantryList() {
   const dispatch = useAppDispatch()
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
 
   const { items: pantryItems, status, error } = useAppSelector((s) => s.pantry)
   const ingredients = useAppSelector((s) => s.ingredients.items)
@@ -114,12 +116,12 @@ export function PantryList() {
                       className="pantry-row__checkbox"
                     />
                   </label>
-                  <span className="pantry-row__name">{ingredient.name}</span>
+                  <span className="pantry-row__name">{localizedIngredientName(ingredient, language)}</span>
 
                   <div className="pantry-row__badges">
                     {pantryItem.quantity !== undefined && (
                       <span className="pantry-row__qty">
-                        {pantryItem.quantity}{pantryItem.unit ? ` ${pantryItem.unit}` : ''}
+                        {roundConverted(pantryItem.quantity)}{pantryItem.unit ? ` ${pantryItem.unit}` : ''}
                       </span>
                     )}
                     {pantryItem.isLow && (

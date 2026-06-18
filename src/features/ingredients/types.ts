@@ -24,6 +24,8 @@ export interface SubProduct {
   nutrition?: NutritionalValues
   /** URL to an image representing this variant. Falls back to parent ingredient image when absent. */
   imageUrl?: string
+  /** Translated names keyed by language code. Falls back to `name` when missing. */
+  nameI18n?: Record<string, string>
 }
 
 /** A single ingredient in the global ingredient library. */
@@ -39,6 +41,14 @@ export interface Ingredient {
   subproducts?: SubProduct[]
   /** URL to an image representing this ingredient. */
   imageUrl?: string
+  /**
+   * Density in grams per ml.
+   * Enables automatic volume ↔ weight conversion (e.g. flour ≈ 0.53, water = 1.0).
+   * Leave blank when unknown or irrelevant (e.g. count-based ingredients).
+   */
+  density?: number
+  /** Translated names keyed by language code. Falls back to `name` when missing. */
+  nameI18n?: Record<string, string>
 }
 
 /** Fields required to create a new ingredient. */

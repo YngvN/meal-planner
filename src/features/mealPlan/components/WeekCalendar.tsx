@@ -50,7 +50,7 @@ const EXPIRY_WINDOW_DAYS = 5
 export function WeekCalendar() {
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
 
   const allPlannedMeals = useAppSelector((s) => s.mealPlan.items)
   const recipes = useAppSelector((s) => s.recipes.items)
@@ -238,7 +238,7 @@ export function WeekCalendar() {
                           className="week-calendar__meal-title"
                           onClick={() => navigate(`/recipes/${recipe.id}?mealId=${meal.id}`)}
                         >
-                          {recipe.title}
+                          {recipe.titleI18n?.[language] || recipe.title}
                         </button>
                         <button
                           type="button"
@@ -260,7 +260,7 @@ export function WeekCalendar() {
                             loading="lazy"
                           />
                         )}
-                        <span className="week-calendar__suggestion-title">{suggestion.title}</span>
+                        <span className="week-calendar__suggestion-title">{suggestion.titleI18n?.[language] || suggestion.title}</span>
                         <button
                           type="button"
                           className="week-calendar__suggestion-accept"

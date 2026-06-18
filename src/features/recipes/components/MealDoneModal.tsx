@@ -3,6 +3,8 @@ import { Button, Modal } from '../../../components'
 import { useAppDispatch, useAppSelector } from '../../../app/hooks'
 import { removePlannedMeal } from '../../mealPlan/mealPlanSlice'
 import { bulkUpdatePantry } from '../../pantry/pantrySlice'
+import { convertUnit, roundConverted } from '../../shared/units'
+import { localizedIngredientName } from '../../shared/localize'
 import { useLanguage } from '../../../i18n'
 import type { Recipe } from '../types'
 import './MealDoneModal.scss'
@@ -21,7 +23,7 @@ interface MealDoneModalProps {
  */
 export function MealDoneModal({ recipe, mealId, onClose }: MealDoneModalProps) {
   const dispatch = useAppDispatch()
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
 
   const pantryItems = useAppSelector((s) => s.pantry.items)
   const ingredients = useAppSelector((s) => s.ingredients.items)
@@ -48,28 +50,37 @@ export function MealDoneModal({ recipe, mealId, onClose }: MealDoneModalProps) {
       const deduction = ri.quantity * scale
       const pantryQty = pantryItem?.quantity
 
-      // Units match check (case-insensitive)
-      const unitsMatch =
-        pantryItem?.unit !== undefined &&
-        pantryItem.unit.trim().toLowerCase() === ri.unit.trim().toLowerCase()
+      // Determine how the deduction was (or wasn't) resolved
+      let defaultWillHave: number | undefined
+      let conversionNote: 'exact' | 'converted' | 'manual' = 'manual'
 
-      const defaultWillHave =
-        unitsMatch && pantryQty !== undefined
-          ? Math.max(0, pantryQty - deduction)
-          : undefined
+      if (pantryItem?.unit && pantryQty !== undefined) {
+        const exactMatch = pantryItem.unit.trim().toLowerCase() === ri.unit.trim().toLowerCase()
+        if (exactMatch) {
+          defaultWillHave = roundConverted(Math.max(0, pantryQty - deduction))
+          conversionNote = 'exact'
+        } else {
+          // Try auto-conversion (same-dimension or cross-dimension via density)
+          const converted = convertUnit(deduction, ri.unit, pantryItem.unit, ingredient?.density)
+          if (converted !== null) {
+            defaultWillHave = roundConverted(Math.max(0, pantryQty - converted))
+            conversionNote = 'converted'
+          }
+        }
+      }
 
       return {
         ingredientId: ri.ingredientId,
-        name: ingredient?.name ?? ri.ingredientId,
+        name: ingredient ? localizedIngredientName(ingredient, language) : ri.ingredientId,
         recipeQty: deduction,
         recipeUnit: ri.unit,
         pantryQty,
         pantryUnit: pantryItem?.unit,
-        unitsMatch,
+        conversionNote,
         defaultWillHave,
       }
     })
-  }, [recipe.ingredients, ingredients, pantryItems, scale])
+  }, [recipe.ingredients, ingredients, pantryItems, scale, language])
 
   // "Will have" editable state per ingredient — stored as strings to allow empty input
   const [willHaveMap, setWillHaveMap] = useState<Map<string, string>>(
@@ -138,13 +149,13 @@ export function MealDoneModal({ recipe, mealId, onClose }: MealDoneModalProps) {
                 <tr key={row.ingredientId}>
                   <td className="meal-done-modal__name-cell">{row.name}</td>
                   <td className="meal-done-modal__num-cell">
-                    {Math.round(row.recipeQty * 10) / 10} {row.recipeUnit}
+                    {roundConverted(row.recipeQty)} {row.recipeUnit}
                   </td>
                   <td className="meal-done-modal__num-cell">
                     {row.pantryQty !== undefined
-                      ? `${row.pantryQty} ${row.pantryUnit ?? ''}`
+                      ? `${roundConverted(row.pantryQty)} ${row.pantryUnit ?? ''}`
                       : '—'}
-                    {!row.unitsMatch && row.pantryQty !== undefined && (
+                    {row.conversionNote === 'manual' && row.pantryQty !== undefined && (
                       <span className="meal-done-modal__mismatch" title={t('recipes.unitsMismatch')}>
                         {' '}⚠
                       </span>
@@ -163,7 +174,12 @@ export function MealDoneModal({ recipe, mealId, onClose }: MealDoneModalProps) {
                     <span className="meal-done-modal__unit">
                       {row.pantryUnit ?? row.recipeUnit}
                     </span>
-                    {!row.unitsMatch && (
+                    {row.conversionNote === 'converted' && (
+                      <span className="meal-done-modal__converted-note">
+                        {t('converter.converted')}
+                      </span>
+                    )}
+                    {row.conversionNote === 'manual' && row.pantryUnit && (
                       <span className="meal-done-modal__mismatch-note">
                         {t('recipes.unitsMismatch')}
                       </span>

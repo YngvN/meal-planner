@@ -28,7 +28,12 @@
         "thingsToDo": "Things to do",
         "allComplete": "Ingredient library is complete!",
         "ingredientsNeedAttention": "{{count}} ingredient(s) need attention",
-        "missingData": "missing: {{items}}"
+        "missingData": "missing: {{items}}",
+        "needsTranslation": "Needs translation",
+        "translateAll": "Translate all",
+        "translate": "Translate",
+        "allTranslated": "Everything is translated",
+        "itemsNeedTranslation": "{{count}} item(s) need translation"
       },
       "profile": {
         "title": "Profile",
@@ -126,6 +131,7 @@
           "createIngredient": "Create \"{{name}}\""
         },
         "source": {
+          "source": "Source",
           "type": "Source type",
           "name": "Name / title",
           "url": "URL"
@@ -136,6 +142,7 @@
           "person": "Person"
         },
         "nutrition": {
+          "nutrition": "Nutrition",
           "manual": "Per serving (manually entered)",
           "calculated": "Estimated from ingredients (per batch)"
         },
@@ -183,9 +190,27 @@
           "beverages": "Beverages",
           "other": "Other"
         },
+        "density": "Density (g per ml)",
+        "densityHint": "Enables volume ↔ weight conversion. E.g. water = 1.0, flour ≈ 0.53, sugar ≈ 0.85",
         "form": {
           "nameRequired": "Name is required."
         }
+      },
+      "converter": {
+        "convertTo": "Convert to",
+        "converted": "≈ converted",
+        "noConversion": "No conversion available",
+        "needsDensity": "Set density on ingredient to convert volume ↔ weight"
+      },
+      "ai": {
+        "scanNutrition": "Scan nutrition label",
+        "scanning": "Reading label…",
+        "scanError": "Couldn't read the label. Enter values manually.",
+        "translating": "Translating…",
+        "translateError": "Translation failed. Try again.",
+        "scanRecipe": "Scan recipe photo",
+        "scanningRecipe": "Reading recipe…",
+        "recipeScanError": "Couldn't read the recipe. Try another photo or enter it manually."
       },
       "pantry": {
         "title": "Pantry",
@@ -290,7 +315,7 @@
         "home": "Hjem",
         "recipes": "Oppskrifter",
         "ingredients": "Ingredienser",
-        "pantry": "Pantry",
+        "pantry": "Kjøleskapet",
         "mealPlan": "Måltidsplanlegger",
         "shoppingList": "Handleliste",
         "settings": "Innstillinger",
@@ -312,7 +337,12 @@
         "thingsToDo": "Ting å gjøre",
         "allComplete": "Ingrediensbiblioteket er komplett!",
         "ingredientsNeedAttention": "{{count}} ingrediens(er) trenger oppmerksomhet",
-        "missingData": "mangler: {{items}}"
+        "missingData": "mangler: {{items}}",
+        "needsTranslation": "Trenger oversettelse",
+        "translateAll": "Oversett alle",
+        "translate": "Oversett",
+        "allTranslated": "Alt er oversatt",
+        "itemsNeedTranslation": "{{count}} element(er) trenger oversettelse"
       },
       "profile": {
         "title": "Profil",
@@ -410,6 +440,7 @@
           "createIngredient": "Opprett \"{{name}}\""
         },
         "source": {
+          "source": "Kilde",
           "type": "Kildetype",
           "name": "Navn / tittel",
           "url": "URL"
@@ -420,6 +451,7 @@
           "person": "Person"
         },
         "nutrition": {
+          "nutrition": "Næringsinnhold",
           "manual": "Per porsjon (manuelt angitt)",
           "calculated": "Estimert fra ingredienser (per batch)"
         },
@@ -432,7 +464,7 @@
         },
         "mealDone": "Måltid ferdig",
         "mealDoneTitle": "Merk måltid som ferdig",
-        "mealDoneConfirm": "Bekreft og oppdater pantry",
+        "mealDoneConfirm": "Bekreft og oppdater kjøleskapet",
         "removeFromPlan": "Fjern fra måltidsplan",
         "willHave": "Vil ha",
         "currentlyHave": "Har nå",
@@ -467,13 +499,31 @@
           "beverages": "Drikke",
           "other": "Annet"
         },
+        "density": "Tetthet (g per ml)",
+        "densityHint": "Muliggjør volum ↔ vekt-konvertering. F.eks. vann = 1.0, mel ≈ 0.53, sukker ≈ 0.85",
         "form": {
           "nameRequired": "Navn er påkrevd."
         }
       },
+      "converter": {
+        "convertTo": "Konverter til",
+        "converted": "≈ konvertert",
+        "noConversion": "Ingen konvertering tilgjengelig",
+        "needsDensity": "Sett tetthet på ingrediensen for å konvertere volum ↔ vekt"
+      },
+      "ai": {
+        "scanNutrition": "Skann næringsinnhold",
+        "scanning": "Leser etikett…",
+        "scanError": "Kunne ikke lese etiketten. Skriv inn verdiene manuelt.",
+        "translating": "Oversetter…",
+        "translateError": "Oversettelse mislyktes. Prøv igjen.",
+        "scanRecipe": "Skann oppskriftsbilde",
+        "scanningRecipe": "Leser oppskrift…",
+        "recipeScanError": "Kunne ikke lese oppskriften. Prøv et annet bilde eller skriv den inn manuelt."
+      },
       "pantry": {
-        "title": "Pantry",
-        "search": "Søk i pantry…",
+        "title": "Kjøleskapet",
+        "search": "Søk i kjøleskapet",
         "inStock": "På lager",
         "outOfStock": "Ikke på lager",
         "low": "Lite igjen",
@@ -483,7 +533,7 @@
         "whatCanIMake": "Hva kan jeg lage?",
         "readyToMake": "Klar til å lage",
         "missing": "Mangler {{count}} ingrediens(er)",
-        "editItem": "Rediger pantry-vare",
+        "editItem": "Rediger kjøleskaps-vare",
         "quantity": "Mengde",
         "unit": "Enhet",
         "expiryDate": "Utløpsdato",

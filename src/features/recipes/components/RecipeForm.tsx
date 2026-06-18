@@ -4,6 +4,7 @@ import { Alert, Button, IngredientCombobox, Input, NumberInput, Select, TagInput
 import { useAppDispatch, useAppSelector } from '../../../app/hooks'
 import { useLanguage } from '../../../i18n'
 import { createIngredient } from '../../ingredients/ingredientsSlice'
+import { RecipeScanButton } from '../../ai/components/RecipeScanButton'
 import { createRecipe, updateRecipe } from '../recipesSlice'
 import type {
   CreateRecipePayload,
@@ -172,6 +173,41 @@ export function RecipeForm({ initialValues, onDone }: RecipeFormProps) {
     return result.id
   }
 
+  /** Resolves an ingredient name to a library id, creating the ingredient if needed. */
+  async function resolveIngredientId(name: string): Promise<string> {
+    const term = name.trim().toLowerCase()
+    const existing = ingredientLibrary.find(
+      (i) =>
+        i.name.toLowerCase() === term ||
+        Object.values(i.nameI18n ?? {}).some((n) => n.toLowerCase() === term),
+    )
+    if (existing) return existing.id
+    return handleCreateIngredient(name.trim())
+  }
+
+  /** Applies an AI-transcribed recipe draft to the form, resolving ingredients to the library. */
+  async function applyRecipeDraft(draft: import('../../ai/types').RecipeDraft) {
+    const resolved: RecipeIngredient[] = []
+    for (const di of draft.ingredients) {
+      const ingredientId = await resolveIngredientId(di.name)
+      resolved.push({ ingredientId, quantity: di.quantity, unit: di.unit })
+    }
+
+    setForm((prev) => ({
+      ...prev,
+      title: draft.title || prev.title,
+      description: draft.description ?? prev.description,
+      portions: draft.portions ?? prev.portions,
+      prepTimeMinutes: draft.prepTimeMinutes ?? prev.prepTimeMinutes,
+      cookTimeMinutes: draft.cookTimeMinutes ?? prev.cookTimeMinutes,
+      ingredients: resolved.length > 0 ? resolved : prev.ingredients,
+      steps:
+        draft.instructions.length > 0
+          ? draft.instructions.map((description, i) => ({ order: i + 1, description }))
+          : prev.steps,
+    }))
+  }
+
   // ─── Source helpers ───────────────────────────────────────────────────────
 
   function buildSource(): RecipeSource | undefined {
@@ -256,7 +292,10 @@ export function RecipeForm({ initialValues, onDone }: RecipeFormProps) {
 
       {/* ─── Basic info ─────────────────────────────────────────────── */}
       <section className="recipe-form__section">
-        <h2>{t('recipes.form.basics')}</h2>
+        <div className="recipe-form__section-header">
+          <h2>{t('recipes.form.basics')}</h2>
+          <RecipeScanButton onResult={applyRecipeDraft} onError={setSubmitError} />
+        </div>
         <div className="recipe-form__row">
           <Input
             id="title"
