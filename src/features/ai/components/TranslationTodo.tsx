@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { ArrowRight, LoaderCircle } from 'lucide-react'
 import { Badge, Button } from '../../../components'
 import { useAppDispatch, useAppSelector } from '../../../app/hooks'
 import { availableLanguages, useLanguage } from '../../../i18n'
@@ -153,7 +154,11 @@ export function TranslationTodo() {
                   onClick={() => translateRow(row)}
                   disabled={busy.has(row.id)}
                 >
-                  {busy.has(row.id) ? `⏳ ${t('ai.translating')}` : `${t('home.translate')} →`}
+                  {busy.has(row.id) ? (
+                    <><LoaderCircle size={14} className="icon-spin" aria-hidden /> {t('ai.translating')}</>
+                  ) : (
+                    <>{t('home.translate')} <ArrowRight size={14} aria-hidden /></>
+                  )}
                 </button>
               </li>
             ))}

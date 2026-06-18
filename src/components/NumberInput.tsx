@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { Minus, Plus } from 'lucide-react'
 import './NumberInput.scss'
 
 interface NumberInputProps {
@@ -35,7 +36,7 @@ export function NumberInput({ label, value, onChange, min = 0, max, step = 1, id
           aria-label="Decrease"
           disabled={min !== undefined && value <= min}
         >
-          −
+          <Minus size={16} aria-hidden />
         </button>
         <input
           id={id}
@@ -54,7 +55,7 @@ export function NumberInput({ label, value, onChange, min = 0, max, step = 1, id
           aria-label="Increase"
           disabled={max !== undefined && value >= max}
         >
-          +
+          <Plus size={16} aria-hidden />
         </button>
       </div>
       {error && <p className="number-input-field__error">{error}</p>}

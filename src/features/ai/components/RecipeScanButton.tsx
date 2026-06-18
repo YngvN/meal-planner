@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { Camera, LoaderCircle } from 'lucide-react'
 import { Button } from '../../../components'
 import { useLanguage } from '../../../i18n'
 import { transcribeRecipe } from '../aiApi'
@@ -64,7 +65,11 @@ export function RecipeScanButton({ onResult, onError }: RecipeScanButtonProps) {
         onClick={() => inputRef.current?.click()}
         disabled={scanning}
       >
-        {scanning ? `⏳ ${t('ai.scanningRecipe')}` : `📷 ${t('ai.scanRecipe')}`}
+        {scanning ? (
+          <><LoaderCircle size={16} className="icon-spin" aria-hidden /> {t('ai.scanningRecipe')}</>
+        ) : (
+          <><Camera size={16} aria-hidden /> {t('ai.scanRecipe')}</>
+        )}
       </Button>
     </div>
   )

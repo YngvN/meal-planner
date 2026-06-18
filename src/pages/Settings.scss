@@ -42,6 +42,22 @@
     letter-spacing: 0.05em;
   }
 
+  &__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: $spacing-unit;
+    padding: calc($spacing-unit * 1.25) calc($spacing-unit * 1.5);
+    background: $color-surface;
+    border: 1px solid $color-border;
+    border-radius: 10px;
+  }
+
+  &__row-label {
+    font-size: 0.9375rem;
+    font-weight: 500;
+  }
+
   &__chips {
     display: flex;
     flex-wrap: wrap;

@@ -1,4 +1,4 @@
-import { FilterChip } from '../components'
+import { FilterChip, LanguageSwitcher, ThemeToggle } from '../components'
 import { useAppDispatch, useAppSelector } from '../app/hooks'
 import type { ScoringFactors } from '../features/settings/types'
 import { setVisibleSlots, toggleAutoSuggest, toggleScoringFactor } from '../features/settings/settingsSlice'
@@ -44,6 +44,25 @@ export function Settings() {
   return (
     <div className="settings-page">
       <h1>{t('settings.title')}</h1>
+
+      {/* ── Appearance ────────────────────────────────────────────────────── */}
+      <section className="settings-page__section">
+        <h2 className="settings-page__section-title">{t('settings.appearance')}</h2>
+
+        <div className="settings-page__field">
+          <div className="settings-page__row">
+            <span className="settings-page__row-label">{t('settings.theme')}</span>
+            <ThemeToggle />
+          </div>
+        </div>
+
+        <div className="settings-page__field">
+          <div className="settings-page__row">
+            <span className="settings-page__row-label">{t('settings.language')}</span>
+            <LanguageSwitcher />
+          </div>
+        </div>
+      </section>
 
       {/* ── Meal Planner ──────────────────────────────────────────────────── */}
       <section className="settings-page__section">

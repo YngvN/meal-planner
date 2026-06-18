@@ -1,3 +1,4 @@
+import { Star } from 'lucide-react'
 import { FilterChip, Select } from '../../../components'
 import { useLanguage } from '../../../i18n'
 import type { DietaryTag, MealTag, RecipeFilters as Filters, SkillLevel } from '../types'
@@ -83,7 +84,7 @@ export function RecipeFilters({ filters, onChange }: RecipeFiltersProps) {
 
       <div className="recipe-filters__group">
         <FilterChip active={filters.favoritesOnly} onClick={toggleFavorites}>
-          ★ {t('recipes.filters.favoritesOnly')}
+          <Star size={14} fill={filters.favoritesOnly ? 'currentColor' : 'none'} aria-hidden /> {t('recipes.filters.favoritesOnly')}
         </FilterChip>
       </div>
     </aside>

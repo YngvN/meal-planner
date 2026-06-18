@@ -3,6 +3,7 @@
 .filter-chip {
   display: inline-flex;
   align-items: center;
+  gap: calc($spacing-unit * 0.5);
   padding: calc($spacing-unit / 2) calc($spacing-unit * 1.25);
   border-radius: 999px;
   border: 1.5px solid $color-border;

@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { ArrowRight } from 'lucide-react'
 import { Badge, Button } from '../components'
 import { useAppDispatch, useAppSelector } from '../app/hooks'
 import type { Ingredient } from '../features/ingredients/types'
@@ -166,7 +167,7 @@ export function Home() {
                     className="home__expiry-link"
                     onClick={() => navigate('/pantry')}
                   >
-                    {t('pantry.title')} →
+                    {t('pantry.title')} <ArrowRight size={14} aria-hidden />
                   </button>
                 </li>
               )
@@ -202,7 +203,7 @@ export function Home() {
                     className="home__expiry-link"
                     onClick={() => navigate(`/ingredients?edit=${ing.id}`)}
                   >
-                    {t('common.edit')} →
+                    {t('common.edit')} <ArrowRight size={14} aria-hidden />
                   </button>
                 </li>
               ))}

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
+import { Plus, X } from 'lucide-react'
 import type { Ingredient } from '../features/ingredients/types'
 import './IngredientCombobox.scss'
 
@@ -154,7 +155,7 @@ export function IngredientCombobox({
             onClick={handleClear}
             aria-label="Clear selection"
           >
-            ×
+            <X size={16} aria-hidden />
           </button>
         </div>
       ) : (
@@ -227,7 +228,7 @@ export function IngredientCombobox({
               }}
               onMouseEnter={() => setHighlightIdx(filtered.length)}
             >
-              <span className="ingredient-combobox__create-icon">+</span>
+              <span className="ingredient-combobox__create-icon"><Plus size={16} aria-hidden /></span>
               <span>
                 {creating ? 'Creating…' : `Create "${inputValue.trim()}"`}
               </span>

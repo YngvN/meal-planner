@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { ArrowRight, X } from 'lucide-react'
 import { Badge, Button } from '../../../components'
 import { useAppDispatch, useAppSelector } from '../../../app/hooks'
 import type { IngredientCategory } from '../../ingredients/types'
@@ -139,7 +140,7 @@ export function ShoppingListView() {
     return (
       <div className="shopping-list-view__empty">
         <p>{t('shoppingList.empty')}</p>
-        <Button onClick={() => navigate('/meal-plan')}>{t('nav.mealPlan')} →</Button>
+        <Button onClick={() => navigate('/meal-plan')}>{t('nav.mealPlan')} <ArrowRight size={16} aria-hidden /></Button>
       </div>
     )
   }
@@ -245,7 +246,7 @@ export function ShoppingListView() {
                   onClick={() => dispatch(removeManualItem(item.id))}
                   aria-label={t('common.delete')}
                 >
-                  ×
+                  <X size={16} aria-hidden />
                 </button>
               </li>
             ))}

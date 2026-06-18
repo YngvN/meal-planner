@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { TriangleAlert } from 'lucide-react'
 import { Alert, Badge, SearchBar, Spinner } from '../../../components'
 import { useAppDispatch, useAppSelector } from '../../../app/hooks'
 import { useLanguage } from '../../../i18n'
@@ -143,8 +144,9 @@ export function PantryList() {
                       className={['pantry-row__low-btn', pantryItem.isLow && 'pantry-row__low-btn--active'].filter(Boolean).join(' ')}
                       onClick={(e) => { e.stopPropagation(); handleLowToggle(ingredient.id, !pantryItem.isLow) }}
                       title={t('pantry.markLow')}
+                      aria-label={t('pantry.markLow')}
                     >
-                      ⚠
+                      <TriangleAlert size={16} aria-hidden />
                     </button>
                   </div>
                 </div>

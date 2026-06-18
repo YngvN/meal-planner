@@ -10,7 +10,9 @@
   background: $color-surface;
 
   &__icon {
-    font-size: 0.875rem;
+    display: inline-flex;
+    align-items: center;
+    color: $color-text-muted;
     flex-shrink: 0;
   }
 

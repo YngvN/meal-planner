@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Alert, Button, IngredientCombobox, Input, NumberInput, Select, TagInput } from '../../../components'
 import { useAppDispatch, useAppSelector } from '../../../app/hooks'
 import { useLanguage } from '../../../i18n'
+import { Plus, X } from 'lucide-react'
 import { createIngredient } from '../../ingredients/ingredientsSlice'
 import { RecipeScanButton } from '../../ai/components/RecipeScanButton'
 import { createRecipe, updateRecipe } from '../recipesSlice'
@@ -519,12 +520,14 @@ export function RecipeForm({ initialValues, onDone }: RecipeFormProps) {
                   <option key={u} value={u}>{u}</option>
                 ))}
               </select>
-              <Button type="button" variant="secondary" onClick={() => removeIngredientRow(idx)}>×</Button>
+              <Button type="button" variant="secondary" onClick={() => removeIngredientRow(idx)} aria-label={t('common.delete')}>
+                <X size={16} aria-hidden />
+              </Button>
             </div>
           )
         })}
         <Button type="button" variant="secondary" onClick={addIngredientRow}>
-          + {t('recipes.form.addIngredient')}
+          <Plus size={16} aria-hidden /> {t('recipes.form.addIngredient')}
         </Button>
       </section>
 
@@ -553,12 +556,14 @@ export function RecipeForm({ initialValues, onDone }: RecipeFormProps) {
               />
             </div>
             {form.steps.length > 1 && (
-              <Button type="button" variant="secondary" onClick={() => removeStep(idx)}>×</Button>
+              <Button type="button" variant="secondary" onClick={() => removeStep(idx)} aria-label={t('common.delete')}>
+                <X size={16} aria-hidden />
+              </Button>
             )}
           </div>
         ))}
         <Button type="button" variant="secondary" onClick={addStep}>
-          + {t('recipes.form.addStep')}
+          <Plus size={16} aria-hidden /> {t('recipes.form.addStep')}
         </Button>
       </section>
 

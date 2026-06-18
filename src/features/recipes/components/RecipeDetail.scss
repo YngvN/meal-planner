@@ -136,8 +136,13 @@
   }
 
   &__ingredient-status {
-    font-size: 1rem;
+    display: inline-flex;
+    align-items: center;
     flex-shrink: 0;
+
+    .recipe-detail__ingredient--missing & {
+      color: $color-warning;
+    }
   }
 
   &__ingredient-qty {
@@ -158,25 +163,29 @@
   }
 
   &__unit-toggle {
-    background: none;
+    display: inline-flex;
+    align-items: center;
+    gap: calc($spacing-unit * 0.5);
     border: 1px solid $color-border;
     border-radius: 6px;
     color: $color-text-muted;
-    font-size: 0.8125rem;
     padding: 2px calc($spacing-unit * 0.5);
-    cursor: pointer;
     flex-shrink: 0;
+
+    &:focus-within {
+      border-color: $color-accent;
+    }
+  }
+
+  &__unit-toggle-select {
+    background: none;
+    border: none;
+    color: inherit;
+    font-size: 0.8125rem;
+    cursor: pointer;
 
     &:focus {
       outline: none;
-      border-color: $color-accent;
-    }
-
-    @media (hover: hover) {
-      &:hover {
-        border-color: $color-accent;
-        color: $color-accent;
-      }
     }
   }
 
@@ -196,7 +205,9 @@
   }
 
   &__step-timer {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    gap: calc($spacing-unit * 0.5);
     margin-top: calc($spacing-unit / 2);
     font-size: 0.875rem;
     color: $color-text-muted;

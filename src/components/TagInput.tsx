@@ -1,5 +1,6 @@
 import type { KeyboardEvent } from 'react'
 import { useState } from 'react'
+import { X } from 'lucide-react'
 import './TagInput.scss'
 
 interface TagInputProps {
@@ -51,7 +52,7 @@ export function TagInput({ label, tags, onChange, placeholder = 'Add tag…', cl
               onClick={() => removeTag(tag)}
               aria-label={`Remove ${tag}`}
             >
-              ×
+              <X size={14} aria-hidden />
             </button>
           </span>
         ))}

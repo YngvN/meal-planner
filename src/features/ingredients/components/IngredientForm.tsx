@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Plus, X } from 'lucide-react'
 import { Alert, Button, Input, NumberInput, Select } from '../../../components'
 import { useAppDispatch } from '../../../app/hooks'
 import { useLanguage } from '../../../i18n'
@@ -250,7 +251,7 @@ export function IngredientForm({ ingredient, onDone }: IngredientFormProps) {
         <div className="ingredient-form__section-header">
           <h4 className="ingredient-form__section-title">{t('ingredients.subproducts')}</h4>
           <Button type="button" variant="secondary" onClick={addSubproduct}>
-            + {t('ingredients.addSubproduct')}
+            <Plus size={16} aria-hidden /> {t('ingredients.addSubproduct')}
           </Button>
         </div>
 
@@ -264,7 +265,9 @@ export function IngredientForm({ ingredient, onDone }: IngredientFormProps) {
                 onChange={(e) => updateSubproduct(idx, { name: e.target.value })}
                 placeholder={t('ingredients.subproductName')}
               />
-              <Button type="button" variant="secondary" onClick={() => removeSubproduct(idx)}>×</Button>
+              <Button type="button" variant="secondary" onClick={() => removeSubproduct(idx)} aria-label={t('common.delete')}>
+                <X size={16} aria-hidden />
+              </Button>
             </div>
             <details className="ingredient-form__subproduct-nutrition">
               <summary>{t('ingredients.nutrition')} + {t('ingredients.imageUrl')} ({t('common.optional')})</summary>

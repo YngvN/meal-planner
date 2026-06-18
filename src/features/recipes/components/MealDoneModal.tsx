@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { TriangleAlert } from 'lucide-react'
 import { Button, Modal } from '../../../components'
 import { useAppDispatch, useAppSelector } from '../../../app/hooks'
 import { removePlannedMeal } from '../../mealPlan/mealPlanSlice'
@@ -157,7 +158,7 @@ export function MealDoneModal({ recipe, mealId, onClose }: MealDoneModalProps) {
                       : '—'}
                     {row.conversionNote === 'manual' && row.pantryQty !== undefined && (
                       <span className="meal-done-modal__mismatch" title={t('recipes.unitsMismatch')}>
-                        {' '}⚠
+                        {' '}<TriangleAlert size={14} aria-hidden />
                       </span>
                     )}
                   </td>

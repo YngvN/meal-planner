@@ -1,4 +1,5 @@
 import type { ChangeEvent } from 'react'
+import { Search, X } from 'lucide-react'
 import './SearchBar.scss'
 
 interface SearchBarProps {
@@ -20,7 +21,7 @@ export function SearchBar({ value, onChange, placeholder, className }: SearchBar
 
   return (
     <div className={['search-bar', className].filter(Boolean).join(' ')}>
-      <span className="search-bar__icon" aria-hidden>🔍</span>
+      <span className="search-bar__icon" aria-hidden><Search size={16} /></span>
       <input
         type="search"
         className="search-bar__input"
@@ -35,7 +36,7 @@ export function SearchBar({ value, onChange, placeholder, className }: SearchBar
           onClick={() => onChange('')}
           aria-label="Clear search"
         >
-          ×
+          <X size={16} aria-hidden />
         </button>
       )}
     </div>

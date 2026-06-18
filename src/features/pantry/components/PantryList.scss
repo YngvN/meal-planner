@@ -105,12 +105,14 @@
   }
 
   &__low-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     background: none;
     border: 1px solid $color-border;
     border-radius: 4px;
     cursor: pointer;
-    padding: 2px 6px;
-    font-size: 0.875rem;
+    padding: 4px 6px;
     color: $color-text-muted;
 
     &--active {

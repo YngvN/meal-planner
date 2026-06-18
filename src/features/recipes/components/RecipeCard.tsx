@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import { Clock, Gauge, Star, Users } from 'lucide-react'
 import { Badge, Button } from '../../../components'
 import { useAppDispatch } from '../../../app/hooks'
 import { useLanguage } from '../../../i18n'
@@ -48,7 +49,7 @@ export function RecipeCard({ recipe: rawRecipe }: RecipeCardProps) {
             aria-label={recipe.isFavorite ? t('recipes.unfavorite') : t('recipes.favorite')}
             title={recipe.isFavorite ? t('recipes.unfavorite') : t('recipes.favorite')}
           >
-            {recipe.isFavorite ? '★' : '☆'}
+            <Star size={18} fill={recipe.isFavorite ? 'currentColor' : 'none'} aria-hidden />
           </button>
         </div>
 
@@ -58,13 +59,13 @@ export function RecipeCard({ recipe: rawRecipe }: RecipeCardProps) {
 
         <div className="recipe-card__meta">
           <span className="recipe-card__meta-item" title={t('recipes.totalTime')}>
-            🕐 {totalMinutes} {t('recipes.minutes')}
+            <Clock size={15} aria-hidden /> {totalMinutes} {t('recipes.minutes')}
           </span>
           <span className="recipe-card__meta-item" title={t('recipes.portions')}>
-            👥 {recipe.portions}
+            <Users size={15} aria-hidden /> {recipe.portions}
           </span>
           <span className="recipe-card__meta-item" title={t('recipes.skillLevel')}>
-            📊 {t(`recipes.skill.${recipe.skillLevel}`)}
+            <Gauge size={15} aria-hidden /> {t(`recipes.skill.${recipe.skillLevel}`)}
           </span>
         </div>
 

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Check, ChevronLeft, ChevronRight, Pencil, Plus, X } from 'lucide-react'
 import { Button } from '../../../components'
 import { useAppDispatch, useAppSelector } from '../../../app/hooks'
 import { useLanguage } from '../../../i18n'
@@ -44,8 +45,8 @@ const EXPIRY_WINDOW_DAYS = 5
 
 /**
  * Weekly meal planning calendar. Shows Mon–Sun with the user's chosen meal slots per day.
- * Empty future slots show an auto-suggested recipe (when enabled in settings) with a ✓ button
- * to accept or … to pick a different recipe.
+ * Empty future slots show an auto-suggested recipe (when enabled in settings) with an accept
+ * button (check) or an override button (pencil) to pick a different recipe.
  */
 export function WeekCalendar() {
   const dispatch = useAppDispatch()
@@ -191,11 +192,11 @@ export function WeekCalendar() {
     <div className="week-calendar">
       <div className="week-calendar__nav">
         <Button variant="secondary" onClick={prevWeek} aria-label={t('mealPlan.prevWeek')}>
-          ‹
+          <ChevronLeft size={18} aria-hidden />
         </Button>
         <span className="week-calendar__week-label">{weekLabel}</span>
         <Button variant="secondary" onClick={nextWeek} aria-label={t('mealPlan.nextWeek')}>
-          ›
+          <ChevronRight size={18} aria-hidden />
         </Button>
       </div>
 
@@ -246,7 +247,7 @@ export function WeekCalendar() {
                           onClick={() => handleRemove(meal)}
                           aria-label={t('common.delete')}
                         >
-                          ×
+                          <X size={16} aria-hidden />
                         </button>
                       </div>
                     ) : suggestion && autoSuggestEnabled ? (
@@ -268,7 +269,7 @@ export function WeekCalendar() {
                           aria-label={t('mealPlan.acceptSuggestion')}
                           title={t('mealPlan.acceptSuggestion')}
                         >
-                          ✓
+                          <Check size={16} aria-hidden />
                         </button>
                         <button
                           type="button"
@@ -277,7 +278,7 @@ export function WeekCalendar() {
                           aria-label={t('mealPlan.overrideSuggestion')}
                           title={t('mealPlan.overrideSuggestion')}
                         >
-                          …
+                          <Pencil size={15} aria-hidden />
                         </button>
                       </div>
                     ) : !isPast ? (
@@ -288,7 +289,7 @@ export function WeekCalendar() {
                         onClick={() => setPicking({ date: dateStr, slot })}
                         aria-label={t('mealPlan.addMeal')}
                       >
-                        + {t('mealPlan.addMeal')}
+                        <Plus size={15} aria-hidden /> {t('mealPlan.addMeal')}
                       </button>
                     ) : null}
                   </div>

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { ArrowLeft, ArrowLeftRight, Check, Clock, Star, X } from 'lucide-react'
 import { Alert, Badge, Button, Modal, Spinner } from '../../../components'
 import { useAppDispatch, useAppSelector } from '../../../app/hooks'
 import { useLanguage } from '../../../i18n'
@@ -167,18 +168,18 @@ export function RecipeDetail({ recipeId }: RecipeDetailProps) {
     <article className="recipe-detail">
       <div className="recipe-detail__actions-top">
         <Button variant="secondary" onClick={() => navigate('/recipes')}>
-          ← {t('common.back')}
+          <ArrowLeft size={16} aria-hidden /> {t('common.back')}
         </Button>
         <div className="recipe-detail__action-group">
           <Button onClick={() => setShowMealDone(true)}>
-            ✓ {t('recipes.mealDone')}
+            <Check size={16} aria-hidden /> {t('recipes.mealDone')}
           </Button>
           <Button
             variant="secondary"
             onClick={() => dispatch(toggleFavorite(recipe.id))}
             title={recipe.isFavorite ? t('recipes.unfavorite') : t('recipes.favorite')}
           >
-            {recipe.isFavorite ? '★' : '☆'} {recipe.isFavorite ? t('recipes.unfavorite') : t('recipes.favorite')}
+            <Star size={16} fill={recipe.isFavorite ? 'currentColor' : 'none'} aria-hidden /> {recipe.isFavorite ? t('recipes.unfavorite') : t('recipes.favorite')}
           </Button>
           <Button variant="secondary" onClick={() => navigate(`/recipes/${recipe.id}/edit`)}>
             {t('common.edit')}
@@ -284,7 +285,9 @@ export function RecipeDetail({ recipeId }: RecipeDetailProps) {
                 key={`${ri.ingredientId}-${ri.subproductId ?? ''}`}
                 className={['recipe-detail__ingredient', !inPantry && 'recipe-detail__ingredient--missing'].filter(Boolean).join(' ')}
               >
-                <span className="recipe-detail__ingredient-status">{inPantry ? '✓' : '✗'}</span>
+                <span className="recipe-detail__ingredient-status">
+                  {inPantry ? <Check size={16} aria-hidden /> : <X size={16} aria-hidden />}
+                </span>
                 <span className="recipe-detail__ingredient-qty">
                   <strong>{ri.quantity} {ri.unit}</strong>
                   {convertedQty !== null && targetUnit && (
@@ -298,22 +301,25 @@ export function RecipeDetail({ recipeId }: RecipeDetailProps) {
                   <Badge variant="warning">{t('recipes.missingFromPantry')}</Badge>
                 )}
                 {compatibleUnits.length > 0 && (
-                  <select
-                    className="recipe-detail__unit-toggle"
-                    value={targetUnit ?? ''}
-                    onChange={(e) => {
-                      const next = new Map(convertedUnits)
-                      if (e.target.value) next.set(ri.ingredientId, e.target.value)
-                      else next.delete(ri.ingredientId)
-                      setConvertedUnits(next)
-                    }}
-                    aria-label={t('converter.convertTo')}
-                  >
-                    <option value="">⇄</option>
-                    {compatibleUnits.map((u) => (
-                      <option key={u} value={u}>{u}</option>
-                    ))}
-                  </select>
+                  <span className="recipe-detail__unit-toggle">
+                    <ArrowLeftRight size={14} aria-hidden />
+                    <select
+                      className="recipe-detail__unit-toggle-select"
+                      value={targetUnit ?? ''}
+                      onChange={(e) => {
+                        const next = new Map(convertedUnits)
+                        if (e.target.value) next.set(ri.ingredientId, e.target.value)
+                        else next.delete(ri.ingredientId)
+                        setConvertedUnits(next)
+                      }}
+                      aria-label={t('converter.convertTo')}
+                    >
+                      <option value="">{ri.unit}</option>
+                      {compatibleUnits.map((u) => (
+                        <option key={u} value={u}>{u}</option>
+                      ))}
+                    </select>
+                  </span>
                 )}
               </li>
             )
@@ -332,7 +338,7 @@ export function RecipeDetail({ recipeId }: RecipeDetailProps) {
                 <p>{step.description}</p>
                 {step.timerMinutes && (
                   <span className="recipe-detail__step-timer">
-                    🕐 {step.timerMinutes} {t('recipes.minutes')}
+                    <Clock size={14} aria-hidden /> {step.timerMinutes} {t('recipes.minutes')}
                   </span>
                 )}
               </li>

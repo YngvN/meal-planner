@@ -98,6 +98,9 @@
   }
 
   &__expiry-link {
+    display: inline-flex;
+    align-items: center;
+    gap: calc($spacing-unit * 0.5);
     background: none;
     border: none;
     cursor: pointer;

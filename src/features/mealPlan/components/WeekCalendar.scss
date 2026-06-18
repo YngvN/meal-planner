@@ -138,6 +138,9 @@
   }
 
   &__add {
+    display: inline-flex;
+    align-items: center;
+    gap: calc($spacing-unit * 0.5);
     background: none;
     border: 1px dashed $color-border;
     border-radius: 6px;
@@ -201,10 +204,12 @@
 
   &__suggestion-accept,
   &__suggestion-override {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     background: none;
     border: none;
     cursor: pointer;
-    font-size: 1rem;
     line-height: 1;
     padding: 2px 4px;
     border-radius: 4px;

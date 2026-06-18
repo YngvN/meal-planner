@@ -3,6 +3,10 @@
 .btn {
   font-family: inherit;
   font-size: 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc($spacing-unit * 0.75);
   padding: $spacing-unit calc($spacing-unit * 2.5);
   border-radius: 6px;
   border: 1px solid transparent;

@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { Camera, LoaderCircle } from 'lucide-react'
 import { Button } from '../../../components'
 import { useLanguage } from '../../../i18n'
 import type { NutritionalValues } from '../../shared/types'
@@ -69,7 +70,11 @@ export function NutritionScanButton({ onResult, onError }: NutritionScanButtonPr
         onClick={() => inputRef.current?.click()}
         disabled={scanning}
       >
-        {scanning ? `⏳ ${t('ai.scanning')}` : `📷 ${t('ai.scanNutrition')}`}
+        {scanning ? (
+          <><LoaderCircle size={16} className="icon-spin" aria-hidden /> {t('ai.scanning')}</>
+        ) : (
+          <><Camera size={16} aria-hidden /> {t('ai.scanNutrition')}</>
+        )}
       </Button>
     </div>
   )

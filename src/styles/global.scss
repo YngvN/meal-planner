@@ -86,42 +86,168 @@ a {
   color: $color-accent;
 }
 
+/** Spinning loader icon (used by AI scan/translate buttons). */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.icon-spin {
+  animation: spin 1s linear infinite;
+}
+
+// ─── App shell: left sidebar (desktop) / hamburger dropdown (mobile) ──────────
+
 .app {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+
+  @media (min-width: $breakpoint-mobile) {
+    flex-direction: row;
+  }
 }
 
-.app__header {
+.app__sidebar {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: $spacing-unit * 2;
+  background: $color-surface;
   border-bottom: 1px solid $color-border;
   padding: $spacing-unit * 2;
+
+  // Desktop: persistent vertical sidebar
+  @media (min-width: $breakpoint-mobile) {
+    width: $sidebar-width;
+    flex-shrink: 0;
+    border-bottom: none;
+    border-right: 1px solid $color-border;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+  }
+
+  // Mobile: hidden by default, shown as a dropdown panel when open
+  @media (max-width: ($breakpoint-mobile - 1px)) {
+    display: none;
+    position: absolute;
+    top: 56px;
+    left: 0;
+    right: 0;
+    z-index: 900;
+    box-shadow: 0 8px 16px $color-shadow;
+
+    &--open {
+      display: flex;
+    }
+  }
+}
+
+.app__brand {
+  font-size: 1.25rem;
+  font-weight: 800;
+  margin: 0;
+  color: $color-text;
+
+  // Hidden in the sidebar on mobile (shown in the top bar instead)
+  @media (max-width: ($breakpoint-mobile - 1px)) {
+    display: none;
+  }
 }
 
 .app__nav {
   display: flex;
-  gap: $spacing-unit * 2;
+  flex-direction: column;
+  gap: calc($spacing-unit / 2);
 
   a {
+    display: flex;
+    align-items: center;
+    gap: $spacing-unit * 1.5;
     text-decoration: none;
     color: $color-text;
+    padding: calc($spacing-unit * 1.25) $spacing-unit * 1.5;
+    border-radius: 8px;
+    font-weight: 500;
+
+    @media (hover: hover) {
+      &:hover {
+        background: $color-surface-hover;
+      }
+    }
+
+    &:active {
+      box-shadow: inset 0 2px 4px $color-shadow;
+    }
 
     &.active {
-      color: $color-accent;
+      color: $color-accent-contrast;
+      background: $color-accent;
       font-weight: 600;
     }
   }
 }
 
-.app__actions {
-  display: flex;
+// Slim top bar — mobile only
+.app__topbar {
+  display: none;
+
+  @media (max-width: ($breakpoint-mobile - 1px)) {
+    display: flex;
+    align-items: center;
+    gap: $spacing-unit * 1.5;
+    height: 56px;
+    padding: 0 $spacing-unit * 2;
+    border-bottom: 1px solid $color-border;
+    background: $color-bg;
+    position: sticky;
+    top: 0;
+    z-index: 800;
+  }
+}
+
+.app__brand-mobile {
+  font-size: 1.0625rem;
+  font-weight: 800;
+}
+
+.app__hamburger {
+  display: inline-flex;
   align-items: center;
-  gap: $spacing-unit;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid $color-border;
+  border-radius: 8px;
+  background: $color-surface;
+  color: $color-text;
+  cursor: pointer;
+
+  @media (hover: hover) {
+    &:hover {
+      background: $color-surface-hover;
+    }
+  }
+
+  &:active {
+    box-shadow: inset 0 2px 4px $color-shadow;
+  }
+}
+
+.app__main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .app__content {
   flex: 1;
   padding: $spacing-unit * 3;
+
+  @media (max-width: ($breakpoint-mobile - 1px)) {
+    padding: $spacing-unit * 2;
+  }
 }

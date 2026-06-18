@@ -3,6 +3,7 @@
     "label": "English",
     "translations": {
       "nav": {
+        "appName": "Meal Planner",
         "home": "Home",
         "recipes": "Recipes",
         "ingredients": "Ingredients",
@@ -279,6 +280,9 @@
       },
       "settings": {
         "title": "Settings",
+        "appearance": "Appearance",
+        "theme": "Theme",
+        "language": "Language",
         "mealPlanner": "Meal Planner",
         "visibleSlots": "Visible meal slots",
         "autoSuggest": "Suggest meals for empty slots",
@@ -312,6 +316,7 @@
     "label": "Norsk",
     "translations": {
       "nav": {
+        "appName": "Måltidsplanlegger",
         "home": "Hjem",
         "recipes": "Oppskrifter",
         "ingredients": "Ingredienser",
@@ -588,6 +593,9 @@
       },
       "settings": {
         "title": "Innstillinger",
+        "appearance": "Utseende",
+        "theme": "Tema",
+        "language": "Språk",
         "mealPlanner": "Måltidsplanlegger",
         "visibleSlots": "Synlige måltider",
         "autoSuggest": "Foreslå måltider for tomme plasser",
