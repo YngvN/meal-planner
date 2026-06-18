@@ -6,12 +6,17 @@ import { useLanguage } from '../../../i18n'
 import type { RecipeMatch } from '../types'
 import './RecipeMatcher.scss'
 
+interface RecipeMatcherProps {
+  /** Limit the number of results shown. Omit to show all. */
+  limit?: number
+}
+
 /**
  * "What can I make?" panel.
  * Scores every recipe by how many of its required ingredients are in the pantry
  * and sorts from best match to worst. Shows missing ingredients for each.
  */
-export function RecipeMatcher() {
+export function RecipeMatcher({ limit }: RecipeMatcherProps) {
   const { t } = useLanguage()
   const navigate = useNavigate()
 
@@ -27,7 +32,7 @@ export function RecipeMatcher() {
   const ingredientMap = useMemo(() => new Map(ingredients.map((i) => [i.id, i])), [ingredients])
 
   const matches: RecipeMatch[] = useMemo(() => {
-    return recipes
+    const all = recipes
       .map((recipe): RecipeMatch => {
         const required = recipe.ingredients.map((ri) => ri.ingredientId)
         const missing = required.filter((id) => !pantryStockedIds.has(id))
@@ -35,7 +40,8 @@ export function RecipeMatcher() {
         return { recipeId: recipe.id, matchRatio, missingIngredientIds: missing }
       })
       .sort((a, b) => b.matchRatio - a.matchRatio)
-  }, [recipes, pantryStockedIds])
+    return limit !== undefined ? all.slice(0, limit) : all
+  }, [recipes, pantryStockedIds, limit])
 
   const recipeMap = useMemo(() => new Map(recipes.map((r) => [r.id, r])), [recipes])
 

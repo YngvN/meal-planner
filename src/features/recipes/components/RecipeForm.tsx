@@ -1,15 +1,27 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Alert, Button, Input, NumberInput, Select, TagInput } from '../../../components'
+import { Alert, Button, IngredientCombobox, Input, NumberInput, Select, TagInput } from '../../../components'
 import { useAppDispatch, useAppSelector } from '../../../app/hooks'
 import { useLanguage } from '../../../i18n'
+import { createIngredient } from '../../ingredients/ingredientsSlice'
 import { createRecipe, updateRecipe } from '../recipesSlice'
-import type { CreateRecipePayload, DietaryTag, MealTag, Recipe, RecipeIngredient, RecipeStep, SkillLevel } from '../types'
+import type {
+  CreateRecipePayload,
+  DietaryTag,
+  MealTag,
+  Recipe,
+  RecipeIngredient,
+  RecipeSource,
+  RecipeSourceType,
+  RecipeStep,
+  SkillLevel,
+} from '../types'
 import './RecipeForm.scss'
 
 const DIETARY_TAGS: DietaryTag[] = ['vegetarian', 'vegan', 'gluten-free', 'dairy-free', 'nut-free']
 const MEAL_TAGS: MealTag[] = ['breakfast', 'lunch', 'dinner', 'snack', 'dessert']
 const SKILL_LEVELS: SkillLevel[] = ['beginner', 'intermediate', 'advanced']
+const SOURCE_TYPES: RecipeSourceType[] = ['website', 'book', 'person']
 const COMMON_UNITS = ['g', 'kg', 'ml', 'l', 'tsp', 'tbsp', 'cup', 'piece', 'clove', 'slice', 'handful', 'pinch']
 
 interface FormState {
@@ -27,9 +39,13 @@ interface FormState {
   notes: string
   ingredients: RecipeIngredient[]
   steps: RecipeStep[]
+  sourceEnabled: boolean
+  sourceType: RecipeSourceType
+  sourceName: string
+  sourceUrl: string
+  imageUrl: string
 }
 
-/** Builds a FormState from an existing recipe (edit mode). */
 function buildFormState(recipe: Recipe): FormState {
   return {
     title: recipe.title,
@@ -46,6 +62,11 @@ function buildFormState(recipe: Recipe): FormState {
     notes: recipe.notes ?? '',
     ingredients: recipe.ingredients,
     steps: recipe.instructions.length > 0 ? recipe.instructions : [{ order: 1, description: '' }],
+    sourceEnabled: !!recipe.source,
+    sourceType: recipe.source?.type ?? 'website',
+    sourceName: recipe.source?.name ?? '',
+    sourceUrl: recipe.source?.url ?? '',
+    imageUrl: recipe.imageUrl ?? '',
   }
 }
 
@@ -64,25 +85,31 @@ const DEFAULT_FORM: FormState = {
   notes: '',
   ingredients: [],
   steps: [{ order: 1, description: '' }],
+  sourceEnabled: false,
+  sourceType: 'website',
+  sourceName: '',
+  sourceUrl: '',
+  imageUrl: '',
 }
 
 interface RecipeFormProps {
   /** Provide to switch to edit mode. The recipe must already be loaded. */
   initialValues?: Recipe
+  /** When provided (modal mode), called on successful create instead of navigating. */
+  onDone?: () => void
 }
 
 /**
  * Create / edit form for a recipe.
- * In edit mode, pass `initialValues` with the already-fetched recipe.
- * The parent is responsible for fetching and passing the data.
+ * Modal mode: pass `onDone` — called on successful create.
+ * Full-page edit mode: pass `initialValues` — navigates on save.
  */
-export function RecipeForm({ initialValues }: RecipeFormProps) {
+export function RecipeForm({ initialValues, onDone }: RecipeFormProps) {
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
   const { t } = useLanguage()
   const isEdit = !!initialValues
 
-  // Lazy initialization so we never call setState in effects
   const [form, setForm] = useState<FormState>(() =>
     initialValues ? buildFormState(initialValues) : DEFAULT_FORM,
   )
@@ -138,6 +165,34 @@ export function RecipeForm({ initialValues }: RecipeFormProps) {
     patch('mealTags', next)
   }
 
+  // ─── Inline ingredient creation ───────────────────────────────────────────
+
+  async function handleCreateIngredient(name: string): Promise<string> {
+    const result = await dispatch(createIngredient({ name, category: 'other' })).unwrap()
+    return result.id
+  }
+
+  // ─── Source helpers ───────────────────────────────────────────────────────
+
+  function buildSource(): RecipeSource | undefined {
+    if (!form.sourceEnabled || !form.sourceName.trim()) return undefined
+    return {
+      type: form.sourceType,
+      name: form.sourceName.trim(),
+      url: form.sourceType === 'website' && form.sourceUrl.trim() ? form.sourceUrl.trim() : undefined,
+    }
+  }
+
+  // ─── Cancel ───────────────────────────────────────────────────────────────
+
+  function handleCancel() {
+    if (onDone) {
+      onDone()
+    } else {
+      navigate(isEdit ? `/recipes/${initialValues!.id}` : '/recipes')
+    }
+  }
+
   // ─── Submit ───────────────────────────────────────────────────────────────
 
   async function handleSubmit(e: React.FormEvent) {
@@ -161,6 +216,8 @@ export function RecipeForm({ initialValues }: RecipeFormProps) {
       ingredients: form.ingredients.filter((r) => r.ingredientId),
       instructions: form.steps.filter((s) => s.description.trim()),
       isFavorite: initialValues?.isFavorite ?? false,
+      source: buildSource(),
+      imageUrl: form.imageUrl.trim() || undefined,
     }
 
     try {
@@ -169,7 +226,12 @@ export function RecipeForm({ initialValues }: RecipeFormProps) {
         navigate(`/recipes/${initialValues.id}`)
       } else {
         const result = await dispatch(createRecipe(payload)).unwrap()
-        navigate(`/recipes/${result.id}`)
+        if (onDone) {
+          onDone()
+          navigate(`/recipes/${result.id}`)
+        } else {
+          navigate(`/recipes/${result.id}`)
+        }
       }
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : t('common.error'))
@@ -178,22 +240,21 @@ export function RecipeForm({ initialValues }: RecipeFormProps) {
 
   return (
     <form className="recipe-form" onSubmit={handleSubmit}>
-      <div className="recipe-form__header">
-        <h1>{isEdit ? t('recipes.editRecipe') : t('recipes.addRecipe')}</h1>
-        <div className="recipe-form__header-actions">
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={() => navigate(isEdit ? `/recipes/${initialValues!.id}` : '/recipes')}
-          >
-            {t('common.cancel')}
-          </Button>
-          <Button type="submit">{t('common.save')}</Button>
+      {!onDone && (
+        <div className="recipe-form__header">
+          <h1>{isEdit ? t('recipes.editRecipe') : t('recipes.addRecipe')}</h1>
+          <div className="recipe-form__header-actions">
+            <Button type="button" variant="secondary" onClick={handleCancel}>
+              {t('common.cancel')}
+            </Button>
+            <Button type="submit">{t('common.save')}</Button>
+          </div>
         </div>
-      </div>
+      )}
 
       {submitError && <Alert variant="error">{submitError}</Alert>}
 
+      {/* ─── Basic info ─────────────────────────────────────────────── */}
       <section className="recipe-form__section">
         <h2>{t('recipes.form.basics')}</h2>
         <div className="recipe-form__row">
@@ -216,6 +277,26 @@ export function RecipeForm({ initialValues }: RecipeFormProps) {
               rows={3}
             />
           </div>
+        </div>
+        <div className="recipe-form__row recipe-form__row--image">
+          <div className="input-field">
+            <label htmlFor="imageUrl">{t('recipes.imageUrl')}</label>
+            <input
+              id="imageUrl"
+              type="url"
+              className="input"
+              value={form.imageUrl}
+              onChange={(e) => patch('imageUrl', e.target.value)}
+              placeholder="https://…"
+            />
+          </div>
+          {form.imageUrl.trim() && (
+            <img
+              src={form.imageUrl}
+              alt={t('common.imagePreview')}
+              className="recipe-form__image-preview"
+            />
+          )}
         </div>
         <div className="recipe-form__row recipe-form__row--3col">
           <NumberInput
@@ -260,6 +341,54 @@ export function RecipeForm({ initialValues }: RecipeFormProps) {
         </div>
       </section>
 
+      {/* ─── Source ─────────────────────────────────────────────────── */}
+      <section className="recipe-form__section">
+        <div className="recipe-form__source-header">
+          <h2>{t('recipes.source')}</h2>
+          <label className="recipe-form__chip-label">
+            <input
+              type="checkbox"
+              checked={form.sourceEnabled}
+              onChange={(e) => patch('sourceEnabled', e.target.checked)}
+            />
+            {t('recipes.form.addSource')}
+          </label>
+        </div>
+        {form.sourceEnabled && (
+          <div className="recipe-form__row recipe-form__row--3col">
+            <Select
+              id="sourceType"
+              label={t('recipes.source.type')}
+              value={form.sourceType}
+              onChange={(e) => patch('sourceType', e.target.value as RecipeSourceType)}
+              options={SOURCE_TYPES.map((s) => ({ value: s, label: t(`recipes.sourceType.${s}`) }))}
+            />
+            <Input
+              id="sourceName"
+              label={t('recipes.source.name')}
+              value={form.sourceName}
+              onChange={(e) => patch('sourceName', e.target.value)}
+              placeholder={
+                form.sourceType === 'website' ? 'e.g. Serious Eats'
+                : form.sourceType === 'book' ? 'e.g. The Silver Spoon'
+                : 'e.g. Grandma Maria'
+              }
+            />
+            {form.sourceType === 'website' && (
+              <Input
+                id="sourceUrl"
+                label={t('recipes.source.url')}
+                type="url"
+                value={form.sourceUrl}
+                onChange={(e) => patch('sourceUrl', e.target.value)}
+                placeholder="https://..."
+              />
+            )}
+          </div>
+        )}
+      </section>
+
+      {/* ─── Tags ───────────────────────────────────────────────────── */}
       <section className="recipe-form__section">
         <h2>{t('recipes.form.tags')}</h2>
         <div className="recipe-form__row">
@@ -308,43 +437,59 @@ export function RecipeForm({ initialValues }: RecipeFormProps) {
         </div>
       </section>
 
+      {/* ─── Ingredients ────────────────────────────────────────────── */}
       <section className="recipe-form__section">
         <h2>{t('recipes.ingredients')}</h2>
-        {form.ingredients.map((row, idx) => (
-          <div key={idx} className="recipe-form__ingredient-row">
-            <select
-              className="recipe-form__ingredient-select"
-              value={row.ingredientId}
-              onChange={(e) => updateIngredientRow(idx, { ingredientId: e.target.value })}
-            >
-              <option value="">{t('recipes.form.selectIngredient')}</option>
-              {ingredientLibrary.map((ing) => (
-                <option key={ing.id} value={ing.id}>{ing.name}</option>
-              ))}
-            </select>
-            <NumberInput
-              value={row.quantity}
-              onChange={(v) => updateIngredientRow(idx, { quantity: v })}
-              min={0.1}
-              step={0.5}
-            />
-            <select
-              className="recipe-form__unit-select"
-              value={row.unit}
-              onChange={(e) => updateIngredientRow(idx, { unit: e.target.value })}
-            >
-              {COMMON_UNITS.map((u) => (
-                <option key={u} value={u}>{u}</option>
-              ))}
-            </select>
-            <Button type="button" variant="secondary" onClick={() => removeIngredientRow(idx)}>×</Button>
-          </div>
-        ))}
+        {form.ingredients.map((row, idx) => {
+          const selectedIngredient = ingredientLibrary.find((i) => i.id === row.ingredientId)
+          const subproducts = selectedIngredient?.subproducts ?? []
+          return (
+            <div key={idx} className="recipe-form__ingredient-row">
+              <IngredientCombobox
+                value={row.ingredientId || undefined}
+                onChange={(id) => updateIngredientRow(idx, { ingredientId: id, subproductId: undefined })}
+                options={ingredientLibrary}
+                onCreateNew={handleCreateIngredient}
+                placeholder={t('recipes.form.selectIngredient')}
+                className="recipe-form__ingredient-combobox"
+              />
+              {subproducts.length > 0 && (
+                <select
+                  className="recipe-form__subproduct-select"
+                  value={row.subproductId ?? ''}
+                  onChange={(e) => updateIngredientRow(idx, { subproductId: e.target.value || undefined })}
+                >
+                  <option value="">{t('recipes.form.defaultVariant')}</option>
+                  {subproducts.map((sp) => (
+                    <option key={sp.id} value={sp.id}>{sp.name}</option>
+                  ))}
+                </select>
+              )}
+              <NumberInput
+                value={row.quantity}
+                onChange={(v) => updateIngredientRow(idx, { quantity: v })}
+                min={0.1}
+                step={0.5}
+              />
+              <select
+                className="recipe-form__unit-select"
+                value={row.unit}
+                onChange={(e) => updateIngredientRow(idx, { unit: e.target.value })}
+              >
+                {COMMON_UNITS.map((u) => (
+                  <option key={u} value={u}>{u}</option>
+                ))}
+              </select>
+              <Button type="button" variant="secondary" onClick={() => removeIngredientRow(idx)}>×</Button>
+            </div>
+          )
+        })}
         <Button type="button" variant="secondary" onClick={addIngredientRow}>
           + {t('recipes.form.addIngredient')}
         </Button>
       </section>
 
+      {/* ─── Instructions ───────────────────────────────────────────── */}
       <section className="recipe-form__section">
         <h2>{t('recipes.instructions')}</h2>
         {form.steps.map((step, idx) => (
@@ -378,6 +523,7 @@ export function RecipeForm({ initialValues }: RecipeFormProps) {
         </Button>
       </section>
 
+      {/* ─── Notes ──────────────────────────────────────────────────── */}
       <section className="recipe-form__section">
         <h2>{t('recipes.notes')}</h2>
         <div className="input-field">
@@ -391,6 +537,16 @@ export function RecipeForm({ initialValues }: RecipeFormProps) {
           />
         </div>
       </section>
+
+      {/* ─── Modal-mode footer ───────────────────────────────────────── */}
+      {onDone && (
+        <div className="recipe-form__modal-footer">
+          <Button type="button" variant="secondary" onClick={handleCancel}>
+            {t('common.cancel')}
+          </Button>
+          <Button type="submit">{t('common.save')}</Button>
+        </div>
+      )}
     </form>
   )
 }

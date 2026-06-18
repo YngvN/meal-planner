@@ -4,9 +4,11 @@
  * Activated when VITE_USE_MOCK_DATA=true in .env.development.
  */
 import type { CreateIngredientPayload, Ingredient, UpdateIngredientPayload } from '../features/ingredients/types'
+import type { CreatePlannedMealPayload, PlannedMeal, UpdatePlannedMealPayload } from '../features/mealPlan/types'
 import type { PantryItem, UpdatePantryItemPayload } from '../features/pantry/types'
 import type { CreateRecipePayload, Recipe, UpdateRecipePayload } from '../features/recipes/types'
 import { mockIngredients } from './mockIngredients'
+import { mockMealPlan } from './mockMealPlan'
 import { mockPantry } from './mockPantry'
 import { mockRecipes } from './mockRecipes'
 
@@ -15,6 +17,7 @@ import { mockRecipes } from './mockRecipes'
 let recipes: Recipe[] = mockRecipes.map((r) => ({ ...r }))
 let ingredients: Ingredient[] = mockIngredients.map((i) => ({ ...i }))
 let pantry: PantryItem[] = mockPantry.map((p) => ({ ...p }))
+let mealPlan: PlannedMeal[] = mockMealPlan.map((m) => ({ ...m }))
 
 const delay = (ms = 300) => new Promise<void>((resolve) => setTimeout(resolve, ms))
 
@@ -149,4 +152,39 @@ export async function bulkUpdatePantry(updates: Array<{ ingredientId: string } &
     await updatePantryItem(ingredientId, payload)
   }
   return pantry.map((p) => ({ ...p }))
+}
+
+// ─── Meal Plan ────────────────────────────────────────────────────────────────
+
+/** Returns all planned meals. */
+export async function fetchMealPlan(): Promise<PlannedMeal[]> {
+  await delay()
+  return mealPlan.map((m) => ({ ...m }))
+}
+
+/** Adds a recipe to a date + slot and returns the created entry. */
+export async function addPlannedMeal(payload: CreatePlannedMealPayload): Promise<PlannedMeal> {
+  await delay()
+  const newMeal: PlannedMeal = { ...payload, id: `mp-${Date.now()}` }
+  mealPlan = [...mealPlan, newMeal]
+  return { ...newMeal }
+}
+
+/** Updates an existing planned meal. */
+export async function updatePlannedMeal(id: string, payload: UpdatePlannedMealPayload): Promise<PlannedMeal> {
+  await delay()
+  let updated: PlannedMeal | undefined
+  mealPlan = mealPlan.map((m) => {
+    if (m.id !== id) return m
+    updated = { ...m, ...payload }
+    return updated
+  })
+  if (!updated) throw new Error(`Planned meal ${id} not found`)
+  return { ...updated }
+}
+
+/** Removes a planned meal by id. */
+export async function removePlannedMeal(id: string): Promise<void> {
+  await delay()
+  mealPlan = mealPlan.filter((m) => m.id !== id)
 }

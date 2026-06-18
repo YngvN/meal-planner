@@ -56,7 +56,14 @@ export function PantryList() {
   }, [rows])
 
   function handleToggle(ingredientId: string, inStock: boolean) {
-    dispatch(updatePantryItem({ ingredientId, payload: { inStock } }))
+    const ingredient = ingredients.find((i) => i.id === ingredientId)
+    let expiresAt: string | undefined
+    if (inStock && ingredient?.defaultExpiryDays) {
+      const d = new Date()
+      d.setDate(d.getDate() + ingredient.defaultExpiryDays)
+      expiresAt = d.toISOString()
+    }
+    dispatch(updatePantryItem({ ingredientId, payload: { inStock, ...(expiresAt ? { expiresAt } : {}) } }))
   }
 
   function handleLowToggle(ingredientId: string, isLow: boolean) {

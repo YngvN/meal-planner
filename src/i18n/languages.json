@@ -7,12 +7,27 @@
         "recipes": "Recipes",
         "ingredients": "Ingredients",
         "pantry": "Pantry",
+        "mealPlan": "Meal Planner",
+        "shoppingList": "Shopping List",
         "profile": "Profile",
         "components": "Components"
       },
       "home": {
         "title": "Home",
-        "welcome": "Welcome to the Vite template."
+        "welcome": "Welcome to your meal planner.",
+        "nextMeal": "Next meal",
+        "noMealsPlanned": "No meals planned yet.",
+        "planMeals": "Plan meals",
+        "today": "Today",
+        "tomorrow": "Tomorrow",
+        "whatCanIMake": "What can I make?",
+        "expiringSoon": "Expiring soon",
+        "allFresh": "Everything is fresh!",
+        "daysLeft": "{{count}} day(s) left",
+        "thingsToDo": "Things to do",
+        "allComplete": "Ingredient library is complete!",
+        "ingredientsNeedAttention": "{{count}} ingredient(s) need attention",
+        "missingData": "missing: {{items}}"
       },
       "profile": {
         "title": "Profile",
@@ -36,6 +51,12 @@
         "loading": "Loading…",
         "error": "Something went wrong. Please try again.",
         "actions": "Actions",
+        "optional": "optional",
+        "inheritsParent": "inherits from parent",
+        "imageUrl": "Image URL",
+        "imagePreview": "Image preview",
+        "noImage": "No image",
+        "comingSoon": "Coming soon — this feature is in development.",
         "confirmDelete": "Are you sure you want to delete this? This action cannot be undone.",
         "confirmDeleteTitle": "Confirm deletion"
       },
@@ -58,7 +79,8 @@
         "notes": "Notes",
         "tags": "Tags",
         "equipment": "Equipment",
-        "nutrition": "Nutrition (per serving)",
+        "source": "Source",
+        "imageUrl": "Image URL",
         "missingFromPantry": "Not in pantry",
         "favorite": "Add to favorites",
         "unfavorite": "Remove from favorites",
@@ -92,11 +114,28 @@
           "addTag": "Add tag…",
           "addEquipment": "Add equipment…",
           "selectIngredient": "Select ingredient…",
+          "defaultVariant": "Default variant",
           "addIngredient": "Add ingredient",
           "addStep": "Add step",
           "stepDescription": "Describe this step…",
           "timer": "Timer",
-          "notesPlaceholder": "Personal tips, modifications, things to remember…"
+          "notesPlaceholder": "Personal tips, modifications, things to remember…",
+          "addSource": "Add source",
+          "createIngredient": "Create \"{{name}}\""
+        },
+        "source": {
+          "type": "Source type",
+          "name": "Name / title",
+          "url": "URL"
+        },
+        "sourceType": {
+          "website": "Website",
+          "book": "Book",
+          "person": "Person"
+        },
+        "nutrition": {
+          "manual": "Per serving (manually entered)",
+          "calculated": "Estimated from ingredients (per batch)"
         },
         "nutrients": {
           "calories": "Calories",
@@ -113,6 +152,16 @@
         "noResults": "No ingredients found.",
         "name": "Name",
         "category": "Category",
+        "nutrition": "Nutritional values (per 100g)",
+        "defaultExpiryDays": "Default shelf life (days)",
+        "noDefaultExpiry": "No default",
+        "imageUrl": "Image URL",
+        "missingNutrition": "Nutrition",
+        "missingExpiry": "Shelf life",
+        "missingImage": "Image",
+        "subproducts": "Variants",
+        "addSubproduct": "Add variant",
+        "subproductName": "Variant name",
         "categories": {
           "produce": "Produce",
           "dairy": "Dairy",
@@ -140,6 +189,33 @@
         "whatCanIMake": "What can I make?",
         "readyToMake": "Ready to make",
         "missing": "Missing {{count}} ingredient(s)"
+      },
+      "mealPlan": {
+        "title": "Meal Planner",
+        "prevWeek": "Previous week",
+        "nextWeek": "Next week",
+        "addMeal": "Add meal",
+        "noMeal": "No meal planned",
+        "pickRecipe": "Pick a recipe",
+        "slot": {
+          "breakfast": "Breakfast",
+          "lunch": "Lunch",
+          "dinner": "Dinner",
+          "snack": "Snack"
+        }
+      },
+      "shoppingList": {
+        "title": "Shopping List",
+        "generated": "{{count}} item(s) from your meal plan",
+        "empty": "Your meal plan is empty — plan some meals first.",
+        "allChecked": "Everything checked off!",
+        "addItem": "Add",
+        "addItemPlaceholder": "Item name…",
+        "qtyPlaceholder": "Qty",
+        "clearAll": "Clear all",
+        "confirmClear": "Clear the entire shopping list?",
+        "manualSection": "Other items",
+        "updatePantry": "Mark as purchased"
       }
     }
   },
@@ -151,12 +227,27 @@
         "recipes": "Oppskrifter",
         "ingredients": "Ingredienser",
         "pantry": "Pantry",
+        "mealPlan": "Måltidsplanlegger",
+        "shoppingList": "Handleliste",
         "profile": "Profil",
         "components": "Komponenter"
       },
       "home": {
         "title": "Hjem",
-        "welcome": "Velkommen til Vite-malen."
+        "welcome": "Velkommen til din måltidsplanlegger.",
+        "nextMeal": "Neste måltid",
+        "noMealsPlanned": "Ingen måltider planlagt ennå.",
+        "planMeals": "Planlegg måltider",
+        "today": "I dag",
+        "tomorrow": "I morgen",
+        "whatCanIMake": "Hva kan jeg lage?",
+        "expiringSoon": "Utløper snart",
+        "allFresh": "Alt er ferskt!",
+        "daysLeft": "{{count}} dag(er) igjen",
+        "thingsToDo": "Ting å gjøre",
+        "allComplete": "Ingrediensbiblioteket er komplett!",
+        "ingredientsNeedAttention": "{{count}} ingrediens(er) trenger oppmerksomhet",
+        "missingData": "mangler: {{items}}"
       },
       "profile": {
         "title": "Profil",
@@ -180,6 +271,12 @@
         "loading": "Laster…",
         "error": "Noe gikk galt. Prøv igjen.",
         "actions": "Handlinger",
+        "optional": "valgfritt",
+        "inheritsParent": "arver fra forelder",
+        "imageUrl": "Bilde-URL",
+        "imagePreview": "Bildeforhåndsvisning",
+        "noImage": "Ingen bilde",
+        "comingSoon": "Kommer snart — denne funksjonen er under utvikling.",
         "confirmDelete": "Er du sikker på at du vil slette dette? Handlingen kan ikke angres.",
         "confirmDeleteTitle": "Bekreft sletting"
       },
@@ -202,7 +299,8 @@
         "notes": "Notater",
         "tags": "Tagger",
         "equipment": "Utstyr",
-        "nutrition": "Ernæring (per porsjon)",
+        "source": "Kilde",
+        "imageUrl": "Bilde-URL",
         "missingFromPantry": "Ikke på lager",
         "favorite": "Legg til som favoritt",
         "unfavorite": "Fjern fra favoritter",
@@ -236,11 +334,28 @@
           "addTag": "Legg til tagg…",
           "addEquipment": "Legg til utstyr…",
           "selectIngredient": "Velg ingrediens…",
+          "defaultVariant": "Standard variant",
           "addIngredient": "Legg til ingrediens",
           "addStep": "Legg til steg",
           "stepDescription": "Beskriv dette steget…",
           "timer": "Timer",
-          "notesPlaceholder": "Personlige tips, endringer, ting å huske…"
+          "notesPlaceholder": "Personlige tips, endringer, ting å huske…",
+          "addSource": "Legg til kilde",
+          "createIngredient": "Opprett \"{{name}}\""
+        },
+        "source": {
+          "type": "Kildetype",
+          "name": "Navn / tittel",
+          "url": "URL"
+        },
+        "sourceType": {
+          "website": "Nettside",
+          "book": "Bok",
+          "person": "Person"
+        },
+        "nutrition": {
+          "manual": "Per porsjon (manuelt angitt)",
+          "calculated": "Estimert fra ingredienser (per batch)"
         },
         "nutrients": {
           "calories": "Kalorier",
@@ -257,6 +372,16 @@
         "noResults": "Ingen ingredienser funnet.",
         "name": "Navn",
         "category": "Kategori",
+        "nutrition": "Næringsinnhold (per 100g)",
+        "defaultExpiryDays": "Standard holdbarhet (dager)",
+        "noDefaultExpiry": "Ingen standard",
+        "imageUrl": "Bilde-URL",
+        "missingNutrition": "Næringsinnhold",
+        "missingExpiry": "Holdbarhet",
+        "missingImage": "Bilde",
+        "subproducts": "Varianter",
+        "addSubproduct": "Legg til variant",
+        "subproductName": "Variantnavn",
         "categories": {
           "produce": "Frukt og grønt",
           "dairy": "Meieriprodukter",
@@ -284,6 +409,33 @@
         "whatCanIMake": "Hva kan jeg lage?",
         "readyToMake": "Klar til å lage",
         "missing": "Mangler {{count}} ingrediens(er)"
+      },
+      "mealPlan": {
+        "title": "Måltidsplanlegger",
+        "prevWeek": "Forrige uke",
+        "nextWeek": "Neste uke",
+        "addMeal": "Legg til måltid",
+        "noMeal": "Ingen måltid planlagt",
+        "pickRecipe": "Velg en oppskrift",
+        "slot": {
+          "breakfast": "Frokost",
+          "lunch": "Lunsj",
+          "dinner": "Middag",
+          "snack": "Snacks"
+        }
+      },
+      "shoppingList": {
+        "title": "Handleliste",
+        "generated": "{{count}} vare(r) fra måltidsplanen",
+        "empty": "Måltidsplanen er tom — planlegg noen måltider først.",
+        "allChecked": "Alt er huket av!",
+        "addItem": "Legg til",
+        "addItemPlaceholder": "Varenavn…",
+        "qtyPlaceholder": "Antall",
+        "clearAll": "Tøm liste",
+        "confirmClear": "Tømme hele handlelisten?",
+        "manualSection": "Andre varer",
+        "updatePantry": "Merk som kjøpt"
       }
     }
   }

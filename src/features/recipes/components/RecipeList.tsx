@@ -1,26 +1,27 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Alert, Button, SearchBar, Spinner } from '../../../components'
+import { Alert, Button, Modal, SearchBar, Spinner } from '../../../components'
 import { useAppDispatch, useAppSelector } from '../../../app/hooks'
 import { useLanguage } from '../../../i18n'
 import { fetchRecipes } from '../recipesSlice'
 import type { RecipeFilters } from '../types'
 import { RecipeCard } from './RecipeCard'
 import { RecipeFilters as RecipeFiltersPanel } from './RecipeFilters'
+import { RecipeForm } from './RecipeForm'
 import './RecipeList.scss'
 
 /**
- * Full recipe browser: search bar, collapsible filter panel, and responsive card grid.
+ * Full recipe browser: search bar, collapsible filter panel, responsive card grid.
+ * New recipe creation opens in a large modal.
  */
 export function RecipeList() {
   const dispatch = useAppDispatch()
-  const navigate = useNavigate()
   const { t } = useLanguage()
   const { items: recipes, status, error } = useAppSelector((s) => s.recipes)
 
   const [search, setSearch] = useState('')
   const [filters, setFilters] = useState<RecipeFilters>({})
   const [showFilters, setShowFilters] = useState(false)
+  const [showAdd, setShowAdd] = useState(false)
 
   useEffect(() => {
     if (status === 'idle' && recipes.length === 0) {
@@ -50,7 +51,7 @@ export function RecipeList() {
     <div className="recipe-list">
       <div className="recipe-list__header">
         <h1 className="recipe-list__title">{t('recipes.title')}</h1>
-        <Button onClick={() => navigate('/recipes/new')}>{t('recipes.addRecipe')}</Button>
+        <Button onClick={() => setShowAdd(true)}>{t('recipes.addRecipe')}</Button>
       </div>
 
       <div className="recipe-list__toolbar">
@@ -78,6 +79,15 @@ export function RecipeList() {
           ))}
         </div>
       )}
+
+      <Modal
+        open={showAdd}
+        onClose={() => setShowAdd(false)}
+        title={t('recipes.addRecipe')}
+        size="large"
+      >
+        <RecipeForm onDone={() => setShowAdd(false)} />
+      </Modal>
     </div>
   )
 }

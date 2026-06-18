@@ -175,4 +175,64 @@
     flex-direction: column;
     gap: $spacing-unit;
   }
+
+  &__row--image {
+    display: flex;
+    align-items: flex-end;
+    gap: $spacing-unit;
+
+    .input-field {
+      flex: 1;
+    }
+  }
+
+  &__image-preview {
+    width: 56px;
+    height: 56px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid $color-border;
+    flex-shrink: 0;
+  }
+
+  &__ingredient-combobox {
+    flex: 1;
+    min-width: 160px;
+  }
+
+  &__source-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: $spacing-unit;
+    flex-wrap: wrap;
+
+    h2 {
+      margin: 0;
+    }
+  }
+
+  &__subproduct-select {
+    width: 150px;
+    padding: $spacing-unit calc($spacing-unit * 1.5);
+    border: 1px solid $color-border;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-family: inherit;
+    background: $color-surface;
+    color: $color-text;
+
+    &:focus {
+      outline: 2px solid $color-accent;
+      outline-offset: 1px;
+    }
+  }
+
+  &__modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: $spacing-unit;
+    padding-top: $spacing-unit;
+    border-top: 1px solid $color-border;
+  }
 }

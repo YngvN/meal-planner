@@ -8,11 +8,13 @@ import { LanguageProvider } from './i18n'
 import { Components } from './pages/Components'
 import { Home } from './pages/Home'
 import { Ingredients } from './pages/Ingredients'
+import { MealPlan } from './pages/MealPlan'
 import { Pantry } from './pages/Pantry'
 import { Profile } from './pages/Profile'
 import { RecipeDetailPage } from './pages/RecipeDetailPage'
 import { RecipeFormPage } from './pages/RecipeFormPage'
 import { Recipes } from './pages/Recipes'
+import { ShoppingList } from './pages/ShoppingList'
 import './styles/global.scss'
 
 const router = createBrowserRouter([
@@ -22,11 +24,13 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <Home /> },
       { path: 'recipes', element: <Recipes /> },
-      { path: 'recipes/new', element: <RecipeFormPage /> },
+      // /recipes/new removed — creation now happens via modal in RecipeList
       { path: 'recipes/:id', element: <RecipeDetailPage /> },
       { path: 'recipes/:id/edit', element: <RecipeFormPage /> },
       { path: 'ingredients', element: <Ingredients /> },
       { path: 'pantry', element: <Pantry /> },
+      { path: 'meal-plan', element: <MealPlan /> },
+      { path: 'shopping-list', element: <ShoppingList /> },
       { path: 'profile', element: <Profile /> },
       { path: 'components', element: <Components /> },
     ],

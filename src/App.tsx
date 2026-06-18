@@ -18,6 +18,12 @@ function App() {
           <NavLink to="/pantry">
             <TranslatedText id="nav.pantry" />
           </NavLink>
+          <NavLink to="/meal-plan">
+            <TranslatedText id="nav.mealPlan" />
+          </NavLink>
+          <NavLink to="/shopping-list">
+            <TranslatedText id="nav.shoppingList" />
+          </NavLink>
         </nav>
         <div className="app__actions">
           <LanguageSwitcher />

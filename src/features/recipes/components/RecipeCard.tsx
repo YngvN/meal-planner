@@ -12,7 +12,7 @@ interface RecipeCardProps {
 
 /**
  * Compact recipe card shown in the recipe list grid.
- * Displays title, key metadata, dietary tags, and a favorite toggle.
+ * Displays cover image (if set), title, key metadata, dietary tags, and a favorite toggle.
  */
 export function RecipeCard({ recipe }: RecipeCardProps) {
   const dispatch = useAppDispatch()
@@ -27,54 +27,69 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
 
   return (
     <article className="recipe-card" onClick={() => navigate(`/recipes/${recipe.id}`)}>
-      <div className="recipe-card__header">
-        <h3 className="recipe-card__title">{recipe.title}</h3>
-        <button
-          type="button"
-          className={['recipe-card__favorite', recipe.isFavorite && 'recipe-card__favorite--active'].filter(Boolean).join(' ')}
-          onClick={handleFavorite}
-          aria-label={recipe.isFavorite ? t('recipes.unfavorite') : t('recipes.favorite')}
-          title={recipe.isFavorite ? t('recipes.unfavorite') : t('recipes.favorite')}
+      {recipe.imageUrl && (
+        <img
+          src={recipe.imageUrl}
+          alt={recipe.title}
+          className="recipe-card__image"
+          loading="lazy"
+        />
+      )}
+
+      <div className="recipe-card__body">
+        <div className="recipe-card__header">
+          <h3 className="recipe-card__title">{recipe.title}</h3>
+          <button
+            type="button"
+            className={['recipe-card__favorite', recipe.isFavorite && 'recipe-card__favorite--active'].filter(Boolean).join(' ')}
+            onClick={handleFavorite}
+            aria-label={recipe.isFavorite ? t('recipes.unfavorite') : t('recipes.favorite')}
+            title={recipe.isFavorite ? t('recipes.unfavorite') : t('recipes.favorite')}
+          >
+            {recipe.isFavorite ? '★' : '☆'}
+          </button>
+        </div>
+
+        {recipe.description && (
+          <p className="recipe-card__description">{recipe.description}</p>
+        )}
+
+        <div className="recipe-card__meta">
+          <span className="recipe-card__meta-item" title={t('recipes.totalTime')}>
+            🕐 {totalMinutes} {t('recipes.minutes')}
+          </span>
+          <span className="recipe-card__meta-item" title={t('recipes.portions')}>
+            👥 {recipe.portions}
+          </span>
+          <span className="recipe-card__meta-item" title={t('recipes.skillLevel')}>
+            📊 {t(`recipes.skill.${recipe.skillLevel}`)}
+          </span>
+        </div>
+
+        {recipe.dietaryTags.length > 0 && (
+          <div className="recipe-card__tags">
+            {recipe.dietaryTags.map((tag) => (
+              <Badge key={tag} variant="success">{tag}</Badge>
+            ))}
+          </div>
+        )}
+
+        {recipe.mealTags.length > 0 && (
+          <div className="recipe-card__tags">
+            {recipe.mealTags.map((tag) => (
+              <Badge key={tag} variant="info">{tag}</Badge>
+            ))}
+          </div>
+        )}
+
+        <Button
+          variant="secondary"
+          className="recipe-card__cta"
+          onClick={(e) => { e.stopPropagation(); navigate(`/recipes/${recipe.id}`) }}
         >
-          {recipe.isFavorite ? '★' : '☆'}
-        </button>
+          {t('recipes.viewRecipe')}
+        </Button>
       </div>
-
-      {recipe.description && (
-        <p className="recipe-card__description">{recipe.description}</p>
-      )}
-
-      <div className="recipe-card__meta">
-        <span className="recipe-card__meta-item" title={t('recipes.totalTime')}>
-          🕐 {totalMinutes} {t('recipes.minutes')}
-        </span>
-        <span className="recipe-card__meta-item" title={t('recipes.portions')}>
-          👥 {recipe.portions}
-        </span>
-        <span className="recipe-card__meta-item" title={t('recipes.skillLevel')}>
-          📊 {t(`recipes.skill.${recipe.skillLevel}`)}
-        </span>
-      </div>
-
-      {recipe.dietaryTags.length > 0 && (
-        <div className="recipe-card__tags">
-          {recipe.dietaryTags.map((tag) => (
-            <Badge key={tag} variant="success">{tag}</Badge>
-          ))}
-        </div>
-      )}
-
-      {recipe.mealTags.length > 0 && (
-        <div className="recipe-card__tags">
-          {recipe.mealTags.map((tag) => (
-            <Badge key={tag} variant="info">{tag}</Badge>
-          ))}
-        </div>
-      )}
-
-      <Button variant="secondary" className="recipe-card__cta" onClick={(e) => { e.stopPropagation(); navigate(`/recipes/${recipe.id}`) }}>
-        {t('recipes.viewRecipe')}
-      </Button>
     </article>
   )
 }

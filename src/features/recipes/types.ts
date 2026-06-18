@@ -1,3 +1,7 @@
+import type { NutritionalValues } from '../shared/types'
+
+export type { NutritionalValues }
+
 /** Difficulty level of a recipe. */
 export type SkillLevel = 'beginner' | 'intermediate' | 'advanced'
 
@@ -10,11 +14,25 @@ export type SeasonalTag = 'spring' | 'summer' | 'autumn' | 'winter'
 /** Which meal occasion the recipe fits. */
 export type MealTag = 'breakfast' | 'lunch' | 'dinner' | 'snack' | 'dessert'
 
+/** Where the recipe was sourced from. */
+export type RecipeSourceType = 'website' | 'book' | 'person'
+
+/** Attribution for the origin of a recipe. */
+export interface RecipeSource {
+  type: RecipeSourceType
+  /** Display name: website name, book title, or person's name. */
+  name: string
+  /** URL — only relevant when type is 'website'. */
+  url?: string
+}
+
 /** One ingredient reference inside a recipe, with quantity and unit. */
 export interface RecipeIngredient {
   ingredientId: string
   quantity: number
   unit: string
+  /** References a specific subproduct variant; falls back to parent nutrition if absent. */
+  subproductId?: string
 }
 
 /** A single step in the recipe instructions. */
@@ -23,15 +41,6 @@ export interface RecipeStep {
   description: string
   /** Optional timer duration in minutes shown during cooking mode. */
   timerMinutes?: number
-}
-
-/** Optional nutritional breakdown per serving. */
-export interface NutritionalValues {
-  calories?: number
-  protein?: number
-  carbs?: number
-  fat?: number
-  fiber?: number
 }
 
 /** Full recipe entity as stored and returned by the API. */
@@ -52,11 +61,16 @@ export interface Recipe {
   seasonalTags: SeasonalTag[]
   mealTags: MealTag[]
   equipment: string[]
+  /** Manually specified nutrition per serving. When absent, nutrition is calculated from ingredients. */
   nutrition?: NutritionalValues
   /** Estimated cost in local currency per full batch. */
   costEstimate?: number
   notes?: string
+  /** Attribution for where this recipe came from. */
+  source?: RecipeSource
   isFavorite: boolean
+  /** URL to a cover/hero image for this recipe. */
+  imageUrl?: string
   createdAt: string
   updatedAt: string
 }

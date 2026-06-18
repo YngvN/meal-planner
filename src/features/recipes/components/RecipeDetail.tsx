@@ -1,20 +1,112 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Alert, Badge, Button, Modal, Spinner } from '../../../components'
 import { useAppDispatch, useAppSelector } from '../../../app/hooks'
 import { useLanguage } from '../../../i18n'
-import { useState } from 'react'
+import type { Ingredient } from '../../ingredients/types'
+import type { NutritionalValues } from '../../shared/types'
 import { deleteRecipe, fetchRecipeById, toggleFavorite } from '../recipesSlice'
+import type { Recipe, RecipeIngredient } from '../types'
 import './RecipeDetail.scss'
 
+/**
+ * Calculates total nutritional values for a recipe from its ingredient data.
+ * Ingredient nutrition is expressed per 100g/100ml; quantity is the weight/volume used.
+ * Returns null when no ingredient has nutrition data.
+ */
+function calculateNutrition(
+  recipe: Recipe,
+  ingredientMap: Map<string, Ingredient>,
+): NutritionalValues | null {
+  let hasAny = false
+  const totals: NutritionalValues = { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 }
+
+  for (const ri of recipe.ingredients) {
+    const ing = ingredientMap.get(ri.ingredientId)
+    if (!ing) continue
+
+    // Use subproduct nutrition if selected, fall back to parent
+    const nutrition = ri.subproductId
+      ? (ing.subproducts?.find((sp) => sp.id === ri.subproductId)?.nutrition ?? ing.nutrition)
+      : ing.nutrition
+
+    if (!nutrition) continue
+    hasAny = true
+
+    const factor = ri.quantity / 100
+    if (nutrition.calories !== undefined) totals.calories! += nutrition.calories * factor
+    if (nutrition.protein !== undefined) totals.protein! += nutrition.protein * factor
+    if (nutrition.carbs !== undefined) totals.carbs! += nutrition.carbs * factor
+    if (nutrition.fat !== undefined) totals.fat! += nutrition.fat * factor
+    if (nutrition.fiber !== undefined) totals.fiber! += nutrition.fiber * factor
+  }
+
+  if (!hasAny) return null
+  return {
+    calories: Math.round(totals.calories!),
+    protein: Math.round(totals.protein! * 10) / 10,
+    carbs: Math.round(totals.carbs! * 10) / 10,
+    fat: Math.round(totals.fat! * 10) / 10,
+    fiber: Math.round(totals.fiber! * 10) / 10,
+  }
+}
+
+/** Renders a nutrition block, shared between manual and calculated modes. */
+function NutritionBlock({
+  nutrition,
+  label,
+}: {
+  nutrition: NutritionalValues
+  label: string
+}) {
+  const { t } = useLanguage()
+  return (
+    <div className="recipe-detail__nutrition-block">
+      <span className="recipe-detail__nutrition-label">{label}</span>
+      <div className="recipe-detail__nutrition">
+        {nutrition.calories !== undefined && (
+          <div className="recipe-detail__nutrient">
+            <span>{t('recipes.nutrients.calories')}</span>
+            <strong>{nutrition.calories} kcal</strong>
+          </div>
+        )}
+        {nutrition.protein !== undefined && (
+          <div className="recipe-detail__nutrient">
+            <span>{t('recipes.nutrients.protein')}</span>
+            <strong>{nutrition.protein}g</strong>
+          </div>
+        )}
+        {nutrition.carbs !== undefined && (
+          <div className="recipe-detail__nutrient">
+            <span>{t('recipes.nutrients.carbs')}</span>
+            <strong>{nutrition.carbs}g</strong>
+          </div>
+        )}
+        {nutrition.fat !== undefined && (
+          <div className="recipe-detail__nutrient">
+            <span>{t('recipes.nutrients.fat')}</span>
+            <strong>{nutrition.fat}g</strong>
+          </div>
+        )}
+        {nutrition.fiber !== undefined && (
+          <div className="recipe-detail__nutrient">
+            <span>{t('recipes.nutrients.fiber')}</span>
+            <strong>{nutrition.fiber}g</strong>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 interface RecipeDetailProps {
-  /** Recipe id from the route. */
   recipeId: string
 }
 
 /**
  * Full recipe detail view.
- * Shows all metadata, ingredients (with missing-from-pantry indicators), and step-by-step instructions.
+ * Shows all metadata, ingredients with pantry indicators, instructions,
+ * source attribution, and nutrition (manual or calculated from ingredients).
  */
 export function RecipeDetail({ recipeId }: RecipeDetailProps) {
   const dispatch = useAppDispatch()
@@ -38,13 +130,18 @@ export function RecipeDetail({ recipeId }: RecipeDetailProps) {
   const pantryMap = new Map(pantryItems.map((p) => [p.ingredientId, p]))
   const ingredientMap = new Map(ingredients.map((i) => [i.id, i]))
 
-  function getIngredientName(id: string) {
-    return ingredientMap.get(id)?.name ?? id
+  function getIngredientName(ri: RecipeIngredient) {
+    const ing = ingredientMap.get(ri.ingredientId)
+    if (!ing) return ri.ingredientId
+    if (ri.subproductId) {
+      const sp = ing.subproducts?.find((s) => s.id === ri.subproductId)
+      if (sp) return `${ing.name} — ${sp.name}`
+    }
+    return ing.name
   }
 
   function isInPantry(ingredientId: string) {
-    const item = pantryMap.get(ingredientId)
-    return item?.inStock === true
+    return pantryMap.get(ingredientId)?.inStock === true
   }
 
   async function handleDelete() {
@@ -53,6 +150,7 @@ export function RecipeDetail({ recipeId }: RecipeDetailProps) {
   }
 
   const totalMinutes = recipe.prepTimeMinutes + recipe.cookTimeMinutes
+  const calculatedNutrition = calculateNutrition(recipe, ingredientMap)
 
   return (
     <article className="recipe-detail">
@@ -77,9 +175,32 @@ export function RecipeDetail({ recipeId }: RecipeDetailProps) {
         </div>
       </div>
 
+      {recipe.imageUrl && (
+        <img
+          src={recipe.imageUrl}
+          alt={recipe.title}
+          className="recipe-detail__hero"
+          loading="lazy"
+        />
+      )}
+
       <header className="recipe-detail__header">
         <h1 className="recipe-detail__title">{recipe.title}</h1>
         {recipe.description && <p className="recipe-detail__description">{recipe.description}</p>}
+
+        {recipe.source && (
+          <p className="recipe-detail__source">
+            <span className="recipe-detail__source-label">{t('recipes.source')}: </span>
+            {recipe.source.type === 'website' && recipe.source.url ? (
+              <a href={recipe.source.url} target="_blank" rel="noopener noreferrer">
+                {recipe.source.name}
+              </a>
+            ) : (
+              <span>{recipe.source.name}</span>
+            )}
+            <Badge variant="neutral">{t(`recipes.sourceType.${recipe.source.type}`)}</Badge>
+          </p>
+        )}
       </header>
 
       <div className="recipe-detail__meta">
@@ -126,10 +247,13 @@ export function RecipeDetail({ recipeId }: RecipeDetailProps) {
           {recipe.ingredients.map((ri) => {
             const inPantry = isInPantry(ri.ingredientId)
             return (
-              <li key={ri.ingredientId} className={['recipe-detail__ingredient', !inPantry && 'recipe-detail__ingredient--missing'].filter(Boolean).join(' ')}>
+              <li
+                key={`${ri.ingredientId}-${ri.subproductId ?? ''}`}
+                className={['recipe-detail__ingredient', !inPantry && 'recipe-detail__ingredient--missing'].filter(Boolean).join(' ')}
+              >
                 <span className="recipe-detail__ingredient-status">{inPantry ? '✓' : '✗'}</span>
                 <span>
-                  <strong>{ri.quantity} {ri.unit}</strong> {getIngredientName(ri.ingredientId)}
+                  <strong>{ri.quantity} {ri.unit}</strong> {getIngredientName(ri)}
                 </span>
                 {!inPantry && (
                   <Badge variant="warning">{t('recipes.missingFromPantry')}</Badge>
@@ -166,41 +290,20 @@ export function RecipeDetail({ recipeId }: RecipeDetailProps) {
         </section>
       )}
 
-      {recipe.nutrition && (
+      {(recipe.nutrition || calculatedNutrition) && (
         <section className="recipe-detail__section">
           <h2>{t('recipes.nutrition')}</h2>
-          <div className="recipe-detail__nutrition">
-            {recipe.nutrition.calories !== undefined && (
-              <div className="recipe-detail__nutrient">
-                <span>{t('recipes.nutrients.calories')}</span>
-                <strong>{recipe.nutrition.calories} kcal</strong>
-              </div>
-            )}
-            {recipe.nutrition.protein !== undefined && (
-              <div className="recipe-detail__nutrient">
-                <span>{t('recipes.nutrients.protein')}</span>
-                <strong>{recipe.nutrition.protein}g</strong>
-              </div>
-            )}
-            {recipe.nutrition.carbs !== undefined && (
-              <div className="recipe-detail__nutrient">
-                <span>{t('recipes.nutrients.carbs')}</span>
-                <strong>{recipe.nutrition.carbs}g</strong>
-              </div>
-            )}
-            {recipe.nutrition.fat !== undefined && (
-              <div className="recipe-detail__nutrient">
-                <span>{t('recipes.nutrients.fat')}</span>
-                <strong>{recipe.nutrition.fat}g</strong>
-              </div>
-            )}
-            {recipe.nutrition.fiber !== undefined && (
-              <div className="recipe-detail__nutrient">
-                <span>{t('recipes.nutrients.fiber')}</span>
-                <strong>{recipe.nutrition.fiber}g</strong>
-              </div>
-            )}
-          </div>
+          {recipe.nutrition ? (
+            <NutritionBlock
+              nutrition={recipe.nutrition}
+              label={t('recipes.nutrition.manual')}
+            />
+          ) : calculatedNutrition ? (
+            <NutritionBlock
+              nutrition={calculatedNutrition}
+              label={t('recipes.nutrition.calculated')}
+            />
+          ) : null}
         </section>
       )}
 

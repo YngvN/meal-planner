@@ -63,6 +63,45 @@
     letter-spacing: 0.05em;
   }
 
+  &__hero {
+    width: 100%;
+    max-height: 360px;
+    object-fit: cover;
+    border-radius: 10px;
+    display: block;
+  }
+
+  &__source {
+    display: flex;
+    align-items: center;
+    gap: calc($spacing-unit / 2);
+    font-size: 0.9rem;
+    color: $color-text-muted;
+    margin: 0;
+
+    a {
+      color: $color-accent;
+    }
+  }
+
+  &__source-label {
+    font-weight: 600;
+  }
+
+  &__nutrition-block {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-unit;
+  }
+
+  &__nutrition-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: $color-text-muted;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
   &__tags {
     display: flex;
     flex-wrap: wrap;

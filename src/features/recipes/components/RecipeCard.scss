@@ -3,12 +3,11 @@
 .recipe-card {
   display: flex;
   flex-direction: column;
-  gap: $spacing-unit;
-  padding: calc($spacing-unit * 2);
   background: $color-surface;
   border: 1px solid $color-border;
   border-radius: 10px;
   cursor: pointer;
+  overflow: hidden;
 
   @media (hover: hover) {
     &:hover {
@@ -19,6 +18,22 @@
 
   &:active {
     box-shadow: inset 0 2px 6px $color-shadow;
+  }
+
+  &__image {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    display: block;
+    flex-shrink: 0;
+  }
+
+  &__body {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-unit;
+    padding: calc($spacing-unit * 2);
+    flex: 1;
   }
 
   &__header {
