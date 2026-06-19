@@ -32,6 +32,7 @@ export function IngredientForm({ ingredient, onDone }: IngredientFormProps) {
   const [defaultExpiryDays, setDefaultExpiryDays] = useState(ingredient?.defaultExpiryDays ?? 0)
   const [imageUrl, setImageUrl] = useState(ingredient?.imageUrl ?? '')
   const [density, setDensity] = useState<string>(String(ingredient?.density ?? ''))
+  const [isPrivate, setIsPrivate] = useState(ingredient?.isGlobal === false)
 
   // Nutrition per 100g
   const [calories, setCalories] = useState<string>(String(ingredient?.nutrition?.calories ?? ''))
@@ -103,6 +104,7 @@ export function IngredientForm({ ingredient, onDone }: IngredientFormProps) {
       subproducts: subproducts.filter((sp) => sp.name.trim()),
       imageUrl: imageUrl.trim() || undefined,
       density: parseOptionalNumber(density),
+      isGlobal: !isPrivate,
     }
 
     try {
@@ -309,6 +311,15 @@ export function IngredientForm({ ingredient, onDone }: IngredientFormProps) {
           </div>
         ))}
       </div>
+
+      <label className="ingredient-form__private-label">
+        <input
+          type="checkbox"
+          checked={isPrivate}
+          onChange={(e) => setIsPrivate(e.target.checked)}
+        />
+        {t('common.makePrivate')}
+      </label>
 
       <div className="ingredient-form__actions">
         <Button type="button" variant="secondary" onClick={onDone}>

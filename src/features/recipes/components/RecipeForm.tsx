@@ -115,6 +115,7 @@ export function RecipeForm({ initialValues, onDone }: RecipeFormProps) {
   const [form, setForm] = useState<FormState>(() =>
     initialValues ? buildFormState(initialValues) : DEFAULT_FORM,
   )
+  const [isPrivate, setIsPrivate] = useState(initialValues?.isGlobal === false)
   const [submitError, setSubmitError] = useState<string | null>(null)
 
   const { items: ingredientLibrary } = useAppSelector((s) => s.ingredients)
@@ -253,6 +254,7 @@ export function RecipeForm({ initialValues, onDone }: RecipeFormProps) {
       ingredients: form.ingredients.filter((r) => r.ingredientId),
       instructions: form.steps.filter((s) => s.description.trim()),
       isFavorite: initialValues?.isFavorite ?? false,
+      isGlobal: !isPrivate,
       source: buildSource(),
       imageUrl: form.imageUrl.trim() || undefined,
     }
@@ -581,6 +583,16 @@ export function RecipeForm({ initialValues, onDone }: RecipeFormProps) {
           />
         </div>
       </section>
+
+      {/* ─── Private toggle ─────────────────────────────────────────── */}
+      <label className="recipe-form__private-label">
+        <input
+          type="checkbox"
+          checked={isPrivate}
+          onChange={(e) => setIsPrivate(e.target.checked)}
+        />
+        {t('common.makePrivate')}
+      </label>
 
       {/* ─── Modal-mode footer ───────────────────────────────────────── */}
       {onDone && (

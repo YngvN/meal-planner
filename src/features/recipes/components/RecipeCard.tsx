@@ -53,6 +53,10 @@ export function RecipeCard({ recipe: rawRecipe }: RecipeCardProps) {
           </button>
         </div>
 
+        {recipe.createdByUsername && (
+          <span className="recipe-card__author">by {recipe.createdByUsername}</span>
+        )}
+
         {recipe.description && (
           <p className="recipe-card__description">{recipe.description}</p>
         )}

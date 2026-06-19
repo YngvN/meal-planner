@@ -33,6 +33,10 @@ export interface Ingredient {
   id: string
   name: string
   category: IngredientCategory
+  /** When false, only the creator can see this ingredient. Default: true. */
+  isGlobal?: boolean
+  /** ID of the user who created this ingredient (null = legacy/seeded data). */
+  userId?: string
   /** Per-100g/100ml nutritional values. */
   nutrition?: NutritionalValues
   /** Typical shelf life in days — used to auto-set pantry expiry when toggled in-stock. */

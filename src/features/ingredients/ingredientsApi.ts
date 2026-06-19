@@ -34,10 +34,12 @@ function mapIngredient(row: Record<string, unknown>): Ingredient {
     density: (row.density as number) ?? undefined,
     nameI18n: (row.name_i18n as Record<string, string>) ?? {},
     subproducts: subs.length ? subs : undefined,
+    isGlobal: (row.is_global as boolean) ?? true,
+    userId: (row.user_id as string) ?? undefined,
   }
 }
 
-function ingredientToDb(payload: Partial<CreateIngredientPayload>) {
+function ingredientToDb(payload: Partial<CreateIngredientPayload>, userId?: string) {
   return {
     ...(payload.name !== undefined && { name: payload.name }),
     ...(payload.category !== undefined && { category: payload.category }),
@@ -46,6 +48,8 @@ function ingredientToDb(payload: Partial<CreateIngredientPayload>) {
     image_url: payload.imageUrl ?? null,
     density: payload.density ?? null,
     name_i18n: payload.nameI18n ?? {},
+    ...(userId !== undefined && { user_id: userId }),
+    ...(payload.isGlobal !== undefined && { is_global: payload.isGlobal }),
   }
 }
 
@@ -82,9 +86,10 @@ export async function createIngredient(payload: CreateIngredientPayload): Promis
 
   apiLog('ingredients', 'createIngredient → Supabase', payload.name)
 
+  const { data: { user } } = await supabase.auth.getUser()
   const { data: ing, error: ingErr } = await supabase
     .from('ingredients')
-    .insert(ingredientToDb(payload))
+    .insert(ingredientToDb(payload, user?.id))
     .select()
     .single()
 

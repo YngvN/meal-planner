@@ -19,8 +19,10 @@ function mapPantryItem(row: Record<string, unknown>): PantryItem {
   }
 }
 
-function pantryItemToDb(ingredientId: string, payload: UpdatePantryItemPayload) {
+async function pantryItemToDb(ingredientId: string, payload: UpdatePantryItemPayload) {
+  const { data: { user } } = await supabase.auth.getUser()
   return {
+    user_id: user?.id ?? null,
     ingredient_id: ingredientId,
     in_stock: payload.inStock ?? false,
     quantity: payload.quantity ?? null,
@@ -56,9 +58,10 @@ export async function updatePantryItem(
     return mock.updatePantryItem(ingredientId, payload)
   }
   apiLog('pantry', `updatePantryItem → Supabase id=${ingredientId}`)
+  const row = await pantryItemToDb(ingredientId, payload)
   const { data, error } = await supabase
     .from('pantry_items')
-    .upsert(pantryItemToDb(ingredientId, payload), { onConflict: 'ingredient_id' })
+    .upsert(row, { onConflict: 'user_id,ingredient_id' })
     .select()
     .single()
   if (error || !data) throw new Error(error?.message ?? 'Failed to update pantry item')
@@ -75,12 +78,12 @@ export async function bulkUpdatePantry(
     return mock.bulkUpdatePantry(updates)
   }
   apiLog('pantry', `bulkUpdatePantry → Supabase count=${updates.length}`)
-  const rows = updates.map(({ ingredientId, ...payload }) =>
-    pantryItemToDb(ingredientId, payload),
+  const rows = await Promise.all(
+    updates.map(({ ingredientId, ...payload }) => pantryItemToDb(ingredientId, payload)),
   )
   const { data, error } = await supabase
     .from('pantry_items')
-    .upsert(rows, { onConflict: 'ingredient_id' })
+    .upsert(rows, { onConflict: 'user_id,ingredient_id' })
     .select()
   if (error) throw new Error(error.message)
   return (data ?? []).map((r) => mapPantryItem(r as Record<string, unknown>))

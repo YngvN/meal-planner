@@ -69,6 +69,12 @@ export interface Recipe {
   /** Attribution for where this recipe came from. */
   source?: RecipeSource
   isFavorite: boolean
+  /** When false, only the creator can see this recipe. Default: true. */
+  isGlobal?: boolean
+  /** ID of the user who created this recipe (null = legacy/seeded data). */
+  userId?: string
+  /** Username of the creator — shown on recipe cards for globally shared recipes. */
+  createdByUsername?: string
   /** URL to a cover/hero image for this recipe. */
   imageUrl?: string
   /** Translated titles keyed by language code. Falls back to `title` when missing. */

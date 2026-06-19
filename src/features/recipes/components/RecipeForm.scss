@@ -236,6 +236,21 @@
     }
   }
 
+  &__private-label {
+    display: flex;
+    align-items: center;
+    gap: $spacing-unit;
+    font-size: 0.9rem;
+    color: $color-text-muted;
+    cursor: pointer;
+
+    input[type='checkbox'] {
+      accent-color: $color-accent;
+      width: 16px;
+      height: 16px;
+    }
+  }
+
   // Pinned to the bottom of the scrolling modal body. Negative margins let it
   // span the body's full width and sit flush against the bottom edge.
   &__modal-footer {

@@ -38,13 +38,34 @@
       },
       "profile": {
         "title": "Profile",
-        "signedInAs": "Signed in as {{name}} ({{email}})"
+        "signedInAs": "Signed in as {{name}} ({{email}})",
+        "changeUsername": "Username",
+        "changeEmail": "Email address",
+        "changePassword": "Password",
+        "newPassword": "New password",
+        "aiRequestsRemaining": "AI image scans remaining",
+        "save": "Save",
+        "emailConfirmationSent": "Confirmation email sent — check your inbox.",
+        "passwordSaved": "Password updated."
       },
       "auth": {
         "emailLabel": "Email",
         "passwordLabel": "Password",
         "signIn": "Sign in",
-        "signingIn": "Signing in…"
+        "signingIn": "Signing in…",
+        "signUp": "Sign up",
+        "signingUp": "Creating account…",
+        "username": "Username",
+        "confirmPassword": "Confirm password",
+        "inviteCode": "Invite code",
+        "forgotPassword": "Forgot password?",
+        "resetPassword": "Reset password",
+        "sendResetEmail": "Send reset email",
+        "resetEmailSent": "Check your inbox — we sent a password reset link.",
+        "backToSignIn": "← Back to sign in",
+        "alreadyHaveAccount": "Already have an account?",
+        "noAccount": "Don't have an account?",
+        "signOut": "Sign out"
       },
       "common": {
         "save": "Save",
@@ -66,7 +87,8 @@
         "noImage": "No image",
         "comingSoon": "Coming soon — this feature is in development.",
         "confirmDelete": "Are you sure you want to delete this? This action cannot be undone.",
-        "confirmDeleteTitle": "Confirm deletion"
+        "confirmDeleteTitle": "Confirm deletion",
+        "makePrivate": "Make private (only visible to me)"
       },
       "recipes": {
         "title": "Recipes",
@@ -87,7 +109,12 @@
         "notes": "Notes",
         "tags": "Tags",
         "equipment": "Equipment",
-        "source": "Source",
+        "source": {
+          "source": "Source",
+          "type": "Source type",
+          "name": "Name / title",
+          "url": "URL"
+        },
         "imageUrl": "Image URL",
         "missingFromPantry": "Not in pantry",
         "favorite": "Add to favorites",
@@ -130,12 +157,6 @@
           "notesPlaceholder": "Personal tips, modifications, things to remember…",
           "addSource": "Add source",
           "createIngredient": "Create \"{{name}}\""
-        },
-        "source": {
-          "source": "Source",
-          "type": "Source type",
-          "name": "Name / title",
-          "url": "URL"
         },
         "sourceType": {
           "website": "Website",
@@ -310,6 +331,21 @@
         "confirmClear": "Clear the entire shopping list?",
         "manualSection": "Other items",
         "updatePantry": "Mark as purchased"
+      },
+      "admin": {
+        "title": "Admin",
+        "maxUsers": "Maximum users",
+        "unlimitedUsers": "Unlimited",
+        "requireInviteCode": "Require invite code to sign up",
+        "aiImageRequestsPerUser": "AI image scans per user",
+        "inviteCodes": "Invite codes",
+        "generateCode": "Generate code",
+        "users": "Users",
+        "role": "Role",
+        "roleAdmin": "Admin",
+        "roleUser": "User",
+        "revokeCode": "Revoke code",
+        "codeUsed": "Used"
       }
     }
   },
@@ -352,13 +388,34 @@
       },
       "profile": {
         "title": "Profil",
-        "signedInAs": "Innlogget som {{name}} ({{email}})"
+        "signedInAs": "Innlogget som {{name}} ({{email}})",
+        "changeUsername": "Brukernavn",
+        "changeEmail": "E-postadresse",
+        "changePassword": "Passord",
+        "newPassword": "Nytt passord",
+        "aiRequestsRemaining": "Gjenstående AI-bildeskanninger",
+        "save": "Lagre",
+        "emailConfirmationSent": "Bekreftelsese-post sendt — sjekk innboksen din.",
+        "passwordSaved": "Passordet er oppdatert."
       },
       "auth": {
         "emailLabel": "E-post",
         "passwordLabel": "Passord",
         "signIn": "Logg inn",
-        "signingIn": "Logger inn…"
+        "signingIn": "Logger inn…",
+        "signUp": "Registrer deg",
+        "signingUp": "Oppretter konto…",
+        "username": "Brukernavn",
+        "confirmPassword": "Bekreft passord",
+        "inviteCode": "Invitasjonskode",
+        "forgotPassword": "Glemt passordet?",
+        "resetPassword": "Tilbakestill passord",
+        "sendResetEmail": "Send tilbakestillingslenke",
+        "resetEmailSent": "Sjekk innboksen — vi sendte en tilbakestillingslenke.",
+        "backToSignIn": "← Tilbake til innlogging",
+        "alreadyHaveAccount": "Har du allerede en konto?",
+        "noAccount": "Har du ikke en konto?",
+        "signOut": "Logg ut"
       },
       "common": {
         "save": "Lagre",
@@ -380,7 +437,8 @@
         "noImage": "Ingen bilde",
         "comingSoon": "Kommer snart — denne funksjonen er under utvikling.",
         "confirmDelete": "Er du sikker på at du vil slette dette? Handlingen kan ikke angres.",
-        "confirmDeleteTitle": "Bekreft sletting"
+        "confirmDeleteTitle": "Bekreft sletting",
+        "makePrivate": "Gjør privat (bare synlig for meg)"
       },
       "recipes": {
         "title": "Oppskrifter",
@@ -401,7 +459,12 @@
         "notes": "Notater",
         "tags": "Tagger",
         "equipment": "Utstyr",
-        "source": "Kilde",
+        "source": {
+          "source": "Kilde",
+          "type": "Kildetype",
+          "name": "Navn / tittel",
+          "url": "URL"
+        },
         "imageUrl": "Bilde-URL",
         "missingFromPantry": "Ikke på lager",
         "favorite": "Legg til som favoritt",
@@ -444,12 +507,6 @@
           "notesPlaceholder": "Personlige tips, endringer, ting å huske…",
           "addSource": "Legg til kilde",
           "createIngredient": "Opprett \"{{name}}\""
-        },
-        "source": {
-          "source": "Kilde",
-          "type": "Kildetype",
-          "name": "Navn / tittel",
-          "url": "URL"
         },
         "sourceType": {
           "website": "Nettside",
@@ -624,6 +681,21 @@
         "confirmClear": "Tømme hele handlelisten?",
         "manualSection": "Andre varer",
         "updatePantry": "Merk som kjøpt"
+      },
+      "admin": {
+        "title": "Admin",
+        "maxUsers": "Maks antall brukere",
+        "unlimitedUsers": "Ubegrenset",
+        "requireInviteCode": "Krev invitasjonskode for registrering",
+        "aiImageRequestsPerUser": "AI-bildeskanninger per bruker",
+        "inviteCodes": "Invitasjonskoder",
+        "generateCode": "Generer kode",
+        "users": "Brukere",
+        "role": "Rolle",
+        "roleAdmin": "Admin",
+        "roleUser": "Bruker",
+        "revokeCode": "Tilbakekall kode",
+        "codeUsed": "Brukt"
       }
     }
   }

@@ -76,6 +76,12 @@
     }
   }
 
+  &__author {
+    font-size: 0.75rem;
+    color: $color-text-muted;
+    font-style: italic;
+  }
+
   &__description {
     font-size: 0.9rem;
     color: $color-text-muted;

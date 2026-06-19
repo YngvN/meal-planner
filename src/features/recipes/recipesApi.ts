@@ -44,6 +44,9 @@ function mapRecipe(row: Record<string, unknown>): Recipe {
     notes: (row.notes as string) ?? undefined,
     source: (row.source as Recipe['source']) ?? undefined,
     isFavorite: (row.is_favorite as boolean) ?? false,
+    isGlobal: (row.is_global as boolean) ?? true,
+    userId: (row.user_id as string) ?? undefined,
+    createdByUsername: (row.created_by_username as string) ?? undefined,
     imageUrl: (row.image_url as string) ?? undefined,
     titleI18n: (row.title_i18n as Record<string, string>) ?? {},
     descriptionI18n: (row.description_i18n as Record<string, string>) ?? {},
@@ -75,6 +78,7 @@ function recipeToDb(payload: Partial<CreateRecipePayload>) {
     notes: payload.notes ?? null,
     source: payload.source ?? null,
     is_favorite: payload.isFavorite ?? false,
+    is_global: payload.isGlobal ?? true,
     image_url: payload.imageUrl ?? null,
     title_i18n: payload.titleI18n ?? {},
     description_i18n: payload.descriptionI18n ?? {},
@@ -142,9 +146,24 @@ export async function createRecipe(payload: CreateRecipePayload): Promise<Recipe
     return mock.createRecipe(payload)
   }
   apiLog('recipes', 'createRecipe → Supabase', payload.title)
+  const { data: { user } } = await supabase.auth.getUser()
+  // Fetch the creator's username for attribution on recipe cards.
+  let createdByUsername: string | undefined
+  if (user) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('username')
+      .eq('id', user.id)
+      .single()
+    createdByUsername = (profile as Record<string, unknown> | null)?.username as string | undefined
+  }
   const { data, error } = await supabase
     .from('recipes')
-    .insert(recipeToDb(payload))
+    .insert({
+      ...recipeToDb(payload),
+      ...(user && { user_id: user.id }),
+      ...(createdByUsername && { created_by_username: createdByUsername }),
+    })
     .select()
     .single()
   if (error || !data) throw new Error(error?.message ?? 'Failed to create recipe')

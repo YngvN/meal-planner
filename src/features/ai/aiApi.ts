@@ -1,4 +1,5 @@
 import { apiError, apiLog } from '../../lib/logger'
+import { supabase } from '../../lib/supabaseClient'
 import type {
   NutritionPhotoResponse,
   RecipeDraft,
@@ -29,13 +30,21 @@ apiLog('ai', `config → base="${AI_BASE}" · mode=${useMock ? 'MOCK' : 'real fu
 
 const delay = (ms = 500) => new Promise<void>((resolve) => setTimeout(resolve, ms))
 
+/** Retrieves the current session JWT for use in Netlify function requests. */
+async function getAuthHeader(): Promise<Record<string, string>> {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session?.access_token) return {}
+  return { Authorization: `Bearer ${session.access_token}` }
+}
+
 /** POSTs JSON to an AI endpoint and returns the parsed response. */
 async function postJson<T>(path: string, body: unknown): Promise<T> {
   const url = `${AI_BASE}${path}`
   apiLog('ai', `→ POST ${url}`)
+  const authHeader = await getAuthHeader()
   const res = await fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...authHeader },
     body: JSON.stringify(body),
   })
   if (!res.ok) {

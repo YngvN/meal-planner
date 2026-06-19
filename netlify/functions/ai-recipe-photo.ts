@@ -1,9 +1,11 @@
 import Anthropic from '@anthropic-ai/sdk'
 import type { Config } from '@netlify/functions'
+import { getAiImageQuota, incrementAiImageUsage, verifyAndGetProfile } from './_supabaseAdmin'
 
 /**
  * Netlify Function: transcribes a photo of a recipe (cookbook page, card,
  * handwritten note) into a structured recipe draft using Claude vision.
+ * Access is limited by per-user quota controlled in admin settings.
  *
  * Body: { imageBase64: string, mediaType: string }
  * Returns: { recipe: { title, description?, portions?, prepTimeMinutes?, cookTimeMinutes?, ingredients[], instructions[] } }
@@ -12,6 +14,17 @@ import type { Config } from '@netlify/functions'
 export default async (req: Request) => {
   if (req.method !== 'POST') {
     return new Response('Method not allowed', { status: 405 })
+  }
+
+  const profile = await verifyAndGetProfile(req)
+  if (!profile) return new Response('Unauthorized', { status: 401 })
+
+  const quota = await getAiImageQuota()
+  if (profile.ai_image_requests_used >= quota) {
+    return new Response(
+      JSON.stringify({ error: 'quota_exceeded', used: profile.ai_image_requests_used, quota }),
+      { status: 429, headers: { 'Content-Type': 'application/json' } },
+    )
   }
 
   const apiKey = process.env.ANTHROPIC_API_KEY
@@ -100,6 +113,7 @@ export default async (req: Request) => {
       return new Response('Model did not return structured output', { status: 500 })
     }
 
+    await incrementAiImageUsage(profile.id)
     return Response.json({ recipe: toolUse.input })
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Recipe transcription failed'

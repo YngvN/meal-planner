@@ -1,9 +1,11 @@
 import Anthropic from '@anthropic-ai/sdk'
 import type { Config } from '@netlify/functions'
+import { getAiImageQuota, incrementAiImageUsage, verifyAndGetProfile } from './_supabaseAdmin'
 
 /**
  * Netlify Function: transcribes a photo of a nutrition label into per-100g
  * nutritional values using Claude vision.
+ * Access is limited by per-user quota controlled in admin settings.
  *
  * Body: { imageBase64: string, mediaType: string }
  * Returns: { nutrition: { calories, protein, carbs, fat, fiber } }
@@ -12,6 +14,17 @@ import type { Config } from '@netlify/functions'
 export default async (req: Request) => {
   if (req.method !== 'POST') {
     return new Response('Method not allowed', { status: 405 })
+  }
+
+  const profile = await verifyAndGetProfile(req)
+  if (!profile) return new Response('Unauthorized', { status: 401 })
+
+  const quota = await getAiImageQuota()
+  if (profile.ai_image_requests_used >= quota) {
+    return new Response(
+      JSON.stringify({ error: 'quota_exceeded', used: profile.ai_image_requests_used, quota }),
+      { status: 429, headers: { 'Content-Type': 'application/json' } },
+    )
   }
 
   const apiKey = process.env.ANTHROPIC_API_KEY
@@ -89,6 +102,7 @@ export default async (req: Request) => {
       if (typeof value === 'number' && !Number.isNaN(value)) nutrition[key] = value
     }
 
+    await incrementAiImageUsage(profile.id)
     return Response.json({ nutrition })
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Nutrition transcription failed'

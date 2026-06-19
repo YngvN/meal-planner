@@ -45,9 +45,11 @@ export async function addPlannedMeal(payload: CreatePlannedMealPayload): Promise
     return mock.addPlannedMeal(payload)
   }
   apiLog('mealPlan', 'addPlannedMeal → Supabase', payload.date, payload.slot)
+  const { data: { user } } = await supabase.auth.getUser()
   const { data, error } = await supabase
     .from('planned_meals')
     .insert({
+      user_id: user?.id ?? null,
       date: payload.date,
       slot: payload.slot,
       recipe_id: payload.recipeId,

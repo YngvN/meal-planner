@@ -1,8 +1,10 @@
 import Anthropic from '@anthropic-ai/sdk'
 import type { Config } from '@netlify/functions'
+import { verifyAndGetProfile } from './_supabaseAdmin'
 
 /**
  * Netlify Function: translates a set of text fields into multiple languages.
+ * Restricted to admin-role users.
  *
  * Body: { fields: Record<string,string>, arrayFields?: Record<string,string[]>, targetLanguages: string[] }
  * Returns: { translations: { [lang]: { fields, arrayFields } } }
@@ -14,6 +16,10 @@ export default async (req: Request) => {
   if (req.method !== 'POST') {
     return new Response('Method not allowed', { status: 405 })
   }
+
+  const profile = await verifyAndGetProfile(req)
+  if (!profile) return new Response('Unauthorized', { status: 401 })
+  if (profile.role !== 'admin') return new Response('Forbidden — admin role required', { status: 403 })
 
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) {

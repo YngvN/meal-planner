@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import { NavLink, Outlet } from 'react-router-dom'
+import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import {
   BookOpen,
   CalendarDays,
   Carrot,
   House,
+  LogOut,
   Menu,
   Package,
   Settings,
@@ -12,6 +13,8 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { TranslatedText } from './components'
+import { useAppDispatch, useAppSelector } from './app/hooks'
+import { logoutUser } from './features/auth/authSlice'
 
 /** A single navigation entry: route, translation key, and its icon. */
 interface NavItem {
@@ -36,9 +39,18 @@ const NAV_ITEMS: NavItem[] = [
  * screens and collapses behind a hamburger dropdown on phones.
  */
 function App() {
+  const dispatch = useAppDispatch()
+  const navigate = useNavigate()
+  const user = useAppSelector((s) => s.auth.user)
   const [navOpen, setNavOpen] = useState(false)
   const sidebarRef = useRef<HTMLElement>(null)
   const hamburgerRef = useRef<HTMLButtonElement>(null)
+
+  async function handleSignOut() {
+    setNavOpen(false)
+    await dispatch(logoutUser())
+    navigate('/login', { replace: true })
+  }
 
   // Close the mobile dropdown on Escape or click outside.
   useEffect(() => {
@@ -83,6 +95,18 @@ function App() {
             </NavLink>
           ))}
         </nav>
+
+        <div className="app__sidebar-footer">
+          {user && (
+            <span className="app__sidebar-username" title={user.email}>
+              {user.username}
+            </span>
+          )}
+          <button type="button" className="app__signout" onClick={handleSignOut}>
+            <LogOut size={18} aria-hidden />
+            <TranslatedText id="auth.signOut" />
+          </button>
+        </div>
       </aside>
 
       <div className="app__main">
