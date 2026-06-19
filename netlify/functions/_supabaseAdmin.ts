@@ -30,7 +30,10 @@ export async function verifyAndGetProfile(req: Request): Promise<Profile | null>
     data: { user },
     error,
   } = await supabaseAdmin.auth.getUser(token)
-  if (error || !user) return null
+  if (error || !user) {
+    console.error('[supabaseAdmin] getUser failed:', error?.message ?? 'no user returned', '| SUPABASE_URL:', process.env.SUPABASE_URL)
+    return null
+  }
 
   const { data: profile, error: profileErr } = await supabaseAdmin
     .from('profiles')
@@ -38,7 +41,10 @@ export async function verifyAndGetProfile(req: Request): Promise<Profile | null>
     .eq('id', user.id)
     .single()
 
-  if (profileErr || !profile) return null
+  if (profileErr || !profile) {
+    console.error('[supabaseAdmin] profile lookup failed for user', user.id, ':', profileErr?.message)
+    return null
+  }
   return profile as Profile
 }
 
