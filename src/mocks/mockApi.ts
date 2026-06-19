@@ -138,14 +138,14 @@ export async function updatePantryItem(ingredientId: string, payload: UpdatePant
     return updated
   })
   if (!found) {
-    updated = { ingredientId, inStock: false, isLow: false, ...payload }
+    updated = { id: `mock-${Date.now()}`, ingredientId, inStock: false, isLow: false, ...payload }
     pantry = [...pantry, updated]
   }
   return { ...updated! }
 }
 
 /** Updates multiple pantry items in one call. */
-export async function bulkUpdatePantry(updates: Array<{ ingredientId: string } & UpdatePantryItemPayload>): Promise<PantryItem[]> {
+export async function bulkUpdatePantry(updates: Array<{ ingredientId: string; id?: string; productId?: string } & UpdatePantryItemPayload>): Promise<PantryItem[]> {
   await delay()
   for (const update of updates) {
     const { ingredientId, ...payload } = update

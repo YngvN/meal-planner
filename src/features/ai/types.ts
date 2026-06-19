@@ -63,3 +63,15 @@ export interface RecipePhotoRequest {
 export interface RecipePhotoResponse {
   recipe: RecipeDraft
 }
+
+/** Fields extracted from a front-of-package product photo. */
+export interface FrontPhotoProduct {
+  productName?: string
+  brand?: string
+  netWeight?: string
+}
+
+/** Response body from the front-photo endpoint. */
+export interface FrontPhotoResponse {
+  product: FrontPhotoProduct
+}

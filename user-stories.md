@@ -55,9 +55,12 @@ Legend: ✅ Built · 🔨 Planned (next phase) · 💡 Planned (future) · ⬜ N
 - ✅ Edit and delete ingredients
 - ✅ Add per-100g nutritional values to ingredients
 - ✅ Add default shelf life (days) to ingredients
-- ✅ Add named subproducts / variants (e.g. Whole Milk, Skimmed Milk)
+- ✅ Add specific branded products to ingredient categories (e.g. "Mutti Polpa" under "Canned Tomatoes")
 - ✅ Ingredient photo / image (imageUrl field)
-- ⬜ Barcode scanning to identify ingredients
+- ✅ Barcode scanning to identify products (auto-detect EAN-13/UPC via live camera)
+- ✅ Open Food Facts lookup from barcode (auto-fills name, brand, nutrition)
+- ✅ Scan front of package photo — AI extracts product name and brand
+- ✅ Scan nutrition label photo — AI extracts nutritional values
 
 ### Pantry / Inventory Tracking
 - ✅ Mark ingredients as in-stock / out-of-stock
@@ -213,6 +216,7 @@ These are gaps identified during development that are worth tracking:
 - ⬜ Keyboard shortcuts for power users
 - ⬜ Keyboard-accessible drag-and-drop for meal plan calendar
 - ⬜ Multiple grocery stores with per-store prices
-- ⬜ Take picture of a product and its nutritional value, and automatically add to text fields
+- ✅ Take picture of a product and its nutritional value, and automatically add to text fields
+- 🔨 Barcode scanner for adding pantry items while shopping (scan → instant pantry update)
 
 

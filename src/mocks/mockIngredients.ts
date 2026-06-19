@@ -85,9 +85,9 @@ export const mockIngredients: Ingredient[] = [
     category: 'dairy',
     nutrition: { calories: 717, protein: 0.9, carbs: 0.1, fat: 81, fiber: 0 },
     defaultExpiryDays: 30,
-    subproducts: [
-      { id: 'ing-11-sp-1', name: 'Salted Butter', nutrition: { calories: 717, protein: 0.9, carbs: 0.1, fat: 81, fiber: 0 } },
-      { id: 'ing-11-sp-2', name: 'Unsalted Butter', nutrition: { calories: 717, protein: 0.9, carbs: 0.1, fat: 81, fiber: 0 } },
+    products: [
+      { id: 'ing-11-sp-1', ingredientId: 'ing-11', name: 'Salted Butter', nutrition: { calories: 717, protein: 0.9, carbs: 0.1, fat: 81, fiber: 0 } },
+      { id: 'ing-11-sp-2', ingredientId: 'ing-11', name: 'Unsalted Butter', nutrition: { calories: 717, protein: 0.9, carbs: 0.1, fat: 81, fiber: 0 } },
     ],
   },
   {
@@ -110,9 +110,9 @@ export const mockIngredients: Ingredient[] = [
     category: 'dairy',
     nutrition: { calories: 280, protein: 28, carbs: 3.1, fat: 17, fiber: 0 },
     defaultExpiryDays: 7,
-    subproducts: [
-      { id: 'ing-14-sp-1', name: 'Fresh Mozzarella', nutrition: { calories: 240, protein: 22, carbs: 2.2, fat: 16, fiber: 0 } },
-      { id: 'ing-14-sp-2', name: 'Low-moisture Mozzarella', nutrition: { calories: 300, protein: 29, carbs: 3.5, fat: 20, fiber: 0 } },
+    products: [
+      { id: 'ing-14-sp-1', ingredientId: 'ing-14', name: 'Fresh Mozzarella', nutrition: { calories: 240, protein: 22, carbs: 2.2, fat: 16, fiber: 0 } },
+      { id: 'ing-14-sp-2', ingredientId: 'ing-14', name: 'Low-moisture Mozzarella', nutrition: { calories: 300, protein: 29, carbs: 3.5, fat: 20, fiber: 0 } },
     ],
   },
   {
@@ -131,9 +131,9 @@ export const mockIngredients: Ingredient[] = [
     nutrition: { calories: 165, protein: 31, carbs: 0, fat: 3.6, fiber: 0 },
     defaultExpiryDays: 3,
     imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Chicken_breast_-_raw.jpg/320px-Chicken_breast_-_raw.jpg',
-    subproducts: [
-      { id: 'ing-16-sp-1', name: 'Organic Chicken Breast', nutrition: { calories: 160, protein: 31, carbs: 0, fat: 3.2, fiber: 0 } },
-      { id: 'ing-16-sp-2', name: 'Chicken Thigh (boneless)', nutrition: { calories: 209, protein: 26, carbs: 0, fat: 11, fiber: 0 } },
+    products: [
+      { id: 'ing-16-sp-1', ingredientId: 'ing-16', name: 'Organic Chicken Breast', nutrition: { calories: 160, protein: 31, carbs: 0, fat: 3.2, fiber: 0 } },
+      { id: 'ing-16-sp-2', ingredientId: 'ing-16', name: 'Chicken Thigh (boneless)', nutrition: { calories: 209, protein: 26, carbs: 0, fat: 11, fiber: 0 } },
     ],
   },
   {
@@ -142,9 +142,9 @@ export const mockIngredients: Ingredient[] = [
     category: 'meat',
     nutrition: { calories: 254, protein: 26, carbs: 0, fat: 17, fiber: 0 },
     defaultExpiryDays: 3,
-    subproducts: [
-      { id: 'ing-17-sp-1', name: 'Ground Beef 5% fat', nutrition: { calories: 174, protein: 26, carbs: 0, fat: 7, fiber: 0 } },
-      { id: 'ing-17-sp-2', name: 'Ground Beef 20% fat', nutrition: { calories: 254, protein: 26, carbs: 0, fat: 17, fiber: 0 } },
+    products: [
+      { id: 'ing-17-sp-1', ingredientId: 'ing-17', name: 'Ground Beef 5% fat', nutrition: { calories: 174, protein: 26, carbs: 0, fat: 7, fiber: 0 } },
+      { id: 'ing-17-sp-2', ingredientId: 'ing-17', name: 'Ground Beef 20% fat', nutrition: { calories: 254, protein: 26, carbs: 0, fat: 17, fiber: 0 } },
     ],
   },
   {

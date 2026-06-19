@@ -484,26 +484,26 @@ export function RecipeForm({ initialValues, onDone }: RecipeFormProps) {
         <h2>{t('recipes.ingredients')}</h2>
         {form.ingredients.map((row, idx) => {
           const selectedIngredient = ingredientLibrary.find((i) => i.id === row.ingredientId)
-          const subproducts = selectedIngredient?.subproducts ?? []
+          const products = selectedIngredient?.products ?? []
           return (
             <div key={idx} className="recipe-form__ingredient-row">
               <IngredientCombobox
                 value={row.ingredientId || undefined}
-                onChange={(id) => updateIngredientRow(idx, { ingredientId: id, subproductId: undefined })}
+                onChange={(id) => updateIngredientRow(idx, { ingredientId: id, productId: undefined })}
                 options={ingredientLibrary}
                 onCreateNew={handleCreateIngredient}
                 placeholder={t('recipes.form.selectIngredient')}
                 className="recipe-form__ingredient-combobox"
               />
-              {subproducts.length > 0 && (
+              {products.length > 0 && (
                 <select
-                  className="recipe-form__subproduct-select"
-                  value={row.subproductId ?? ''}
-                  onChange={(e) => updateIngredientRow(idx, { subproductId: e.target.value || undefined })}
+                  className="recipe-form__product-select"
+                  value={row.productId ?? ''}
+                  onChange={(e) => updateIngredientRow(idx, { productId: e.target.value || undefined })}
                 >
                   <option value="">{t('recipes.form.defaultVariant')}</option>
-                  {subproducts.map((sp) => (
-                    <option key={sp.id} value={sp.id}>{sp.name}</option>
+                  {products.map((p) => (
+                    <option key={p.id} value={p.id}>{p.name}{p.brand ? ` — ${p.brand}` : ''}</option>
                   ))}
                 </select>
               )}

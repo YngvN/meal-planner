@@ -14,7 +14,7 @@ async function buildAuthUser(): Promise<AuthUser | null> {
   } = await supabase.auth.getUser()
   if (!user) return null
 
-  let { data: profile, error } = await supabase
+  let { data: profile } = await supabase
     .from('profiles')
     .select('username, role, ai_image_requests_used')
     .eq('id', user.id)

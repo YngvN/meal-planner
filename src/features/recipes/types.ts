@@ -31,8 +31,8 @@ export interface RecipeIngredient {
   ingredientId: string
   quantity: number
   unit: string
-  /** References a specific subproduct variant; falls back to parent nutrition if absent. */
-  subproductId?: string
+  /** References a specific branded product; falls back to parent ingredient nutrition if absent. */
+  productId?: string
 }
 
 /** A single step in the recipe instructions. */

@@ -1,11 +1,10 @@
 import { useState } from 'react'
-import { Plus, X } from 'lucide-react'
 import { Alert, Button, Input, NumberInput, Select } from '../../../components'
 import { useAppDispatch } from '../../../app/hooks'
 import { useLanguage } from '../../../i18n'
 import { createIngredient, updateIngredient } from '../ingredientsSlice'
 import { NutritionScanButton } from '../../ai/components/NutritionScanButton'
-import type { Ingredient, IngredientCategory, SubProduct } from '../types'
+import type { Ingredient, IngredientCategory } from '../types'
 import './IngredientForm.scss'
 
 const CATEGORIES: IngredientCategory[] = [
@@ -41,41 +40,11 @@ export function IngredientForm({ ingredient, onDone }: IngredientFormProps) {
   const [fat, setFat] = useState<string>(String(ingredient?.nutrition?.fat ?? ''))
   const [fiber, setFiber] = useState<string>(String(ingredient?.nutrition?.fiber ?? ''))
 
-  // Subproducts
-  const [subproducts, setSubproducts] = useState<SubProduct[]>(
-    ingredient?.subproducts?.map((sp) => ({ ...sp })) ?? [],
-  )
-
   const [error, setError] = useState<string | null>(null)
 
   function parseOptionalNumber(val: string): number | undefined {
     const n = parseFloat(val)
     return isNaN(n) ? undefined : n
-  }
-
-  function addSubproduct() {
-    setSubproducts([
-      ...subproducts,
-      { id: `sp-${Date.now()}`, name: '' },
-    ])
-  }
-
-  function updateSubproduct(idx: number, patch: Partial<SubProduct>) {
-    setSubproducts(subproducts.map((sp, i) => (i === idx ? { ...sp, ...patch } : sp)))
-  }
-
-  function updateSubproductNutrition(idx: number, field: string, value: string) {
-    const n = parseFloat(value)
-    const current = subproducts[idx]
-    setSubproducts(subproducts.map((sp, i) =>
-      i === idx
-        ? { ...sp, nutrition: { ...current.nutrition, [field]: isNaN(n) ? undefined : n } }
-        : sp,
-    ))
-  }
-
-  function removeSubproduct(idx: number) {
-    setSubproducts(subproducts.filter((_, i) => i !== idx))
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -101,7 +70,6 @@ export function IngredientForm({ ingredient, onDone }: IngredientFormProps) {
       category,
       defaultExpiryDays: defaultExpiryDays > 0 ? defaultExpiryDays : undefined,
       nutrition: hasNutrition ? nutritionPayload : undefined,
-      subproducts: subproducts.filter((sp) => sp.name.trim()),
       imageUrl: imageUrl.trim() || undefined,
       density: parseOptionalNumber(density),
       isGlobal: !isPrivate,
@@ -249,68 +217,7 @@ export function IngredientForm({ ingredient, onDone }: IngredientFormProps) {
         </div>
       </div>
 
-      <div className="ingredient-form__section">
-        <div className="ingredient-form__section-header">
-          <h4 className="ingredient-form__section-title">{t('ingredients.subproducts')}</h4>
-          <Button type="button" variant="secondary" onClick={addSubproduct}>
-            <Plus size={16} aria-hidden /> {t('ingredients.addSubproduct')}
-          </Button>
-        </div>
-
-        {subproducts.map((sp, idx) => (
-          <div key={sp.id} className="ingredient-form__subproduct">
-            <div className="ingredient-form__subproduct-header">
-              <Input
-                id={`sp-name-${idx}`}
-                label={t('ingredients.subproductName')}
-                value={sp.name}
-                onChange={(e) => updateSubproduct(idx, { name: e.target.value })}
-                placeholder={t('ingredients.subproductName')}
-              />
-              <Button type="button" variant="secondary" onClick={() => removeSubproduct(idx)} aria-label={t('common.delete')}>
-                <X size={16} aria-hidden />
-              </Button>
-            </div>
-            <details className="ingredient-form__subproduct-nutrition">
-              <summary>{t('ingredients.nutrition')} + {t('ingredients.imageUrl')} ({t('common.optional')})</summary>
-              <div className="ingredient-form__subproduct-image-row">
-                <div className="input-field">
-                  <label htmlFor={`sp-${idx}-image`}>{t('ingredients.imageUrl')}</label>
-                  <input
-                    id={`sp-${idx}-image`}
-                    type="url"
-                    className="input"
-                    value={sp.imageUrl ?? ''}
-                    onChange={(e) => updateSubproduct(idx, { imageUrl: e.target.value || undefined })}
-                    placeholder="https://…"
-                  />
-                </div>
-                {sp.imageUrl && (
-                  <img
-                    src={sp.imageUrl}
-                    alt=""
-                    className="ingredient-form__image-preview"
-                  />
-                )}
-              </div>
-              <div className="ingredient-form__nutrition-grid ingredient-form__nutrition-grid--compact">
-                {(['calories', 'protein', 'carbs', 'fat', 'fiber'] as const).map((field) => (
-                  <Input
-                    key={field}
-                    id={`sp-${idx}-${field}`}
-                    label={field === 'calories' ? t(`recipes.nutrients.${field}`) : `${t(`recipes.nutrients.${field}`)} (g)`}
-                    type="number"
-                    min="0"
-                    value={sp.nutrition?.[field] !== undefined ? String(sp.nutrition[field]) : ''}
-                    onChange={(e) => updateSubproductNutrition(idx, field, e.target.value)}
-                    placeholder={t('common.inheritsParent')}
-                  />
-                ))}
-              </div>
-            </details>
-          </div>
-        ))}
-      </div>
+      {/* Products are managed separately via the IngredientDetail panel */}
 
       <label className="ingredient-form__private-label">
         <input

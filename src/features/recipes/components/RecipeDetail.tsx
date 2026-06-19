@@ -9,7 +9,7 @@ import type { NutritionalValues } from '../../shared/types'
 import { deleteRecipe, fetchRecipeById, toggleFavorite } from '../recipesSlice'
 import type { Recipe, RecipeIngredient } from '../types'
 import { ALL_UNIT_KEYS, convertUnit, getUnitDimension, roundConverted } from '../../shared/units'
-import { localizedIngredientName, localizedSubproductName, localizeRecipe } from '../../shared/localize'
+import { localizedIngredientName, localizedProductName, localizeRecipe } from '../../shared/localize'
 import { MealDoneModal } from './MealDoneModal'
 import './RecipeDetail.scss'
 
@@ -30,8 +30,8 @@ function calculateNutrition(
     if (!ing) continue
 
     // Use subproduct nutrition if selected, fall back to parent
-    const nutrition = ri.subproductId
-      ? (ing.subproducts?.find((sp) => sp.id === ri.subproductId)?.nutrition ?? ing.nutrition)
+    const nutrition = ri.productId
+      ? (ing.products?.find((sp) => sp.id === ri.productId)?.nutrition ?? ing.nutrition)
       : ing.nutrition
 
     if (!nutrition) continue
@@ -145,9 +145,9 @@ export function RecipeDetail({ recipeId }: RecipeDetailProps) {
     const ing = ingredientMap.get(ri.ingredientId)
     if (!ing) return ri.ingredientId
     const baseName = localizedIngredientName(ing, language)
-    if (ri.subproductId) {
-      const sp = ing.subproducts?.find((s) => s.id === ri.subproductId)
-      if (sp) return `${baseName} — ${localizedSubproductName(sp, language)}`
+    if (ri.productId) {
+      const sp = ing.products?.find((s) => s.id === ri.productId)
+      if (sp) return `${baseName} — ${localizedProductName(sp, language)}`
     }
     return baseName
   }
@@ -282,7 +282,7 @@ export function RecipeDetail({ recipeId }: RecipeDetailProps) {
 
             return (
               <li
-                key={`${ri.ingredientId}-${ri.subproductId ?? ''}`}
+                key={`${ri.ingredientId}-${ri.productId ?? ''}`}
                 className={['recipe-detail__ingredient', !inPantry && 'recipe-detail__ingredient--missing'].filter(Boolean).join(' ')}
               >
                 <span className="recipe-detail__ingredient-status">

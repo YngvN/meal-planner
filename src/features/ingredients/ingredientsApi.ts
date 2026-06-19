@@ -1,28 +1,33 @@
 import { supabase } from '../../lib/supabaseClient'
 import { apiLog } from '../../lib/logger'
-import type { CreateIngredientPayload, Ingredient, SubProduct, UpdateIngredientPayload } from './types'
+import type { CreateIngredientPayload, Ingredient, Product, UpdateIngredientPayload } from './types'
+import type { NutritionalValues } from '../shared/types'
 
 const useMock = import.meta.env.VITE_USE_MOCK_DATA === 'true'
 
 apiLog('ingredients', `module loaded · mode=${useMock ? 'MOCK' : 'Supabase'}`)
 
-// ─── Row mappers (DB snake_case → TS camelCase) ────────────────────────────────
+// ─── Row mappers ──────────────────────────────────────────────────────────────
 
-function mapSubproduct(row: Record<string, unknown>): SubProduct {
+function mapProduct(row: Record<string, unknown>): Product {
   return {
     id: row.id as string,
+    ingredientId: row.ingredient_id as string,
     name: row.name as string,
-    nutrition: (row.nutrition as SubProduct['nutrition']) ?? undefined,
+    brand: (row.brand as string) ?? undefined,
+    barcode: (row.barcode as string) ?? undefined,
+    barcodeFormat: (row.barcode_format as string) ?? undefined,
+    nutrition: (row.nutrition as NutritionalValues) ?? undefined,
     imageUrl: (row.image_url as string) ?? undefined,
     nameI18n: (row.name_i18n as Record<string, string>) ?? {},
   }
 }
 
 function mapIngredient(row: Record<string, unknown>): Ingredient {
-  const subs = Array.isArray(row.ingredient_subproducts)
-    ? (row.ingredient_subproducts as Record<string, unknown>[])
-        .sort((a, b) => ((a.position as number) ?? 0) - ((b.position as number) ?? 0))
-        .map(mapSubproduct)
+  const products = Array.isArray(row.products)
+    ? (row.products as Record<string, unknown>[])
+        .sort((a, b) => ((a.name as string) ?? '').localeCompare((b.name as string) ?? ''))
+        .map(mapProduct)
     : []
   return {
     id: row.id as string,
@@ -33,7 +38,7 @@ function mapIngredient(row: Record<string, unknown>): Ingredient {
     imageUrl: (row.image_url as string) ?? undefined,
     density: (row.density as number) ?? undefined,
     nameI18n: (row.name_i18n as Record<string, string>) ?? {},
-    subproducts: subs.length ? subs : undefined,
+    products: products.length ? products : undefined,
     isGlobal: (row.is_global as boolean) ?? true,
     userId: (row.user_id as string) ?? undefined,
   }
@@ -53,9 +58,9 @@ function ingredientToDb(payload: Partial<CreateIngredientPayload>, userId?: stri
   }
 }
 
-// ─── API functions ─────────────────────────────────────────────────────────────
+// ─── API functions ────────────────────────────────────────────────────────────
 
-/** Returns all global ingredients. */
+/** Returns all visible ingredients with their products. */
 export async function fetchIngredients(): Promise<Ingredient[]> {
   if (useMock) {
     apiLog('ingredients', 'fetchIngredients (MOCK)')
@@ -63,10 +68,10 @@ export async function fetchIngredients(): Promise<Ingredient[]> {
     return mock.fetchIngredients()
   }
 
-  apiLog('ingredients', 'fetchIngredients → Supabase ingredients + ingredient_subproducts')
+  apiLog('ingredients', 'fetchIngredients → Supabase ingredients + products')
   const { data, error } = await supabase
     .from('ingredients')
-    .select('*, ingredient_subproducts(*)')
+    .select('*, products(*)')
     .order('name')
 
   if (error) {
@@ -76,7 +81,7 @@ export async function fetchIngredients(): Promise<Ingredient[]> {
   return (data ?? []).map((r) => mapIngredient(r as Record<string, unknown>))
 }
 
-/** Creates a new ingredient (and its subproducts). */
+/** Creates a new ingredient category (products are added separately). */
 export async function createIngredient(payload: CreateIngredientPayload): Promise<Ingredient> {
   if (useMock) {
     apiLog('ingredients', 'createIngredient (MOCK)', payload.name)
@@ -95,26 +100,9 @@ export async function createIngredient(payload: CreateIngredientPayload): Promis
 
   if (ingErr || !ing) throw new Error(ingErr?.message ?? 'Failed to create ingredient')
 
-  // Insert subproducts if any
-  const validSubs = (payload.subproducts ?? []).filter((sp) => sp.name.trim())
-  if (validSubs.length) {
-    const { error: spErr } = await supabase.from('ingredient_subproducts').insert(
-      validSubs.map((sp, i) => ({
-        ingredient_id: (ing as Record<string, unknown>).id,
-        name: sp.name,
-        nutrition: sp.nutrition ?? null,
-        image_url: sp.imageUrl ?? null,
-        name_i18n: sp.nameI18n ?? {},
-        position: i,
-      })),
-    )
-    if (spErr) throw new Error(spErr.message)
-  }
-
-  // Re-fetch with subproducts included
   const { data: full, error: fetchErr } = await supabase
     .from('ingredients')
-    .select('*, ingredient_subproducts(*)')
+    .select('*, products(*)')
     .eq('id', (ing as Record<string, unknown>).id)
     .single()
 
@@ -122,7 +110,7 @@ export async function createIngredient(payload: CreateIngredientPayload): Promis
   return mapIngredient(full as Record<string, unknown>)
 }
 
-/** Updates an existing ingredient (replaces subproducts in full). */
+/** Updates an existing ingredient category's metadata. */
 export async function updateIngredient(id: string, payload: UpdateIngredientPayload): Promise<Ingredient> {
   if (useMock) {
     apiLog('ingredients', `updateIngredient (MOCK) id=${id}`)
@@ -139,27 +127,9 @@ export async function updateIngredient(id: string, payload: UpdateIngredientPayl
 
   if (updErr) throw new Error(updErr.message)
 
-  // Replace subproducts wholesale (delete + re-insert)
-  await supabase.from('ingredient_subproducts').delete().eq('ingredient_id', id)
-
-  const validSubs = (payload.subproducts ?? []).filter((sp) => sp.name.trim())
-  if (validSubs.length) {
-    const { error: spErr } = await supabase.from('ingredient_subproducts').insert(
-      validSubs.map((sp, i) => ({
-        ingredient_id: id,
-        name: sp.name,
-        nutrition: sp.nutrition ?? null,
-        image_url: sp.imageUrl ?? null,
-        name_i18n: sp.nameI18n ?? {},
-        position: i,
-      })),
-    )
-    if (spErr) throw new Error(spErr.message)
-  }
-
   const { data: full, error: fetchErr } = await supabase
     .from('ingredients')
-    .select('*, ingredient_subproducts(*)')
+    .select('*, products(*)')
     .eq('id', id)
     .single()
 

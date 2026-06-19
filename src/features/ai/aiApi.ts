@@ -1,6 +1,8 @@
 import { apiError, apiLog } from '../../lib/logger'
 import { supabase } from '../../lib/supabaseClient'
 import type {
+  FrontPhotoProduct,
+  FrontPhotoResponse,
   NutritionPhotoResponse,
   RecipeDraft,
   RecipePhotoResponse,
@@ -138,5 +140,23 @@ export async function transcribeRecipe(
 
   const res = await postJson<RecipePhotoResponse>('/recipe-photo', { imageBase64, mediaType })
   return res.recipe
+}
+
+/**
+ * Extracts product name, brand, and net weight from a front-of-package photo.
+ * Mock mode returns sample data so the wizard is testable without an AI key.
+ */
+export async function transcribeFrontOfPackage(
+  imageBase64: string,
+  mediaType: string,
+): Promise<FrontPhotoProduct> {
+  if (useMock) {
+    apiLog('ai', 'transcribeFrontOfPackage (MOCK)')
+    await delay(700)
+    return { productName: 'Sample Product', brand: 'Generic Brand', netWeight: '400 g' }
+  }
+
+  const res = await postJson<FrontPhotoResponse>('/front-photo', { imageBase64, mediaType })
+  return res.product
 }
 

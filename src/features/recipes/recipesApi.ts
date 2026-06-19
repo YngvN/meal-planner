@@ -13,7 +13,7 @@ function mapRecipeIngredient(row: Record<string, unknown>): RecipeIngredient {
     ingredientId: row.ingredient_id as string,
     quantity: row.quantity as number,
     unit: row.unit as string,
-    subproductId: (row.subproduct_id as string) ?? undefined,
+    productId: (row.product_id as string) ?? undefined,
   }
 }
 
@@ -106,7 +106,7 @@ async function upsertIngredients(recipeId: string, ingredients: RecipeIngredient
     ingredients.map((ri, i) => ({
       recipe_id: recipeId,
       ingredient_id: ri.ingredientId,
-      subproduct_id: ri.subproductId ?? null,
+      product_id: ri.productId ?? null,
       quantity: ri.quantity,
       unit: ri.unit,
       position: i,

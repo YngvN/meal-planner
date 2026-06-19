@@ -1,6 +1,10 @@
-/** Tracks the user's current stock of one ingredient. */
+/** Tracks the user's current stock of one ingredient (category) or specific product. */
 export interface PantryItem {
+  /** Surrogate primary key from the database. */
+  id: string
   ingredientId: string
+  /** When set, this row tracks a specific branded product rather than the ingredient category. */
+  productId?: string
   inStock: boolean
   quantity?: number
   unit?: string
@@ -11,7 +15,7 @@ export interface PantryItem {
 }
 
 /** Payload for updating a single pantry item. */
-export type UpdatePantryItemPayload = Partial<Omit<PantryItem, 'ingredientId'>>
+export type UpdatePantryItemPayload = Partial<Omit<PantryItem, 'id' | 'ingredientId' | 'productId'>>
 
 /** Result from the "what can I make?" matcher for one recipe. */
 export interface RecipeMatch {

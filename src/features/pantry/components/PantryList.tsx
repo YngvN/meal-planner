@@ -46,7 +46,7 @@ export function PantryList() {
       .filter((ing) => ing.name.toLowerCase().includes(search.toLowerCase()))
       .map((ing) => ({
         ingredient: ing,
-        pantryItem: pantryMap.get(ing.id) ?? { ingredientId: ing.id, inStock: false, isLow: false },
+        pantryItem: pantryMap.get(ing.id) ?? { id: '', ingredientId: ing.id, inStock: false, isLow: false },
       }))
   }, [ingredients, pantryMap, search])
 

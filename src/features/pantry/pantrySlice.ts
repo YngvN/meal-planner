@@ -18,13 +18,22 @@ export const fetchPantry = createAsyncThunk('pantry/fetchAll', () => pantryApi.f
 
 export const updatePantryItem = createAsyncThunk(
   'pantry/updateItem',
-  ({ ingredientId, payload }: { ingredientId: string; payload: UpdatePantryItemPayload }) =>
-    pantryApi.updatePantryItem(ingredientId, payload),
+  ({
+    ingredientId,
+    payload,
+    id,
+    productId,
+  }: {
+    ingredientId: string
+    payload: UpdatePantryItemPayload
+    id?: string
+    productId?: string
+  }) => pantryApi.updatePantryItem(ingredientId, payload, id, productId),
 )
 
 export const bulkUpdatePantry = createAsyncThunk(
   'pantry/bulkUpdate',
-  (updates: Array<{ ingredientId: string } & UpdatePantryItemPayload>) =>
+  (updates: Array<{ ingredientId: string; id?: string; productId?: string } & UpdatePantryItemPayload>) =>
     pantryApi.bulkUpdatePantry(updates),
 )
 
@@ -49,11 +58,16 @@ const pantrySlice = createSlice({
 
     builder
       .addCase(updatePantryItem.fulfilled, (state, action) => {
-        const idx = state.items.findIndex((p) => p.ingredientId === action.payload.ingredientId)
+        // Match by surrogate id if available, otherwise by ingredientId+productId combo.
+        const item = action.payload
+        const idx = state.items.findIndex((p) =>
+          p.id === item.id ||
+          (p.ingredientId === item.ingredientId && p.productId === item.productId),
+        )
         if (idx !== -1) {
-          state.items[idx] = action.payload
+          state.items[idx] = item
         } else {
-          state.items.push(action.payload)
+          state.items.push(item)
         }
       })
       .addCase(updatePantryItem.rejected, (state, action) => {
@@ -62,7 +76,19 @@ const pantrySlice = createSlice({
 
     builder
       .addCase(bulkUpdatePantry.fulfilled, (state, action) => {
-        state.items = Array.isArray(action.payload) ? action.payload : state.items
+        if (!Array.isArray(action.payload)) return
+        // Merge returned items back into state
+        for (const item of action.payload) {
+          const idx = state.items.findIndex((p) =>
+            p.id === item.id ||
+            (p.ingredientId === item.ingredientId && p.productId === item.productId),
+          )
+          if (idx !== -1) {
+            state.items[idx] = item
+          } else {
+            state.items.push(item)
+          }
+        }
       })
       .addCase(bulkUpdatePantry.rejected, (state, action) => {
         state.error = action.error.message ?? 'Failed to update pantry'

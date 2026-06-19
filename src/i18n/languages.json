@@ -216,7 +216,20 @@
         "densityHint": "Enables volume ↔ weight conversion. E.g. water = 1.0, flour ≈ 0.53, sugar ≈ 0.85",
         "form": {
           "nameRequired": "Name is required."
-        }
+        },
+        "products": "Products",
+        "addProduct": "Add product",
+        "editProduct": "Edit product",
+        "noProducts": "No products yet — scan a barcode or add one manually.",
+        "brand": "Brand",
+        "barcode": "Barcode",
+        "scanBarcode": "Scan barcode",
+        "enterBarcodeManual": "Enter barcode manually",
+        "skipBarcode": "Skip — no barcode",
+        "lookingUpBarcode": "Looking up barcode…",
+        "barcodeFound": "Product found in database!",
+        "barcodeNotFound": "Not found in database — fill in details manually.",
+        "scanFront": "Scan package front"
       },
       "converter": {
         "convertTo": "Convert to",
@@ -232,7 +245,10 @@
         "translateError": "Translation failed. Try again.",
         "scanRecipe": "Scan recipe photo",
         "scanningRecipe": "Reading recipe…",
-        "recipeScanError": "Couldn't read the recipe. Try another photo or enter it manually."
+        "recipeScanError": "Couldn't read the recipe. Try another photo or enter it manually.",
+        "scanFront": "Scan front of package",
+        "scanningFront": "Scanning…",
+        "frontScanError": "Front scan failed. Try again or fill in manually."
       },
       "pantry": {
         "title": "Pantry",
@@ -566,7 +582,20 @@
         "densityHint": "Muliggjør volum ↔ vekt-konvertering. F.eks. vann = 1.0, mel ≈ 0.53, sukker ≈ 0.85",
         "form": {
           "nameRequired": "Navn er påkrevd."
-        }
+        },
+        "products": "Produkter",
+        "addProduct": "Legg til produkt",
+        "editProduct": "Rediger produkt",
+        "noProducts": "Ingen produkter ennå — skann en strekkode eller legg til manuelt.",
+        "brand": "Merkevare",
+        "barcode": "Strekkode",
+        "scanBarcode": "Skann strekkode",
+        "enterBarcodeManual": "Skriv inn strekkode manuelt",
+        "skipBarcode": "Hopp over — ingen strekkode",
+        "lookingUpBarcode": "Slår opp strekkode…",
+        "barcodeFound": "Produkt funnet i database!",
+        "barcodeNotFound": "Ikke funnet i database — fyll inn detaljer manuelt.",
+        "scanFront": "Skann produktforside"
       },
       "converter": {
         "convertTo": "Konverter til",
@@ -582,7 +611,10 @@
         "translateError": "Oversettelse mislyktes. Prøv igjen.",
         "scanRecipe": "Skann oppskriftsbilde",
         "scanningRecipe": "Leser oppskrift…",
-        "recipeScanError": "Kunne ikke lese oppskriften. Prøv et annet bilde eller skriv den inn manuelt."
+        "recipeScanError": "Kunne ikke lese oppskriften. Prøv et annet bilde eller skriv den inn manuelt.",
+        "scanFront": "Skann produktforside",
+        "scanningFront": "Skanner…",
+        "frontScanError": "Skanningen av forsiden mislyktes. Prøv igjen eller fyll inn manuelt."
       },
       "pantry": {
         "title": "Kjøleskapet",

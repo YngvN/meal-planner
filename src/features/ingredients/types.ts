@@ -15,20 +15,37 @@ export type IngredientCategory =
   | 'other'
 
 /**
- * A named variant of an ingredient (e.g. "Whole Milk 3.5%", "Skimmed Milk 0.5%").
- * Shares the parent's category. Nutrition falls back to the parent when not set.
+ * A specific branded product linked to an ingredient category.
+ * E.g. "Mutti Polpa Chopped Tomatoes" linked to the "Canned Tomatoes" ingredient.
  */
-export interface SubProduct {
+export interface Product {
   id: string
+  /** The parent ingredient category this product belongs to. */
+  ingredientId: string
   name: string
+  brand?: string
+  /** EAN-13, UPC-A, QR code value, etc. */
+  barcode?: string
+  /** Format identifier returned by the barcode scanner (EAN_13, UPC_A, QR_CODE, …). */
+  barcodeFormat?: string
+  /** Per-100g/ml nutrition; falls back to parent ingredient nutrition when absent. */
   nutrition?: NutritionalValues
-  /** URL to an image representing this variant. Falls back to parent ingredient image when absent. */
+  /** URL to a front-of-package photo or product image. */
   imageUrl?: string
   /** Translated names keyed by language code. Falls back to `name` when missing. */
   nameI18n?: Record<string, string>
 }
 
-/** A single ingredient in the global ingredient library. */
+/** Fields required to create a new product. */
+export type CreateProductPayload = Omit<Product, 'id'>
+
+/** Fields that can be updated on an existing product. */
+export type UpdateProductPayload = Partial<CreateProductPayload>
+
+/**
+ * An ingredient category in the global library (e.g. "Canned Tomatoes", "Olive Oil").
+ * Specific brand products are listed under `products`.
+ */
 export interface Ingredient {
   id: string
   name: string
@@ -37,18 +54,17 @@ export interface Ingredient {
   isGlobal?: boolean
   /** ID of the user who created this ingredient (null = legacy/seeded data). */
   userId?: string
-  /** Per-100g/100ml nutritional values. */
+  /** Category-level per-100g/ml nutritional values (fallback for products without their own). */
   nutrition?: NutritionalValues
   /** Typical shelf life in days — used to auto-set pantry expiry when toggled in-stock. */
   defaultExpiryDays?: number
-  /** Named variants of this ingredient (e.g. salted vs. unsalted butter). */
-  subproducts?: SubProduct[]
-  /** URL to an image representing this ingredient. */
+  /** Specific branded products belonging to this category. */
+  products?: Product[]
+  /** URL to an image representing this ingredient category. */
   imageUrl?: string
   /**
    * Density in grams per ml.
    * Enables automatic volume ↔ weight conversion (e.g. flour ≈ 0.53, water = 1.0).
-   * Leave blank when unknown or irrelevant (e.g. count-based ingredients).
    */
   density?: number
   /** Translated names keyed by language code. Falls back to `name` when missing. */

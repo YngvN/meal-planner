@@ -1,4 +1,4 @@
-import type { Ingredient, SubProduct } from '../ingredients/types'
+import type { Ingredient, Product } from '../ingredients/types'
 import type { Recipe } from '../recipes/types'
 
 /**
@@ -11,9 +11,9 @@ export function localizedIngredientName(ing: Ingredient, lang: string): string {
   return ing.nameI18n?.[lang]?.trim() || ing.name
 }
 
-/** Returns the subproduct name in the given language, or the original name. */
-export function localizedSubproductName(sp: SubProduct, lang: string): string {
-  return sp.nameI18n?.[lang]?.trim() || sp.name
+/** Returns the product name in the given language, or the original name. */
+export function localizedProductName(p: Product, lang: string): string {
+  return p.nameI18n?.[lang]?.trim() || p.name
 }
 
 /**

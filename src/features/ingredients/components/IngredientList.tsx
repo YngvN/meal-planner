@@ -6,13 +6,15 @@ import { useLanguage } from '../../../i18n'
 import { localizedIngredientName } from '../../shared/localize'
 import { deleteIngredient, fetchIngredients } from '../ingredientsSlice'
 import type { Ingredient } from '../types'
+import { IngredientDetail } from './IngredientDetail'
 import { IngredientForm } from './IngredientForm'
 import './IngredientList.scss'
 
 /**
  * Searchable ingredient library table.
- * Add/edit forms open in a modal.
- * Supports `?edit=<id>` query param to open the edit modal directly (e.g. from Home "Things to do").
+ * Add/edit category forms open in a modal. Clicking a row name opens the
+ * IngredientDetail panel to manage specific products.
+ * Supports `?edit=<id>` query param to open the edit modal directly.
  */
 export function IngredientList() {
   const dispatch = useAppDispatch()
@@ -22,14 +24,13 @@ export function IngredientList() {
 
   const [search, setSearch] = useState('')
   const [showAdd, setShowAdd] = useState(false)
-  // Ingredient opened via the table's Edit button (local state)
   const [manualEdit, setManualEdit] = useState<Ingredient | null>(null)
+  const [detailIngredient, setDetailIngredient] = useState<Ingredient | null>(null)
 
   useEffect(() => {
     if (status === 'idle' && ingredients.length === 0) dispatch(fetchIngredients())
   }, [dispatch, status, ingredients.length])
 
-  // Derive the ingredient to edit: URL param takes priority over manual button
   const editId = searchParams.get('edit')
   const urlEditIngredient = editId ? (ingredients.find((i) => i.id === editId) ?? null) : null
   const editingIngredient = urlEditIngredient ?? manualEdit
@@ -72,9 +73,15 @@ export function IngredientList() {
           {filtered.map((ing) => (
             <tr key={ing.id}>
               <td>
-                {localizedIngredientName(ing, language)}
-                {ing.subproducts && ing.subproducts.length > 0 && (
-                  <Badge variant="neutral">{ing.subproducts.length}</Badge>
+                <button
+                  type="button"
+                  className="ingredient-list__name-btn"
+                  onClick={() => setDetailIngredient(ing)}
+                >
+                  {localizedIngredientName(ing, language)}
+                </button>
+                {(ing.products?.length ?? 0) > 0 && (
+                  <Badge variant="neutral">{ing.products!.length}</Badge>
                 )}
               </td>
               <td>
@@ -82,7 +89,6 @@ export function IngredientList() {
                   {t(`ingredients.categories.${ing.category}`)}
                 </span>
               </td>
-
               <td className="ingredient-list__actions">
                 <Button variant="secondary" onClick={() => setManualEdit(ing)}>
                   {t('common.edit')}
@@ -95,34 +101,32 @@ export function IngredientList() {
           ))}
           {filtered.length === 0 && (
             <tr>
-              <td colSpan={5} className="ingredient-list__empty">{t('ingredients.noResults')}</td>
+              <td colSpan={3} className="ingredient-list__empty">{t('ingredients.noResults')}</td>
             </tr>
           )}
         </tbody>
       </table>
 
-      {/* Add modal */}
-      <Modal
-        open={showAdd}
-        onClose={() => setShowAdd(false)}
-        title={t('ingredients.addIngredient')}
-      >
+      {/* Add category modal */}
+      <Modal open={showAdd} onClose={() => setShowAdd(false)} title={t('ingredients.addIngredient')}>
         <IngredientForm onDone={() => setShowAdd(false)} />
       </Modal>
 
-      {/* Edit modal — driven by URL param or table button */}
-      <Modal
-        open={!!editingIngredient}
-        onClose={closeEditModal}
-        title={t('common.edit')}
-      >
+      {/* Edit category modal */}
+      <Modal open={!!editingIngredient} onClose={closeEditModal} title={t('common.edit')}>
         {editingIngredient && (
-          <IngredientForm
-            ingredient={editingIngredient}
-            onDone={closeEditModal}
-          />
+          <IngredientForm ingredient={editingIngredient} onDone={closeEditModal} />
         )}
       </Modal>
+
+      {/* Product detail panel */}
+      {detailIngredient && (
+        <IngredientDetail
+          ingredient={detailIngredient}
+          onClose={() => setDetailIngredient(null)}
+          onEditCategory={() => { setManualEdit(detailIngredient); setDetailIngredient(null) }}
+        />
+      )}
     </div>
   )
 }
