@@ -26,6 +26,18 @@ create table profiles (
 
 alter table profiles enable row level security;
 
+-- SECURITY DEFINER function so RLS policies can read the caller's role without
+-- recursively triggering the policies on the profiles table itself.
+create or replace function public.get_my_role()
+returns text
+language sql
+security definer
+set search_path = public
+stable
+as $$
+  select role from profiles where id = auth.uid()
+$$;
+
 -- Everyone can read any profile (needed for recipe attribution).
 create policy "profiles_select_all" on profiles for select using (true);
 
@@ -34,13 +46,14 @@ create policy "profiles_insert_own" on profiles for insert
   with check (auth.uid() = id);
 
 -- A user may update their own row but cannot escalate their own role.
+-- Uses get_my_role() to avoid infinite recursion in the policy expression.
 create policy "profiles_update_own" on profiles for update
   using (auth.uid() = id)
-  with check (auth.uid() = id and role = (select role from profiles where id = auth.uid()));
+  with check (auth.uid() = id and role = get_my_role());
 
 -- Admins can do anything to any profile row (including changing roles).
 create policy "profiles_admin_all" on profiles for all
-  using ((select role from profiles where id = auth.uid()) = 'admin');
+  using (get_my_role() = 'admin');
 
 -- ─── Trigger: auto-create profile on signup ────────────────────────────────────
 -- The first user to register becomes 'admin'; all subsequent users are 'user'.
