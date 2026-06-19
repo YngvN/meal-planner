@@ -21,7 +21,7 @@ async function buildAuthUser(): Promise<AuthUser | null> {
     .single()
 
   // Auto-create profile row if missing (e.g. user signed up before migration ran).
-  if ((error || !profile) && user.id) {
+  if (!profile && user.id) {
     const fallbackUsername =
       (user.user_metadata?.username as string) ?? `user_${user.id.slice(0, 8)}`
     const { data: created } = await supabase

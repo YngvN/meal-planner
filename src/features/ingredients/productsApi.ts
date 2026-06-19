@@ -104,25 +104,43 @@ export interface BarcodeResult {
   imageUrl?: string
 }
 
+const OFF_CACHE_PREFIX = 'off_barcode_'
+
 /**
  * Looks up a barcode in the Open Food Facts public database.
+ * Results are cached in sessionStorage for the lifetime of the tab to avoid
+ * redundant requests when the same barcode is scanned more than once.
  * Returns null when the product is not found or the request fails.
  */
 export async function lookupBarcode(barcode: string): Promise<BarcodeResult | null> {
-  apiLog('products', `lookupBarcode ${barcode}`)
+  // Return from session cache if available.
+  const cacheKey = OFF_CACHE_PREFIX + barcode
+  try {
+    const cached = sessionStorage.getItem(cacheKey)
+    if (cached !== null) {
+      apiLog('products', `lookupBarcode ${barcode} (cache hit)`)
+      return cached === 'null' ? null : (JSON.parse(cached) as BarcodeResult)
+    }
+  } catch {
+    // sessionStorage unavailable — proceed with network request.
+  }
+
+  apiLog('products', `lookupBarcode ${barcode} (fetching Open Food Facts)`)
   try {
     const res = await fetch(
       `https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(barcode)}.json`,
-      {
-        headers: {
-          'User-Agent': 'MealPlanner/1.0 (https://hungri.netlify.app)',
-        },
-      },
+      { headers: { 'User-Agent': 'MealPlanner/1.0 (https://hungri.netlify.app)' } },
     )
-    if (!res.ok) return null
+    if (!res.ok) {
+      sessionStorage.setItem(cacheKey, 'null')
+      return null
+    }
 
     const json = (await res.json()) as Record<string, unknown>
-    if ((json.status as number) !== 1 || !json.product) return null
+    if ((json.status as number) !== 1 || !json.product) {
+      sessionStorage.setItem(cacheKey, 'null')
+      return null
+    }
 
     const p = json.product as Record<string, unknown>
     const n = (p.nutriments ?? {}) as Record<string, number>
@@ -135,12 +153,15 @@ export async function lookupBarcode(barcode: string): Promise<BarcodeResult | nu
     if (n['fiber_100g'] != null) nutrition.fiber = n['fiber_100g']
     const hasNutrition = Object.keys(nutrition).length > 0
 
-    return {
+    const result: BarcodeResult = {
       name: (p.product_name as string) ?? '',
       brand: (p.brands as string) ?? undefined,
       nutrition: hasNutrition ? nutrition : undefined,
       imageUrl: (p.image_front_url as string) ?? undefined,
     }
+
+    try { sessionStorage.setItem(cacheKey, JSON.stringify(result)) } catch { /* quota */ }
+    return result
   } catch {
     apiLog('products', 'lookupBarcode failed — network or parse error')
     return null

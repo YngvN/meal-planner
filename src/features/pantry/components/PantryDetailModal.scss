@@ -42,10 +42,32 @@
   &__qty-row {
     display: flex;
     gap: $spacing-unit;
+    align-items: center;
   }
 
   &__qty-input {
     flex: 1;
+    min-width: 0;
+  }
+
+  &__qty-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    border: 1px solid $color-border;
+    border-radius: 8px;
+    background: $color-surface;
+    color: $color-text;
+    cursor: pointer;
+
+    @media (hover: hover) {
+      &:hover { background: $color-surface-hover; }
+    }
+
+    &:active { box-shadow: inset 0 2px 4px $color-shadow; }
   }
 
   &__num-input,

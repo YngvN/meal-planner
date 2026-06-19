@@ -223,7 +223,7 @@ export function ProductWizard({ ingredientId, existingProduct, onClose }: Props)
 
       {step === 'details' && (
         <div className="product-wizard__details-step">
-          {/* Barcode lookup status */}
+          {/* Barcode lookup result — image shown here as scan confirmation */}
           {lookupState === 'loading' && (
             <p className="product-wizard__status">
               <LoaderCircle size={14} className="icon-spin" aria-hidden />
@@ -231,9 +231,18 @@ export function ProductWizard({ ingredientId, existingProduct, onClose }: Props)
             </p>
           )}
           {lookupState === 'found' && (
-            <p className="product-wizard__status product-wizard__status--success">
-              <TranslatedText id="ingredients.barcodeFound" />
-            </p>
+            <div className="product-wizard__confirmation">
+              {imageUrl.trim() && (
+                <img
+                  src={imageUrl}
+                  alt={name}
+                  className="product-wizard__confirmation-img"
+                />
+              )}
+              <p className="product-wizard__status product-wizard__status--success">
+                <TranslatedText id="ingredients.barcodeFound" />
+              </p>
+            </div>
           )}
           {lookupState === 'not-found' && (
             <p className="product-wizard__status product-wizard__status--muted">
@@ -241,7 +250,7 @@ export function ProductWizard({ ingredientId, existingProduct, onClose }: Props)
             </p>
           )}
 
-          {/* AI scan buttons */}
+          {/* AI scan buttons — only shown when barcode didn't resolve everything */}
           <div className="product-wizard__scan-row">
             <input ref={frontInputRef} type="file" accept="image/*" capture="environment"
               className="product-wizard__hidden-input" onChange={handleFrontFile} />
@@ -262,19 +271,13 @@ export function ProductWizard({ ingredientId, existingProduct, onClose }: Props)
             </Button>
           </div>
 
-          {/* Core fields */}
+          {/* Core fields — no image URL input; image comes from OFF barcode lookup only */}
           <Input id="pw-name" label={<TranslatedText id="common.name" />}
             value={name} onChange={(e) => setName(e.target.value)} required />
           <Input id="pw-brand" label={<TranslatedText id="ingredients.brand" />}
             value={brand} onChange={(e) => setBrand(e.target.value)} />
           <Input id="pw-barcode" label={<TranslatedText id="ingredients.barcode" />}
             value={barcode} onChange={(e) => setBarcode(e.target.value)} />
-          <Input id="pw-image" label={<TranslatedText id="common.imageUrl" />}
-            value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} />
-
-          {imageUrl.trim() && (
-            <img src={imageUrl} alt={name} className="product-wizard__image-preview" />
-          )}
 
           {/* Nutrition */}
           <details className="product-wizard__nutrition">

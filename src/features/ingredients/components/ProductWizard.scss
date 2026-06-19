@@ -61,11 +61,24 @@
     }
   }
 
-  &__image-preview {
-    max-height: 120px;
-    border-radius: 8px;
-    object-fit: contain;
+  // Barcode scan confirmation block (image + "found" message)
+  &__confirmation {
+    display: flex;
+    align-items: center;
+    gap: $spacing-unit * 1.5;
+    padding: $spacing-unit * 1.5;
+    background: $color-surface;
     border: 1px solid $color-border;
+    border-radius: 10px;
+  }
+
+  &__confirmation-img {
+    width: 72px;
+    height: 72px;
+    object-fit: contain;
+    border-radius: 6px;
+    flex-shrink: 0;
+    background: #fff;
   }
 
   &__nutrition {

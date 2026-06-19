@@ -1,10 +1,13 @@
 import { useState } from 'react'
+import { Minus, Plus } from 'lucide-react'
 import { Button, Modal } from '../../../components'
 import { useAppDispatch, useAppSelector } from '../../../app/hooks'
 import { useLanguage } from '../../../i18n'
 import { localizedIngredientName } from '../../shared/localize'
 import { updatePantryItem } from '../pantrySlice'
 import './PantryDetailModal.scss'
+
+const COUNT_UNITS = new Set(['pcs', 'bunch', 'can', 'bottle', 'bag', 'box', 'pack', 'slice', 'clove', 'head'])
 
 /**
  * Standard kitchen unit groups. Each unit key maps to a translation at
@@ -37,6 +40,14 @@ export function PantryDetailModal({ ingredientId, onClose }: PantryDetailModalPr
 
   const [quantity, setQuantity] = useState(pantryItem?.quantity?.toString() ?? '')
   const [unit, setUnit] = useState(pantryItem?.unit ?? '')
+
+  function qtyStep() { return COUNT_UNITS.has(unit) ? 1 : 10 }
+
+  function adjustQty(delta: number) {
+    const current = parseFloat(quantity) || 0
+    const next = Math.max(0, current + delta)
+    setQuantity(COUNT_UNITS.has(unit) ? String(next) : next.toFixed(1).replace(/\.0$/, ''))
+  }
   const [expiresAt, setExpiresAt] = useState(pantryItem?.expiresAt?.slice(0, 10) ?? '')
   const [inStock, setInStock] = useState(pantryItem?.inStock ?? false)
   const [isLow, setIsLow] = useState(pantryItem?.isLow ?? false)
@@ -89,6 +100,14 @@ export function PantryDetailModal({ ingredientId, onClose }: PantryDetailModalPr
               {t('pantry.quantity')}
             </label>
             <div className="pantry-detail-modal__qty-row">
+              <button
+                type="button"
+                className="pantry-detail-modal__qty-btn"
+                onClick={() => adjustQty(-qtyStep())}
+                aria-label="Decrease"
+              >
+                <Minus size={16} aria-hidden />
+              </button>
               <input
                 id="pdi-quantity"
                 type="number"
@@ -96,9 +115,17 @@ export function PantryDetailModal({ ingredientId, onClose }: PantryDetailModalPr
                 value={quantity}
                 onChange={(e) => setQuantity(e.target.value)}
                 min={0}
-                step={0.1}
+                step={qtyStep()}
                 placeholder="0"
               />
+              <button
+                type="button"
+                className="pantry-detail-modal__qty-btn"
+                onClick={() => adjustQty(qtyStep())}
+                aria-label="Increase"
+              >
+                <Plus size={16} aria-hidden />
+              </button>
               <select
                 className="pantry-detail-modal__unit-select"
                 value={unit}
