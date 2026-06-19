@@ -1,7 +1,10 @@
 import { apiClient } from '../../lib/axiosClient'
+import { apiLog } from '../../lib/logger'
 import type { CreatePlannedMealPayload, PlannedMeal, UpdatePlannedMealPayload } from './types'
 
 const useMock = import.meta.env.VITE_USE_MOCK_DATA === 'true'
+
+apiLog('mealPlan', `module loaded · mode=${useMock ? 'MOCK' : 'real API'}`)
 
 /** Returns all planned meals. */
 export async function fetchMealPlan(): Promise<PlannedMeal[]> {

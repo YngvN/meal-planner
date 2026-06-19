@@ -1,7 +1,10 @@
 import { apiClient } from '../../lib/axiosClient'
+import { apiLog } from '../../lib/logger'
 import type { CreateRecipePayload, Recipe, UpdateRecipePayload } from './types'
 
 const useMock = import.meta.env.VITE_USE_MOCK_DATA === 'true'
+
+apiLog('recipes', `module loaded · mode=${useMock ? 'MOCK' : 'real API'}`)
 
 /** Returns all recipes. */
 export async function fetchRecipes(): Promise<Recipe[]> {

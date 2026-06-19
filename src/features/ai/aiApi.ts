@@ -1,3 +1,4 @@
+import { apiError, apiLog } from '../../lib/logger'
 import type {
   NutritionPhotoResponse,
   RecipeDraft,
@@ -24,19 +25,25 @@ const useMock =
 /** Base path for the serverless AI endpoints (same-origin on Netlify). */
 const AI_BASE = import.meta.env.VITE_AI_API_BASE_URL ?? '/api/ai'
 
+apiLog('ai', `config → base="${AI_BASE}" · mode=${useMock ? 'MOCK' : 'real functions'}`)
+
 const delay = (ms = 500) => new Promise<void>((resolve) => setTimeout(resolve, ms))
 
 /** POSTs JSON to an AI endpoint and returns the parsed response. */
 async function postJson<T>(path: string, body: unknown): Promise<T> {
-  const res = await fetch(`${AI_BASE}${path}`, {
+  const url = `${AI_BASE}${path}`
+  apiLog('ai', `→ POST ${url}`)
+  const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   })
   if (!res.ok) {
     const message = await res.text().catch(() => '')
+    apiError('ai', `✗ ${res.status} ${url}`, message)
     throw new Error(message || `AI request failed (${res.status})`)
   }
+  apiLog('ai', `← ${res.status} ${url}`)
   return res.json() as Promise<T>
 }
 
@@ -46,6 +53,7 @@ async function postJson<T>(path: string, body: unknown): Promise<T> {
  */
 export async function translateFields(payload: TranslateRequest): Promise<TranslateResponse> {
   if (useMock) {
+    apiLog('ai', 'translateFields (MOCK)', payload.targetLanguages)
     await delay()
     const translations: TranslateResponse['translations'] = {}
     for (const lang of payload.targetLanguages) {
@@ -62,6 +70,7 @@ export async function translateFields(payload: TranslateRequest): Promise<Transl
     return { translations }
   }
 
+  apiLog('ai', 'translateFields (real)', payload.targetLanguages)
   return postJson<TranslateResponse>('/translate', payload)
 }
 
@@ -74,6 +83,7 @@ export async function transcribeNutrition(
   mediaType: string,
 ): Promise<NutritionalValues> {
   if (useMock) {
+    apiLog('ai', 'transcribeNutrition (MOCK)')
     await delay(800)
     return { calories: 250, protein: 8.5, carbs: 30, fat: 11, fiber: 2.4 }
   }
@@ -94,6 +104,7 @@ export async function transcribeRecipe(
   mediaType: string,
 ): Promise<RecipeDraft> {
   if (useMock) {
+    apiLog('ai', 'transcribeRecipe (MOCK)')
     await delay(900)
     return {
       title: 'Scanned Tomato Pasta',
