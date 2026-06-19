@@ -18,11 +18,13 @@ type AllowedType = (typeof ALLOWED_TYPES)[number]
  * Mapped to /api/ai/recipe-photos via the exported config.
  */
 export default async (req: Request) => {
+  console.log('[ai-recipe-photos] invoked, method:', req.method)
   if (req.method !== 'POST') {
     return new Response('Method not allowed', { status: 405 })
   }
 
   const profile = await verifyAndGetProfile(req)
+  console.log('[ai-recipe-photos] profile result:', profile ? `ok (${profile.id})` : 'null')
   if (!profile) return new Response('Unauthorized', { status: 401 })
 
   const { images } = (await req.json().catch(() => ({}))) as {
