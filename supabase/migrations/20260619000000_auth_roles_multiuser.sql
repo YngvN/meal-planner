@@ -29,6 +29,10 @@ alter table profiles enable row level security;
 -- Everyone can read any profile (needed for recipe attribution).
 create policy "profiles_select_all" on profiles for select using (true);
 
+-- A user may insert their own profile row (safety net if the trigger misses).
+create policy "profiles_insert_own" on profiles for insert
+  with check (auth.uid() = id);
+
 -- A user may update their own row but cannot escalate their own role.
 create policy "profiles_update_own" on profiles for update
   using (auth.uid() = id)

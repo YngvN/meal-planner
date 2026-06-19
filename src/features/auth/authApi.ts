@@ -14,20 +14,32 @@ async function buildAuthUser(): Promise<AuthUser | null> {
   } = await supabase.auth.getUser()
   if (!user) return null
 
-  const { data: profile, error } = await supabase
+  let { data: profile, error } = await supabase
     .from('profiles')
     .select('username, role, ai_image_requests_used')
     .eq('id', user.id)
     .single()
 
-  if (error || !profile) return null
+  // Auto-create profile row if missing (e.g. user signed up before migration ran).
+  if ((error || !profile) && user.id) {
+    const fallbackUsername =
+      (user.user_metadata?.username as string) ?? `user_${user.id.slice(0, 8)}`
+    const { data: created } = await supabase
+      .from('profiles')
+      .insert({ id: user.id, username: fallbackUsername, role: 'user' })
+      .select('username, role, ai_image_requests_used')
+      .single()
+    profile = created
+  }
+
+  if (!profile) return null
 
   return {
     id: user.id,
     email: user.email ?? '',
-    username: profile.username as string,
-    role: profile.role as AuthUser['role'],
-    aiImageRequestsUsed: (profile.ai_image_requests_used as number) ?? 0,
+    username: (profile as Record<string, unknown>).username as string,
+    role: (profile as Record<string, unknown>).role as AuthUser['role'],
+    aiImageRequestsUsed: ((profile as Record<string, unknown>).ai_image_requests_used as number) ?? 0,
   }
 }
 
