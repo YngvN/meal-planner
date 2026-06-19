@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
-import { Plus, Trash2, X } from 'lucide-react'
+import { Plus, Trash2 } from 'lucide-react'
 import type { Ingredient } from '../features/ingredients/types'
 import './IngredientCombobox.scss'
 
