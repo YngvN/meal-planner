@@ -144,7 +144,28 @@ export function RecipeForm({ initialValues, initialDraft, onDone }: RecipeFormPr
   }
 
   function removeIngredientRow(idx: number) {
-    patch('ingredients', form.ingredients.filter((_, i) => i !== idx))
+    // Also remove any alternatives that reference this row by its position-based temp key.
+    const tempKey = `draft-${idx}`
+    const primaryId = form.ingredients[idx]?.alternativeFor === undefined
+      ? tempKey
+      : undefined
+    patch(
+      'ingredients',
+      form.ingredients.filter(
+        (r, i) => i !== idx && r.alternativeFor !== tempKey && r.alternativeFor !== primaryId,
+      ),
+    )
+  }
+
+  function addAlternativeRow(primaryIdx: number) {
+    const tempKey = `draft-${primaryIdx}`
+    const newAlt: RecipeIngredient = { ingredientId: '', quantity: form.ingredients[primaryIdx].quantity, unit: form.ingredients[primaryIdx].unit, alternativeFor: tempKey }
+    // Insert the alternative immediately after the primary (and after any existing alternatives for it).
+    const updated = [...form.ingredients]
+    let insertAt = primaryIdx + 1
+    while (insertAt < updated.length && updated[insertAt].alternativeFor === tempKey) insertAt++
+    updated.splice(insertAt, 0, newAlt)
+    patch('ingredients', updated)
   }
 
   // ─── Steps ───────────────────────────────────────────────────────────────
@@ -200,9 +221,27 @@ export function RecipeForm({ initialValues, initialDraft, onDone }: RecipeFormPr
   async function applyRecipeDraft(draft: import('../../ai/types').RecipeDraft) {
     const resolved: RecipeIngredient[] = []
     for (const di of draft.ingredients) {
+      // Use a temporary position-based key so alternatives can reference their primary.
+      // The real DB id is filled in after the first upsert pass in recipesApi.
+      const tempKey = `draft-${resolved.length}`
       const ingredientId = await resolveIngredientId(di.name)
       resolved.push({ ingredientId, quantity: di.quantity, unit: di.unit })
+
+      for (const altName of di.alternatives ?? []) {
+        const altIngredientId = await resolveIngredientId(altName)
+        resolved.push({
+          ingredientId: altIngredientId,
+          quantity: di.quantity,
+          unit: di.unit,
+          alternativeFor: tempKey,
+        })
+      }
     }
+
+    // Filter AI-supplied tags to only accepted enum values.
+    const validDietaryTags = ['vegetarian', 'vegan', 'gluten-free', 'dairy-free', 'nut-free'] as const
+    const validMealTags = ['breakfast', 'lunch', 'dinner', 'snack', 'dessert'] as const
+    const validSkillLevels = ['beginner', 'intermediate', 'advanced'] as const
 
     setForm((prev) => ({
       ...prev,
@@ -216,6 +255,22 @@ export function RecipeForm({ initialValues, initialDraft, onDone }: RecipeFormPr
         draft.instructions.length > 0
           ? draft.instructions.map((description, i) => ({ order: i + 1, description }))
           : prev.steps,
+      ...(draft.dietaryTags && {
+        dietaryTags: draft.dietaryTags.filter((t): t is typeof validDietaryTags[number] =>
+          (validDietaryTags as readonly string[]).includes(t),
+        ),
+      }),
+      ...(draft.mealTags && {
+        mealTags: draft.mealTags.filter((t): t is typeof validMealTags[number] =>
+          (validMealTags as readonly string[]).includes(t),
+        ),
+      }),
+      ...(draft.skillLevel && validSkillLevels.includes(draft.skillLevel as typeof validSkillLevels[number]) && {
+        skillLevel: draft.skillLevel as typeof validSkillLevels[number],
+      }),
+      ...(draft.cuisineTypes?.length && { cuisineTypes: draft.cuisineTypes }),
+      ...(draft.equipment?.length && { equipment: draft.equipment }),
+      ...(draft.tags?.length && { tags: draft.tags }),
     }))
   }
 
@@ -508,10 +563,20 @@ export function RecipeForm({ initialValues, initialDraft, onDone }: RecipeFormPr
       <section className="recipe-form__section">
         <h2>{t('recipes.ingredients')}</h2>
         {form.ingredients.map((row, idx) => {
+          const isAlternative = Boolean(row.alternativeFor)
           const selectedIngredient = ingredientLibrary.find((i) => i.id === row.ingredientId)
           const products = selectedIngredient?.products ?? []
           return (
-            <div key={idx} className="recipe-form__ingredient-row">
+            <div
+              key={idx}
+              className={[
+                'recipe-form__ingredient-row',
+                isAlternative && 'recipe-form__ingredient-row--alternative',
+              ].filter(Boolean).join(' ')}
+            >
+              {isAlternative && (
+                <span className="recipe-form__or-badge" aria-label="or">or</span>
+              )}
               <IngredientCombobox
                 value={row.ingredientId || undefined}
                 onChange={(id) => updateIngredientRow(idx, { ingredientId: id, productId: undefined })}
@@ -547,6 +612,17 @@ export function RecipeForm({ initialValues, initialDraft, onDone }: RecipeFormPr
                   <option key={u} value={u}>{u}</option>
                 ))}
               </select>
+              {!isAlternative && (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => addAlternativeRow(idx)}
+                  aria-label={t('recipes.form.addAlternative')}
+                  title={t('recipes.form.addAlternative')}
+                >
+                  <span className="recipe-form__or-btn-label">or</span>
+                </Button>
+              )}
               <Button type="button" variant="secondary" onClick={() => removeIngredientRow(idx)} aria-label={t('common.delete')}>
                 <X size={16} aria-hidden />
               </Button>

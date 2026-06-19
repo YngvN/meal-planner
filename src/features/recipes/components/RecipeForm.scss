@@ -121,6 +121,29 @@
     align-items: flex-end;
     gap: $spacing-unit;
     flex-wrap: wrap;
+
+    &--alternative {
+      padding-left: calc($spacing-unit * 2.5);
+      opacity: 0.85;
+    }
+  }
+
+  &__or-badge {
+    flex-shrink: 0;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: $color-text-muted;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0 calc($spacing-unit * 0.5);
+    align-self: center;
+  }
+
+  &__or-btn-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
 
   &__ingredient-select {

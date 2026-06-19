@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Barcode, Plus } from 'lucide-react'
+import { Barcode, Pencil, Plus, Trash2 } from 'lucide-react'
 import { Alert, Badge, Button, Modal, SearchBar, Spinner } from '../../../components'
 import { useAppDispatch, useAppSelector } from '../../../app/hooks'
 import { useLanguage } from '../../../i18n'
@@ -96,12 +96,22 @@ export function IngredientList() {
                 </span>
               </td>
               <td className="ingredient-list__actions">
-                <Button variant="secondary" onClick={() => setManualEdit(ing)}>
-                  {t('common.edit')}
-                </Button>
-                <Button variant="secondary" onClick={() => handleDelete(ing)}>
-                  {t('common.delete')}
-                </Button>
+                <button
+                  type="button"
+                  className="ingredient-list__icon-btn"
+                  aria-label={t('common.edit')}
+                  onClick={() => setManualEdit(ing)}
+                >
+                  <Pencil size={15} aria-hidden />
+                </button>
+                <button
+                  type="button"
+                  className="ingredient-list__icon-btn ingredient-list__icon-btn--danger"
+                  aria-label={t('common.delete')}
+                  onClick={() => handleDelete(ing)}
+                >
+                  <Trash2 size={15} aria-hidden />
+                </button>
               </td>
             </tr>
           ))}

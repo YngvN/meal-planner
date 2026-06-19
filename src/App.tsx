@@ -45,7 +45,6 @@ function App() {
   const user = useAppSelector((s) => s.auth.user)
   const [navOpen, setNavOpen] = useState(false)
   const sidebarRef = useRef<HTMLElement>(null)
-  const hamburgerRef = useRef<HTMLButtonElement>(null)
 
   async function handleSignOut() {
     setNavOpen(false)
@@ -53,34 +52,25 @@ function App() {
     navigate('/login', { replace: true })
   }
 
-  // Close the mobile dropdown on Escape or click outside.
+  // Close nav on Escape; lock body scroll while open.
   useEffect(() => {
-    if (!navOpen) return
-
     function handleKey(e: KeyboardEvent) {
       if (e.key === 'Escape') setNavOpen(false)
     }
-    function handleClick(e: MouseEvent) {
-      const target = e.target as Node
-      if (
-        sidebarRef.current?.contains(target) ||
-        hamburgerRef.current?.contains(target)
-      ) {
-        return
-      }
-      setNavOpen(false)
-    }
-
     document.addEventListener('keydown', handleKey)
-    document.addEventListener('mousedown', handleClick)
-    return () => {
-      document.removeEventListener('keydown', handleKey)
-      document.removeEventListener('mousedown', handleClick)
-    }
+    return () => document.removeEventListener('keydown', handleKey)
+  }, [])
+
+  useEffect(() => {
+    document.body.style.overflow = navOpen ? 'hidden' : ''
+    return () => { document.body.style.overflow = '' }
   }, [navOpen])
 
   return (
     <div className="app">
+      {navOpen && (
+        <div className="app__nav-overlay" aria-hidden onClick={() => setNavOpen(false)} />
+      )}
       <aside
         ref={sidebarRef}
         className={`app__sidebar${navOpen ? ' app__sidebar--open' : ''}`}
@@ -119,7 +109,6 @@ function App() {
       <div className="app__main">
         <header className="app__topbar">
           <button
-            ref={hamburgerRef}
             type="button"
             className="app__hamburger"
             aria-label="Menu"

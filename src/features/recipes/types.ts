@@ -33,6 +33,12 @@ export interface RecipeIngredient {
   unit: string
   /** References a specific branded product; falls back to parent ingredient nutrition if absent. */
   productId?: string
+  /**
+   * When set, this row is an alternative for the primary ingredient row whose
+   * DB id matches this value. Used with a temporary position-based key during
+   * draft application; resolved to a real UUID after the first upsert pass.
+   */
+  alternativeFor?: string
 }
 
 /** A single step in the recipe instructions. */

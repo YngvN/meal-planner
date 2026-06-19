@@ -1,0 +1,57 @@
+@use '../../../styles/variables' as *;
+
+.recipe-pantry-check {
+  border-radius: 8px;
+  padding: calc($spacing-unit * 1.5) calc($spacing-unit * 2);
+  margin-bottom: calc($spacing-unit * 2);
+
+  &--ok {
+    background: color-mix(in srgb, $color-success 12%, $color-surface);
+    border: 1px solid color-mix(in srgb, $color-success 30%, transparent);
+
+    .recipe-pantry-check__icon { color: $color-success; }
+    .recipe-pantry-check__title { color: $color-success; }
+  }
+
+  &--missing {
+    background: color-mix(in srgb, $color-warning 10%, $color-surface);
+    border: 1px solid color-mix(in srgb, $color-warning 30%, transparent);
+
+    .recipe-pantry-check__icon { color: $color-warning; }
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: calc($spacing-unit * 0.75);
+  }
+
+  &__title {
+    font-weight: 600;
+    font-size: 0.95rem;
+    flex: 1;
+  }
+
+  &__ratio {
+    font-size: 0.85rem;
+    color: $color-text-muted;
+    font-weight: 500;
+  }
+
+  &__missing-list {
+    margin: calc($spacing-unit * 1) 0 0 calc($spacing-unit * 3);
+    padding: 0;
+    list-style: disc;
+    font-size: 0.9rem;
+    color: $color-text-muted;
+  }
+
+  &__missing-item {
+    margin-top: calc($spacing-unit * 0.5);
+  }
+
+  &__missing-alternatives {
+    font-size: 0.8rem;
+    opacity: 0.7;
+  }
+}

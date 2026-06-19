@@ -101,7 +101,13 @@ export function IngredientDetail({ ingredient, onClose, onEditCategory }: Props)
                     )}
                     {p.nutrition && (
                       <span className="ingredient-detail__product-nutrition">
-                        {p.nutrition.calories != null && `${p.nutrition.calories} kcal`}
+                        {[
+                          p.nutrition.calories != null && `${p.nutrition.calories} kcal`,
+                          p.nutrition.protein != null && `${p.nutrition.protein}g protein`,
+                          p.nutrition.carbs != null && `${p.nutrition.carbs}g carbs`,
+                          p.nutrition.fat != null && `${p.nutrition.fat}g fat`,
+                          p.nutrition.fiber != null && `${p.nutrition.fiber}g fiber`,
+                        ].filter(Boolean).join(' · ')}
                       </span>
                     )}
                   </div>

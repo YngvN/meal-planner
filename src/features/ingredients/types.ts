@@ -34,6 +34,8 @@ export interface Product {
   imageUrl?: string
   /** Translated names keyed by language code. Falls back to `name` when missing. */
   nameI18n?: Record<string, string>
+  /** Free-form descriptive tags set by AI standardisation (e.g. "Condiment", "Sauce"). */
+  tags?: string[]
 }
 
 /** Fields required to create a new product. */

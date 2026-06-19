@@ -40,6 +40,8 @@ export interface RecipeDraftIngredient {
   name: string
   quantity: number
   unit: string
+  /** Alternative ingredient names (e.g. ["olivenolje"] for "smør eller olivenolje"). */
+  alternatives?: string[]
 }
 
 /** A recipe parsed from a photo, before it is mapped onto the form / library. */
@@ -51,6 +53,12 @@ export interface RecipeDraft {
   cookTimeMinutes?: number
   ingredients: RecipeDraftIngredient[]
   instructions: string[]
+  mealTags?: string[]
+  dietaryTags?: string[]
+  cuisineTypes?: string[]
+  equipment?: string[]
+  skillLevel?: string
+  tags?: string[]
 }
 
 /** Request body for the recipe-photo endpoint. */

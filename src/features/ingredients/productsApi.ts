@@ -18,6 +18,7 @@ function mapProduct(row: Record<string, unknown>): Product {
     nutrition: (row.nutrition as NutritionalValues) ?? undefined,
     imageUrl: (row.image_url as string) ?? undefined,
     nameI18n: (row.name_i18n as Record<string, string>) ?? {},
+    tags: (row.tags as string[]) ?? [],
   }
 }
 
@@ -31,6 +32,7 @@ function productToDb(payload: Partial<CreateProductPayload>) {
     nutrition: payload.nutrition ?? null,
     image_url: payload.imageUrl ?? null,
     name_i18n: payload.nameI18n ?? {},
+    ...(payload.tags !== undefined && { tags: payload.tags }),
   }
 }
 
@@ -145,7 +147,7 @@ export async function lookupBarcode(barcode: string): Promise<BarcodeResult | nu
   try {
     const res = await fetch(
       `https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(barcode)}.json`,
-      { headers: { 'User-Agent': 'MealPlanner/1.0 (https://hungri.netlify.app)' } },
+      { headers: { 'User-Agent': 'Hungri/1.0 (https://hungri.netlify.app)' } },
     )
     if (!res.ok) {
       sessionStorage.setItem(cacheKey, 'null')

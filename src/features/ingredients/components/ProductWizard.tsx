@@ -62,6 +62,10 @@ export function ProductWizard({ ingredientId, existingProduct, onClose }: Props)
   const [error, setError] = useState<string | null>(null)
   const [frontScanning, setFrontScanning] = useState(false)
   const [nutritionScanning, setNutritionScanning] = useState(false)
+  const [nutritionOpen, setNutritionOpen] = useState(
+    // Auto-open if editing a product that already has nutrition
+    isEdit && Object.values(existingProduct?.nutrition ?? {}).some((v) => v != null),
+  )
 
   const frontInputRef = useRef<HTMLInputElement>(null)
   const nutritionInputRef = useRef<HTMLInputElement>(null)
@@ -85,6 +89,7 @@ export function ProductWizard({ ingredientId, existingProduct, onClose }: Props)
         if (result.nutrition.carbs != null) setCarbs(String(result.nutrition.carbs))
         if (result.nutrition.fat != null) setFat(String(result.nutrition.fat))
         if (result.nutrition.fiber != null) setFiber(String(result.nutrition.fiber))
+        setNutritionOpen(true)
       }
     } else {
       setLookupState('not-found')
@@ -125,6 +130,7 @@ export function ProductWizard({ ingredientId, existingProduct, onClose }: Props)
       if (nutrition.carbs != null) setCarbs(String(nutrition.carbs))
       if (nutrition.fat != null) setFat(String(nutrition.fat))
       if (nutrition.fiber != null) setFiber(String(nutrition.fiber))
+      setNutritionOpen(true)
     } catch (err) {
       setError(err instanceof Error ? err.message : t('ai.scanError'))
     } finally {
@@ -279,8 +285,12 @@ export function ProductWizard({ ingredientId, existingProduct, onClose }: Props)
           <Input id="pw-barcode" label={<TranslatedText id="ingredients.barcode" />}
             value={barcode} onChange={(e) => setBarcode(e.target.value)} />
 
-          {/* Nutrition */}
-          <details className="product-wizard__nutrition">
+          {/* Nutrition (auto-expands after barcode lookup or AI label scan fills values) */}
+          <details
+            className="product-wizard__nutrition"
+            open={nutritionOpen}
+            onToggle={(e) => setNutritionOpen(e.currentTarget.open)}
+          >
             <summary><TranslatedText id="ingredients.nutrition" /></summary>
             <div className="product-wizard__nutrition-fields">
               {(['calories', 'protein', 'carbs', 'fat', 'fiber'] as const).map((field) => {

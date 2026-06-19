@@ -4,11 +4,42 @@ import { Button, Modal, TranslatedText } from '../../../components'
 import { useLanguage } from '../../../i18n'
 import { transcribeRecipePhotos } from '../aiApi'
 import type { RecipeDraft } from '../types'
+import { useNameFeasibility } from '../../pantry/useRecipeFeasibility'
 import './RecipePhotoScanner.scss'
 
 interface Props {
   onResult: (draft: RecipeDraft) => void
   onClose: () => void
+}
+
+/** Pantry summary shown after AI scan, before handing the draft to the form. */
+function PantrySummary({ draft, onContinue, onClose }: { draft: RecipeDraft; onContinue: () => void; onClose: () => void }) {
+  const { t } = useLanguage()
+  const names = draft.ingredients.map((i) => i.name)
+  const { inStockCount, total, missingNames } = useNameFeasibility(names)
+
+  return (
+    <div className="recipe-photo-scanner__pantry-summary">
+      <p className="recipe-photo-scanner__pantry-ratio">
+        {t('pantry.feasibility.missing', { count: String(total - inStockCount) })}
+        {' · '}
+        <strong>{inStockCount}/{total}</strong> {t('pantry.inStock').toLowerCase()}
+      </p>
+      {missingNames.length > 0 && (
+        <ul className="recipe-photo-scanner__missing-list">
+          {missingNames.map((n) => <li key={n}>{n}</li>)}
+        </ul>
+      )}
+      <div className="recipe-photo-scanner__pantry-actions">
+        <Button variant="secondary" onClick={onClose}>
+          <TranslatedText id="common.cancel" />
+        </Button>
+        <Button onClick={onContinue}>
+          <TranslatedText id="recipes.form.continueToRecipe" />
+        </Button>
+      </div>
+    </div>
+  )
 }
 
 const MAX_PHOTOS = 6
@@ -38,6 +69,7 @@ export function RecipePhotoScanner({ onResult, onClose }: Props) {
   const [previews, setPreviews] = useState<string[]>([])
   const [scanning, setScanning] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [pendingDraft, setPendingDraft] = useState<RecipeDraft | null>(null)
 
   function addFiles(files: FileList | null) {
     if (!files) return
@@ -65,7 +97,7 @@ export function RecipePhotoScanner({ onResult, onClose }: Props) {
         photos.map(async (f) => ({ imageBase64: await fileToBase64(f), mediaType: f.type })),
       )
       const draft = await transcribeRecipePhotos(images)
-      onResult(draft)
+      setPendingDraft(draft)
     } catch (err) {
       setError(err instanceof Error ? err.message : t('ai.recipeScanMultiError'))
     } finally {
@@ -74,6 +106,18 @@ export function RecipePhotoScanner({ onResult, onClose }: Props) {
   }
 
   const canAddMore = photos.length < MAX_PHOTOS && !scanning
+
+  if (pendingDraft) {
+    return (
+      <Modal open title={t('recipes.scanRecipe')} onClose={onClose}>
+        <PantrySummary
+          draft={pendingDraft}
+          onContinue={() => { onResult(pendingDraft); onClose() }}
+          onClose={onClose}
+        />
+      </Modal>
+    )
+  }
 
   return (
     <Modal

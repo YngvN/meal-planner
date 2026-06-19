@@ -14,6 +14,7 @@ function mapRecipeIngredient(row: Record<string, unknown>): RecipeIngredient {
     quantity: row.quantity as number,
     unit: row.unit as string,
     productId: (row.product_id as string) ?? undefined,
+    alternativeFor: (row.alternative_for as string) ?? undefined,
   }
 }
 
@@ -87,7 +88,7 @@ function recipeToDb(payload: Partial<CreateRecipePayload>) {
   }
 }
 
-const RECIPE_SELECT = '*, recipe_ingredients(*)'
+const RECIPE_SELECT = '*, recipe_ingredients(*, alternative_for)'
 
 async function fetchById(id: string): Promise<Recipe> {
   const { data, error } = await supabase
@@ -102,17 +103,49 @@ async function fetchById(id: string): Promise<Recipe> {
 async function upsertIngredients(recipeId: string, ingredients: RecipeIngredient[]) {
   await supabase.from('recipe_ingredients').delete().eq('recipe_id', recipeId)
   if (!ingredients.length) return
-  const { error } = await supabase.from('recipe_ingredients').insert(
-    ingredients.map((ri, i) => ({
+
+  // Pass 1: insert primaries (alternativeFor == null/undefined) and collect their real IDs.
+  const primaries = ingredients.filter((ri) => !ri.alternativeFor)
+  const { data: primaryRows, error: primaryErr } = await supabase
+    .from('recipe_ingredients')
+    .insert(
+      primaries.map((ri, i) => ({
+        recipe_id: recipeId,
+        ingredient_id: ri.ingredientId,
+        product_id: ri.productId ?? null,
+        quantity: ri.quantity,
+        unit: ri.unit,
+        position: i,
+        alternative_for: null,
+      })),
+    )
+    .select('id, position')
+  if (primaryErr) throw new Error(primaryErr.message)
+
+  // Build a map from the temporary draft key → real DB id.
+  // applyRecipeDraft stores alternatives with alternativeFor = "draft-<primaryIndex>".
+  const tempKeyToId = new Map<string, string>()
+  ;(primaryRows ?? []).forEach((row, idx) => {
+    tempKeyToId.set(`draft-${idx}`, row.id as string)
+  })
+
+  // Pass 2: insert alternatives, resolving temp keys to real ids where possible.
+  const alternatives = ingredients.filter((ri) => ri.alternativeFor)
+  if (!alternatives.length) return
+
+  const { error: altErr } = await supabase.from('recipe_ingredients').insert(
+    alternatives.map((ri, i) => ({
       recipe_id: recipeId,
       ingredient_id: ri.ingredientId,
       product_id: ri.productId ?? null,
       quantity: ri.quantity,
       unit: ri.unit,
-      position: i,
+      position: primaries.length + i,
+      // Resolve temp draft key → real id; if it's already a UUID (editing), use as-is.
+      alternative_for: tempKeyToId.get(ri.alternativeFor!) ?? ri.alternativeFor!,
     })),
   )
-  if (error) throw new Error(error.message)
+  if (altErr) throw new Error(altErr.message)
 }
 
 // ─── API functions ─────────────────────────────────────────────────────────────

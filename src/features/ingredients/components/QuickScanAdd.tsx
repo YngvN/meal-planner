@@ -46,6 +46,7 @@ export function QuickScanAdd({ onClose, onDone }: Props) {
   const [carbs, setCarbs] = useState('')
   const [fat, setFat] = useState('')
   const [fiber, setFiber] = useState('')
+  const [nutritionOpen, setNutritionOpen] = useState(false)
 
   // ── Barcode detected ───────────────────────────────────────────────────────
 
@@ -67,6 +68,7 @@ export function QuickScanAdd({ onClose, onDone }: Props) {
         if (result.nutrition.carbs != null) setCarbs(String(result.nutrition.carbs))
         if (result.nutrition.fat != null) setFat(String(result.nutrition.fat))
         if (result.nutrition.fiber != null) setFiber(String(result.nutrition.fiber))
+        setNutritionOpen(true)
       }
       // Try to match to an existing ingredient category by name
       const nameLower = result.name?.toLowerCase() ?? ''
@@ -214,8 +216,12 @@ export function QuickScanAdd({ onClose, onDone }: Props) {
               value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)} />
           )}
 
-          {/* Nutrition (collapsed) */}
-          <details className="quick-scan-add__nutrition">
+          {/* Nutrition (auto-expands when scan or barcode lookup fills values) */}
+          <details
+            className="quick-scan-add__nutrition"
+            open={nutritionOpen}
+            onToggle={(e) => setNutritionOpen(e.currentTarget.open)}
+          >
             <summary><TranslatedText id="ingredients.nutrition" /></summary>
             <div className="quick-scan-add__nutrition-grid">
               {(['calories', 'protein', 'carbs', 'fat', 'fiber'] as const).map((field) => {

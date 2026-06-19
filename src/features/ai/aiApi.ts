@@ -182,3 +182,38 @@ export async function transcribeFrontOfPackage(
   return res.product
 }
 
+export interface ProductStandardizeInput {
+  id: string
+  name: string
+  brand?: string
+  ingredientName: string
+  currentCategory: string
+}
+
+export interface ProductSuggestion {
+  productId: string
+  tags: string[]
+  suggestedCategory?: string
+}
+
+/**
+ * Sends all products to Claude for batch tag and category standardisation.
+ * Admin only — the server enforces the role check.
+ */
+export async function standardizeProducts(
+  products: ProductStandardizeInput[],
+): Promise<ProductSuggestion[]> {
+  if (useMock) {
+    apiLog('ai', 'standardizeProducts (MOCK)')
+    await delay(800)
+    return products.slice(0, 3).map((p) => ({
+      productId: p.id,
+      tags: ['Condiment'],
+      suggestedCategory: undefined,
+    }))
+  }
+
+  const res = await postJson<{ suggestions: ProductSuggestion[] }>('/standardize-products', { products })
+  return res.suggestions
+}
+

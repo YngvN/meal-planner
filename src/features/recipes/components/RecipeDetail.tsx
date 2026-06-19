@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, ArrowLeftRight, Check, Clock, Star, X } from 'lucide-react'
+import { ArrowLeft, ArrowLeftRight, Check, Clock, Pencil, Star, Trash2, X } from 'lucide-react'
 import { Alert, Badge, Button, Modal, Spinner } from '../../../components'
 import { useAppDispatch, useAppSelector } from '../../../app/hooks'
 import { useLanguage } from '../../../i18n'
@@ -11,6 +11,7 @@ import type { Recipe, RecipeIngredient } from '../types'
 import { ALL_UNIT_KEYS, convertUnit, getUnitDimension, roundConverted } from '../../shared/units'
 import { localizedIngredientName, localizedProductName, localizeRecipe } from '../../shared/localize'
 import { MealDoneModal } from './MealDoneModal'
+import { RecipePantryCheck } from '../../pantry/components/RecipePantryCheck'
 import './RecipeDetail.scss'
 
 /**
@@ -182,10 +183,10 @@ export function RecipeDetail({ recipeId }: RecipeDetailProps) {
             <Star size={16} fill={recipe.isFavorite ? 'currentColor' : 'none'} aria-hidden /> {recipe.isFavorite ? t('recipes.unfavorite') : t('recipes.favorite')}
           </Button>
           <Button variant="secondary" onClick={() => navigate(`/recipes/${recipe.id}/edit`)}>
-            {t('common.edit')}
+            <Pencil size={15} aria-hidden /> {t('common.edit')}
           </Button>
           <Button variant="secondary" onClick={() => setConfirmDelete(true)}>
-            {t('common.delete')}
+            <Trash2 size={15} aria-hidden /> {t('common.delete')}
           </Button>
         </div>
       </div>
@@ -255,6 +256,8 @@ export function RecipeDetail({ recipeId }: RecipeDetailProps) {
           <Badge key={tag} variant="neutral">{tag}</Badge>
         ))}
       </div>
+
+      <RecipePantryCheck ingredients={recipe.ingredients} />
 
       <section className="recipe-detail__section">
         <h2>{t('recipes.ingredients')}</h2>

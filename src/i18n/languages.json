@@ -3,7 +3,7 @@
     "label": "English",
     "translations": {
       "nav": {
-        "appName": "Meal Planner",
+        "appName": "Hungri",
         "home": "Home",
         "recipes": "Recipes",
         "ingredients": "Ingredients",
@@ -17,7 +17,7 @@
       },
       "home": {
         "title": "Home",
-        "welcome": "Welcome to your meal planner.",
+        "welcome": "Welcome to Hungri.",
         "nextMeal": "Next meal",
         "noMealsPlanned": "No meals planned yet.",
         "planMeals": "Plan meals",
@@ -152,6 +152,8 @@
           "selectIngredient": "Select ingredient…",
           "defaultVariant": "Default variant",
           "addIngredient": "Add ingredient",
+          "addAlternative": "Add alternative (or)",
+          "continueToRecipe": "Continue to recipe →",
           "addStep": "Add step",
           "stepDescription": "Describe this step…",
           "timer": "Timer",
@@ -278,6 +280,11 @@
         "whatCanIMake": "What can I make?",
         "readyToMake": "Ready to make",
         "missing": "Missing {{count}} ingredient(s)",
+        "feasibility": {
+          "canMake": "You can make this!",
+          "missing": "Missing {{count}} ingredient(s)",
+          "orAlternatives": "or {{alts}}"
+        },
         "editItem": "Edit pantry item",
         "quantity": "Quantity",
         "unit": "Unit",
@@ -387,7 +394,19 @@
         "aiUsage": "AI Usage",
         "scansUsed": "Scans used",
         "aiUsageBar": "Usage",
-        "totalUsers": "{{n}} users total"
+        "totalUsers": "{{n}} users total",
+        "standardize": {
+          "title": "Product Library",
+          "hint": "Send all products to AI to standardise categories and add descriptive tags.",
+          "run": "Standardize with AI",
+          "running": "Analysing…",
+          "noProducts": "No products in the library yet.",
+          "product": "Product",
+          "tags": "Suggested tags",
+          "category": "Category change",
+          "include": "Include",
+          "apply": "Apply {{n}} changes"
+        }
       }
     }
   },
@@ -395,7 +414,7 @@
     "label": "Norsk",
     "translations": {
       "nav": {
-        "appName": "Måltidsplanlegger",
+        "appName": "Hungri",
         "home": "Hjem",
         "recipes": "Oppskrifter",
         "ingredients": "Ingredienser",
@@ -409,7 +428,7 @@
       },
       "home": {
         "title": "Hjem",
-        "welcome": "Velkommen til din måltidsplanlegger.",
+        "welcome": "Velkommen til Hungri.",
         "nextMeal": "Neste måltid",
         "noMealsPlanned": "Ingen måltider planlagt ennå.",
         "planMeals": "Planlegg måltider",
@@ -544,6 +563,8 @@
           "selectIngredient": "Velg ingrediens…",
           "defaultVariant": "Standard variant",
           "addIngredient": "Legg til ingrediens",
+          "addAlternative": "Legg til alternativ (eller)",
+          "continueToRecipe": "Fortsett til oppskriften →",
           "addStep": "Legg til steg",
           "stepDescription": "Beskriv dette steget…",
           "timer": "Timer",
@@ -670,6 +691,11 @@
         "whatCanIMake": "Hva kan jeg lage?",
         "readyToMake": "Klar til å lage",
         "missing": "Mangler {{count}} ingrediens(er)",
+        "feasibility": {
+          "canMake": "Du kan lage dette!",
+          "missing": "Mangler {{count}} ingrediens(er)",
+          "orAlternatives": "eller {{alts}}"
+        },
         "editItem": "Rediger kjøleskaps-vare",
         "quantity": "Mengde",
         "unit": "Enhet",
@@ -779,7 +805,19 @@
         "aiUsage": "AI-bruk",
         "scansUsed": "Skanninger brukt",
         "aiUsageBar": "Bruk",
-        "totalUsers": "{{n}} brukere totalt"
+        "totalUsers": "{{n}} brukere totalt",
+        "standardize": {
+          "title": "Produktbibliotek",
+          "hint": "Send alle produkter til AI for å standardisere kategorier og legge til beskrivende tagger.",
+          "run": "Standardiser med AI",
+          "running": "Analyserer…",
+          "noProducts": "Ingen produkter i biblioteket ennå.",
+          "product": "Produkt",
+          "tags": "Foreslåtte tagger",
+          "category": "Kategoriendring",
+          "include": "Inkluder",
+          "apply": "Bruk {{n}} endringer"
+        }
       }
     }
   }

@@ -1,5 +1,5 @@
-import { useEffect } from 'react'
-import { Copy, TriangleAlert, X } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Copy, LoaderCircle, TriangleAlert, X } from 'lucide-react'
 import { Button, TranslatedText } from '../components'
 import { useAppDispatch, useAppSelector } from '../app/hooks'
 import { useLanguage } from '../i18n'
@@ -12,7 +12,11 @@ import {
   updateAppSettings,
   updateUserRole,
 } from '../features/settings/adminSlice'
+import { updateProduct } from '../features/ingredients/ingredientsSlice'
+import { updateIngredient } from '../features/ingredients/ingredientsSlice'
+import { standardizeProducts, type ProductSuggestion } from '../features/ai/aiApi'
 import { Input } from '../components'
+import type { IngredientCategory } from '../features/ingredients/types'
 import './Admin.scss'
 
 /**
@@ -24,6 +28,14 @@ export function Admin() {
   const { t } = useLanguage()
   const currentUser = useAppSelector((s) => s.auth.user)
   const { appSettings, inviteCodes, users } = useAppSelector((s) => s.admin)
+  const ingredients = useAppSelector((s) => s.ingredients.items)
+
+  // Product standardization state
+  const [standardizing, setStandardizing] = useState(false)
+  const [standardizeError, setStandardizeError] = useState<string | null>(null)
+  const [suggestions, setSuggestions] = useState<ProductSuggestion[]>([])
+  const [excluded, setExcluded] = useState<Set<string>>(new Set())
+  const [applying, setApplying] = useState(false)
 
   useEffect(() => {
     dispatch(fetchAppSettings())
@@ -35,6 +47,55 @@ export function Admin() {
 
   const quota = appSettings.aiImageRequestsPerUser
   const totalScans = users.reduce((sum, u) => sum + u.aiImageRequestsUsed, 0)
+
+  async function handleStandardize() {
+    setStandardizing(true)
+    setStandardizeError(null)
+    setSuggestions([])
+    setExcluded(new Set())
+    try {
+      const productInputs = ingredients.flatMap((ing) =>
+        (ing.products ?? []).map((p) => ({
+          id: p.id,
+          name: p.name,
+          brand: p.brand,
+          ingredientName: ing.name,
+          currentCategory: ing.category,
+        })),
+      )
+      if (!productInputs.length) {
+        setStandardizeError(t('admin.standardize.noProducts'))
+        return
+      }
+      const result = await standardizeProducts(productInputs)
+      setSuggestions(result)
+    } catch (err) {
+      setStandardizeError(err instanceof Error ? err.message : t('common.error'))
+    } finally {
+      setStandardizing(false)
+    }
+  }
+
+  async function handleApply() {
+    setApplying(true)
+    try {
+      const toApply = suggestions.filter((s) => !excluded.has(s.productId))
+      for (const s of toApply) {
+        // Find which ingredient owns this product
+        const ing = ingredients.find((i) => i.products?.some((p) => p.id === s.productId))
+        if (!ing) continue
+        await dispatch(updateProduct({ id: s.productId, payload: { tags: s.tags } })).unwrap()
+        if (s.suggestedCategory && s.suggestedCategory !== ing.category) {
+          await dispatch(updateIngredient({ id: ing.id, payload: { category: s.suggestedCategory as IngredientCategory } })).unwrap()
+        }
+      }
+      setSuggestions([])
+    } catch (err) {
+      setStandardizeError(err instanceof Error ? err.message : t('common.error'))
+    } finally {
+      setApplying(false)
+    }
+  }
 
   return (
     <div className="admin-page">
@@ -189,6 +250,66 @@ export function Admin() {
               <span />
             </div>
           </div>
+        )}
+      </section>
+
+      {/* ─── Product Standardization ─────────────────────────────────────── */}
+      <section className="admin-page__section">
+        <div className="admin-page__section-header">
+          <h2 className="admin-page__section-title"><TranslatedText id="admin.standardize.title" /></h2>
+          <Button onClick={handleStandardize} disabled={standardizing || applying}>
+            {standardizing
+              ? <><LoaderCircle size={15} className="icon-spin" aria-hidden /> <TranslatedText id="admin.standardize.running" /></>
+              : <TranslatedText id="admin.standardize.run" />}
+          </Button>
+        </div>
+        <p className="admin-page__hint"><TranslatedText id="admin.standardize.hint" /></p>
+
+        {standardizeError && (
+          <p className="admin-page__error">{standardizeError}</p>
+        )}
+
+        {suggestions.length > 0 && (
+          <>
+            <div className="admin-page__standardize-table">
+              <div className="admin-page__standardize-header">
+                <span><TranslatedText id="admin.standardize.product" /></span>
+                <span><TranslatedText id="admin.standardize.tags" /></span>
+                <span><TranslatedText id="admin.standardize.category" /></span>
+                <span><TranslatedText id="admin.standardize.include" /></span>
+              </div>
+              {suggestions.map((s) => {
+                const ing = ingredients.find((i) => i.products?.some((p) => p.id === s.productId))
+                const product = ing?.products?.find((p) => p.id === s.productId)
+                return (
+                  <div key={s.productId} className="admin-page__standardize-row">
+                    <span>{product?.name ?? s.productId}{product?.brand && <em> — {product.brand}</em>}</span>
+                    <span>{s.tags.join(', ')}</span>
+                    <span>{s.suggestedCategory ? `${ing?.category} → ${s.suggestedCategory}` : '—'}</span>
+                    <input
+                      type="checkbox"
+                      checked={!excluded.has(s.productId)}
+                      onChange={() => setExcluded((prev) => {
+                        const next = new Set(prev)
+                        next.has(s.productId) ? next.delete(s.productId) : next.add(s.productId)
+                        return next
+                      })}
+                    />
+                  </div>
+                )
+              })}
+            </div>
+            <div className="admin-page__standardize-actions">
+              <Button variant="secondary" onClick={() => setSuggestions([])}>
+                <TranslatedText id="common.cancel" />
+              </Button>
+              <Button onClick={handleApply} disabled={applying || excluded.size === suggestions.length}>
+                {applying
+                  ? <><LoaderCircle size={15} className="icon-spin" aria-hidden /> <TranslatedText id="common.save" /></>
+                  : <TranslatedText id="admin.standardize.apply" vars={{ n: suggestions.length - excluded.size }} />}
+              </Button>
+            </div>
+          </>
         )}
       </section>
     </div>
