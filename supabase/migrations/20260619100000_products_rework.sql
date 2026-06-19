@@ -60,14 +60,15 @@ insert into products (id, ingredient_id, name, nutrition, image_url, name_i18n)
 select id, ingredient_id, name, nutrition, image_url, name_i18n
 from ingredient_subproducts;
 
+-- Drop the FK from recipe_ingredients first so ingredient_subproducts can be dropped.
+alter table recipe_ingredients
+  drop constraint if exists recipe_ingredients_subproduct_id_fkey;
+
 drop table ingredient_subproducts;
 
 -- ─── recipe_ingredients: subproduct_id → product_id ───────────────────────────
 
 alter table recipe_ingredients rename column subproduct_id to product_id;
-
-alter table recipe_ingredients
-  drop constraint if exists recipe_ingredients_subproduct_id_fkey;
 
 alter table recipe_ingredients
   add constraint recipe_ingredients_product_id_fkey
