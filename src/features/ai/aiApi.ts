@@ -117,28 +117,50 @@ export async function transcribeRecipe(
   if (useMock) {
     apiLog('ai', 'transcribeRecipe (MOCK)')
     await delay(900)
-    return {
-      title: 'Scanned Tomato Pasta',
-      description: 'A simple weeknight pasta transcribed from a photo.',
-      portions: 4,
-      prepTimeMinutes: 10,
-      cookTimeMinutes: 20,
-      ingredients: [
-        { name: 'Spaghetti', quantity: 400, unit: 'g' },
-        { name: 'Canned Tomatoes', quantity: 400, unit: 'g' },
-        { name: 'Garlic', quantity: 2, unit: 'clove' },
-        { name: 'Olive Oil', quantity: 2, unit: 'tbsp' },
-      ],
-      instructions: [
-        'Boil the spaghetti until al dente.',
-        'Gently fry the garlic in olive oil.',
-        'Add the canned tomatoes and simmer.',
-        'Toss the pasta in the sauce and serve.',
-      ],
-    }
+    return MOCK_RECIPE_DRAFT
   }
 
   const res = await postJson<RecipePhotoResponse>('/recipe-photo', { imageBase64, mediaType })
+  return res.recipe
+}
+
+const MOCK_RECIPE_DRAFT: RecipeDraft = {
+  title: 'Scanned Tomato Pasta',
+  description: 'A simple weeknight pasta transcribed from a photo.',
+  portions: 4,
+  prepTimeMinutes: 10,
+  cookTimeMinutes: 20,
+  ingredients: [
+    { name: 'Spaghetti', quantity: 400, unit: 'g' },
+    { name: 'Canned Tomatoes', quantity: 400, unit: 'g' },
+    { name: 'Garlic', quantity: 2, unit: 'clove' },
+    { name: 'Olive Oil', quantity: 2, unit: 'tbsp' },
+  ],
+  instructions: [
+    'Boil the spaghetti until al dente.',
+    'Gently fry the garlic in olive oil.',
+    'Add the canned tomatoes and simmer.',
+    'Toss the pasta in the sauce and serve.',
+  ],
+}
+
+/**
+ * Transcribes multiple recipe photos (e.g. several cookbook pages) into a
+ * single unified draft. All images are sent in one Claude request so the
+ * model can combine information across pages.
+ * Mock mode returns the same fixed sample as `transcribeRecipe`.
+ */
+export async function transcribeRecipePhotos(
+  images: Array<{ imageBase64: string; mediaType: string }>,
+): Promise<RecipeDraft> {
+  if (useMock) {
+    apiLog('ai', `transcribeRecipePhotos (MOCK) count=${images.length}`)
+    await delay(1200)
+    return MOCK_RECIPE_DRAFT
+  }
+
+  apiLog('ai', `transcribeRecipePhotos (real) count=${images.length}`)
+  const res = await postJson<RecipePhotoResponse>('/recipe-photos', { images })
   return res.recipe
 }
 

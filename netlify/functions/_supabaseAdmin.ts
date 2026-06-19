@@ -56,20 +56,17 @@ export async function getAiImageQuota(): Promise<number> {
 
 /**
  * Increments the ai_image_requests_used counter for the given profile.
+ * `count` defaults to 1; pass the number of images for multi-photo scans.
  */
-export async function incrementAiImageUsage(profileId: string): Promise<void> {
-  await supabaseAdmin.rpc('increment_ai_image_usage', { profile_id: profileId })
-    .catch(async () => {
-      // rpc fallback: plain update if the function doesn't exist yet
-      const { data: p } = await supabaseAdmin
-        .from('profiles')
-        .select('ai_image_requests_used')
-        .eq('id', profileId)
-        .single()
-      const used = ((p as Record<string, unknown> | null)?.ai_image_requests_used as number) ?? 0
-      await supabaseAdmin
-        .from('profiles')
-        .update({ ai_image_requests_used: used + 1 })
-        .eq('id', profileId)
-    })
+export async function incrementAiImageUsage(profileId: string, count = 1): Promise<void> {
+  const { data: p } = await supabaseAdmin
+    .from('profiles')
+    .select('ai_image_requests_used')
+    .eq('id', profileId)
+    .single()
+  const used = ((p as Record<string, unknown> | null)?.ai_image_requests_used as number) ?? 0
+  await supabaseAdmin
+    .from('profiles')
+    .update({ ai_image_requests_used: used + count })
+    .eq('id', profileId)
 }

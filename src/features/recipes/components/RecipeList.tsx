@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Camera, Plus } from 'lucide-react'
 import { Alert, Button, Modal, SearchBar, Spinner } from '../../../components'
 import { useAppDispatch, useAppSelector } from '../../../app/hooks'
 import { useLanguage } from '../../../i18n'
+import { RecipePhotoScanner } from '../../ai/components/RecipePhotoScanner'
+import type { RecipeDraft } from '../../ai/types'
 import { fetchRecipes } from '../recipesSlice'
 import type { RecipeFilters } from '../types'
 import { RecipeCard } from './RecipeCard'
@@ -11,7 +14,8 @@ import './RecipeList.scss'
 
 /**
  * Full recipe browser: search bar, collapsible filter panel, responsive card grid.
- * New recipe creation opens in a large modal.
+ * New recipe creation opens in a large modal; a camera button opens the
+ * multi-photo AI scanner which pre-fills the creation form on success.
  */
 export function RecipeList() {
   const dispatch = useAppDispatch()
@@ -22,12 +26,25 @@ export function RecipeList() {
   const [filters, setFilters] = useState<RecipeFilters>({})
   const [showFilters, setShowFilters] = useState(false)
   const [showAdd, setShowAdd] = useState(false)
+  const [showScanner, setShowScanner] = useState(false)
+  const [scannedDraft, setScannedDraft] = useState<RecipeDraft | null>(null)
 
   useEffect(() => {
     if (status === 'idle' && recipes.length === 0) {
       dispatch(fetchRecipes())
     }
   }, [dispatch, status, recipes.length])
+
+  function handleScanResult(draft: RecipeDraft) {
+    setScannedDraft(draft)
+    setShowScanner(false)
+    setShowAdd(true)
+  }
+
+  function closeAddModal() {
+    setShowAdd(false)
+    setScannedDraft(null)
+  }
 
   const filtered = useMemo(() => {
     return recipes.filter((r) => {
@@ -51,7 +68,16 @@ export function RecipeList() {
     <div className="recipe-list">
       <div className="recipe-list__header">
         <h1 className="recipe-list__title">{t('recipes.title')}</h1>
-        <Button onClick={() => setShowAdd(true)}>{t('recipes.addRecipe')}</Button>
+        <div className="recipe-list__header-actions">
+          <Button variant="secondary" onClick={() => setShowScanner(true)}>
+            <Camera size={16} aria-hidden />
+            {t('recipes.scanRecipe')}
+          </Button>
+          <Button onClick={() => setShowAdd(true)}>
+            <Plus size={16} aria-hidden />
+            {t('recipes.addRecipe')}
+          </Button>
+        </div>
       </div>
 
       <div className="recipe-list__toolbar">
@@ -80,13 +106,25 @@ export function RecipeList() {
         </div>
       )}
 
+      {/* Multi-photo AI scanner */}
+      {showScanner && (
+        <RecipePhotoScanner
+          onResult={handleScanResult}
+          onClose={() => setShowScanner(false)}
+        />
+      )}
+
+      {/* Recipe creation / edit modal — may be pre-filled from a scan */}
       <Modal
         open={showAdd}
-        onClose={() => setShowAdd(false)}
+        onClose={closeAddModal}
         title={t('recipes.addRecipe')}
         size="large"
       >
-        <RecipeForm onDone={() => setShowAdd(false)} />
+        <RecipeForm
+          initialDraft={scannedDraft ?? undefined}
+          onDone={closeAddModal}
+        />
       </Modal>
     </div>
   )

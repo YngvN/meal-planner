@@ -1,5 +1,4 @@
-import { useEffect, useState } from 'react'
-import { Copy, X } from 'lucide-react'
+import { useState } from 'react'
 import { Button, FilterChip, Input, LanguageSwitcher, ThemeToggle } from '../components'
 import { useAppDispatch, useAppSelector } from '../app/hooks'
 import {
@@ -10,15 +9,6 @@ import {
 } from '../features/auth/authSlice'
 import type { ScoringFactors } from '../features/settings/types'
 import { setVisibleSlots, toggleAutoSuggest, toggleScoringFactor } from '../features/settings/settingsSlice'
-import {
-  createInviteCode,
-  fetchAppSettings,
-  fetchInviteCodes,
-  fetchUsers,
-  revokeInviteCode,
-  updateAppSettings,
-  updateUserRole,
-} from '../features/settings/adminSlice'
 import { MEAL_SLOT_ORDER, type MealSlot } from '../features/mealPlan/types'
 import { useLanguage } from '../i18n'
 import './Settings.scss'
@@ -34,8 +24,8 @@ const SCORING_FACTOR_KEYS: (keyof ScoringFactors)[] = [
 ]
 
 /**
- * Settings page — profile, appearance, meal planner prefs, and (for admins)
- * global app controls.
+ * Settings page — profile, appearance, and meal planner preferences.
+ * Admin controls live on the dedicated /admin page.
  */
 export function Settings() {
   const dispatch = useAppDispatch()
@@ -46,7 +36,7 @@ export function Settings() {
   const { visibleSlots, autoSuggestEnabled, scoringFactors } = useAppSelector(
     (s) => s.settings.mealPlanner,
   )
-  const { appSettings, inviteCodes, users } = useAppSelector((s) => s.admin)
+  const appSettings = useAppSelector((s) => s.admin.appSettings)
 
   // ── Profile form state ─────────────────────────────────────────────────────
   const [newUsername, setNewUsername] = useState(user?.username ?? '')
@@ -54,15 +44,6 @@ export function Settings() {
   const [newPassword, setNewPassword] = useState('')
   const [emailSent, setEmailSent] = useState(false)
   const [passwordSaved, setPasswordSaved] = useState(false)
-
-  // ── Admin data loading ─────────────────────────────────────────────────────
-  useEffect(() => {
-    if (user?.role === 'admin') {
-      dispatch(fetchAppSettings())
-      dispatch(fetchInviteCodes())
-      dispatch(fetchUsers())
-    }
-  }, [user?.role, dispatch])
 
   // ── Profile handlers ───────────────────────────────────────────────────────
   async function handleSaveUsername() {
@@ -263,147 +244,6 @@ export function Settings() {
           </div>
         )}
       </section>
-
-      {/* ── Admin ───────────────────────────────────────────────────────────── */}
-      {user?.role === 'admin' && appSettings && (
-        <section className="settings-page__section">
-          <h2 className="settings-page__section-title">{t('admin.title')}</h2>
-
-          {/* Max users */}
-          <div className="settings-page__field">
-            <label className="settings-page__label">{t('admin.maxUsers')}</label>
-            <div className="settings-page__input-row">
-              <Input
-                id="admin-max-users"
-                label={null}
-                type="number"
-                value={appSettings.maxUsers ?? ''}
-                onChange={(e) => {
-                  const val = e.target.value === '' ? null : Number(e.target.value)
-                  dispatch(updateAppSettings({ maxUsers: val }))
-                }}
-                placeholder={t('admin.unlimitedUsers')}
-              />
-            </div>
-          </div>
-
-          {/* AI image requests per user */}
-          <div className="settings-page__field">
-            <label className="settings-page__label">{t('admin.aiImageRequestsPerUser')}</label>
-            <div className="settings-page__input-row">
-              <Input
-                id="admin-ai-quota"
-                label={null}
-                type="number"
-                value={appSettings.aiImageRequestsPerUser}
-                onChange={(e) =>
-                  dispatch(updateAppSettings({ aiImageRequestsPerUser: Number(e.target.value) }))
-                }
-              />
-            </div>
-          </div>
-
-          {/* Require invite code */}
-          <div className="settings-page__field">
-            <label
-              className="settings-page__toggle-label"
-              htmlFor="admin-require-invite"
-            >
-              <span>{t('admin.requireInviteCode')}</span>
-              <button
-                id="admin-require-invite"
-                type="button"
-                role="switch"
-                aria-checked={appSettings.requireInviteCode}
-                className={`settings-page__toggle${appSettings.requireInviteCode ? ' settings-page__toggle--on' : ''}`}
-                onClick={() =>
-                  dispatch(
-                    updateAppSettings({ requireInviteCode: !appSettings.requireInviteCode }),
-                  )
-                }
-              >
-                <span className="settings-page__toggle-knob" />
-              </button>
-            </label>
-          </div>
-
-          {/* Invite codes */}
-          <div className="settings-page__field">
-            <div className="settings-page__label-row">
-              <label className="settings-page__label">{t('admin.inviteCodes')}</label>
-              <Button onClick={() => dispatch(createInviteCode())} variant="secondary">
-                {t('admin.generateCode')}
-              </Button>
-            </div>
-            {inviteCodes.length > 0 && (
-              <ul className="settings-page__code-list">
-                {inviteCodes.map((c) => (
-                  <li
-                    key={c.id}
-                    className={`settings-page__code-item${c.usedBy ? ' settings-page__code-item--used' : ''}`}
-                  >
-                    <code className="settings-page__code">{c.code}</code>
-                    {c.usedBy && (
-                      <span className="settings-page__code-used">{t('admin.codeUsed')}</span>
-                    )}
-                    <button
-                      type="button"
-                      className="settings-page__code-copy"
-                      title="Copy"
-                      onClick={() => navigator.clipboard.writeText(c.code)}
-                    >
-                      <Copy size={14} aria-hidden />
-                    </button>
-                    {!c.usedBy && (
-                      <button
-                        type="button"
-                        className="settings-page__code-revoke"
-                        title={t('admin.revokeCode')}
-                        onClick={() => dispatch(revokeInviteCode(c.id))}
-                      >
-                        <X size={14} aria-hidden />
-                      </button>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-
-          {/* Users table */}
-          <div className="settings-page__field">
-            <label className="settings-page__label">{t('admin.users')}</label>
-            {users.length > 0 && (
-              <div className="settings-page__users">
-                {users.map((u) => (
-                  <div key={u.id} className="settings-page__user-row">
-                    <span className="settings-page__user-name">{u.username}</span>
-                    <select
-                      className="settings-page__role-select"
-                      value={u.role}
-                      disabled={u.id === user.id}
-                      onChange={(e) =>
-                        dispatch(
-                          updateUserRole({
-                            userId: u.id,
-                            role: e.target.value as 'admin' | 'user',
-                          }),
-                        )
-                      }
-                    >
-                      <option value="user">{t('admin.roleUser')}</option>
-                      <option value="admin">{t('admin.roleAdmin')}</option>
-                    </select>
-                    <span className="settings-page__ai-used">
-                      {u.aiImageRequestsUsed} AI scans
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </section>
-      )}
     </div>
   )
 }

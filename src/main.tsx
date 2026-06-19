@@ -7,6 +7,7 @@ import { ProtectedApp } from './app/ProtectedApp.tsx'
 import { store } from './app/store'
 import { AuthProvider } from './features/auth/AuthProvider'
 import { LanguageProvider } from './i18n'
+import { Admin } from './pages/Admin'
 import { ForgotPassword } from './pages/auth/ForgotPassword'
 import { Login } from './pages/auth/Login'
 import { Signup } from './pages/auth/Signup'
@@ -47,6 +48,7 @@ const router = createBrowserRouter([
       { path: 'meal-plan', element: <MealPlan /> },
       { path: 'shopping-list', element: <ShoppingList /> },
       { path: 'settings', element: <Settings /> },
+      { path: 'admin', element: <Admin /> },
       { path: 'profile', element: <Profile /> },
       { path: 'components', element: <Components /> },
     ],

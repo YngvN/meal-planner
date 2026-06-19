@@ -1,0 +1,116 @@
+@use '../../../styles/variables' as *;
+
+.recipe-photo-scanner {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-unit * 2;
+
+  &__hidden-input {
+    display: none;
+  }
+
+  &__add-buttons {
+    display: flex;
+    gap: $spacing-unit;
+    flex-wrap: wrap;
+  }
+
+  // ── Thumbnail grid ────────────────────────────────────────────────────────
+
+  &__grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $spacing-unit;
+  }
+
+  &__thumb {
+    position: relative;
+    width: 90px;
+    height: 90px;
+    border-radius: 8px;
+    overflow: visible;
+    flex-shrink: 0;
+  }
+
+  &__thumb-img {
+    width: 90px;
+    height: 90px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 2px solid $color-border;
+    display: block;
+  }
+
+  &__thumb-remove {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 1px solid $color-border;
+    background: $color-bg;
+    color: $color-text;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 10px;
+    line-height: 1;
+    box-shadow: 0 1px 4px $color-shadow;
+
+    @media (hover: hover) {
+      &:hover { background: $color-error-bg; color: $color-error; border-color: $color-error-border; }
+    }
+  }
+
+  &__thumb-label {
+    position: absolute;
+    bottom: 4px;
+    left: 4px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.55);
+    color: #fff;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  // ── Status text ───────────────────────────────────────────────────────────
+
+  &__count {
+    font-size: 0.8125rem;
+    color: $color-text-muted;
+    margin: 0;
+  }
+
+  &__empty {
+    font-size: 0.9rem;
+    color: $color-text-muted;
+    margin: 0;
+    text-align: center;
+    padding: $spacing-unit * 2 0;
+  }
+
+  &__error {
+    color: $color-error;
+    font-size: 0.875rem;
+    margin: 0;
+    padding: $spacing-unit;
+    background: $color-error-bg;
+    border: 1px solid $color-error-border;
+    border-radius: 8px;
+  }
+
+  // ── Footer buttons ────────────────────────────────────────────────────────
+
+  &__footer {
+    display: flex;
+    gap: $spacing-unit;
+    justify-content: flex-end;
+  }
+}

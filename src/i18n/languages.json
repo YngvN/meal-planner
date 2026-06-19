@@ -12,7 +12,8 @@
         "shoppingList": "Shopping List",
         "settings": "Settings",
         "profile": "Profile",
-        "components": "Components"
+        "components": "Components",
+        "admin": "Admin"
       },
       "home": {
         "title": "Home",
@@ -182,7 +183,14 @@
         "willHave": "Will have",
         "currentlyHave": "Currently have",
         "recipeUses": "Recipe uses",
-        "unitsMismatch": "Units differ — enter manually"
+        "unitsMismatch": "Units differ — enter manually",
+        "scanRecipe": "Scan recipe",
+        "scanPages": "Scan all pages",
+        "addPage": "Take photo",
+        "pageCount": "{{n}} / {{max}} pages",
+        "scanningPages": "Scanning {{n}} page(s)…",
+        "aiScanNotice": "This recipe was filled in by AI — please review all fields before saving.",
+        "scanHint": "Take photos of each page of the recipe. Supports up to 6 pages."
       },
       "ingredients": {
         "title": "Ingredients",
@@ -254,7 +262,8 @@
         "recipeScanError": "Couldn't read the recipe. Try another photo or enter it manually.",
         "scanFront": "Scan front of package",
         "scanningFront": "Scanning…",
-        "frontScanError": "Front scan failed. Try again or fill in manually."
+        "frontScanError": "Front scan failed. Try again or fill in manually.",
+        "recipeScanMultiError": "Recipe scan failed. Check your AI quota and try again."
       },
       "pantry": {
         "title": "Pantry",
@@ -373,7 +382,12 @@
         "roleAdmin": "Admin",
         "roleUser": "User",
         "revokeCode": "Revoke code",
-        "codeUsed": "Used"
+        "codeUsed": "Used",
+        "appSettings": "App Settings",
+        "aiUsage": "AI Usage",
+        "scansUsed": "Scans used",
+        "aiUsageBar": "Usage",
+        "totalUsers": "{{n}} users total"
       }
     }
   },
@@ -390,7 +404,8 @@
         "shoppingList": "Handleliste",
         "settings": "Innstillinger",
         "profile": "Profil",
-        "components": "Komponenter"
+        "components": "Komponenter",
+        "admin": "Admin"
       },
       "home": {
         "title": "Hjem",
@@ -560,7 +575,14 @@
         "willHave": "Vil ha",
         "currentlyHave": "Har nå",
         "recipeUses": "Oppskrift bruker",
-        "unitsMismatch": "Enheter er ulike — skriv inn manuelt"
+        "unitsMismatch": "Enheter er ulike — skriv inn manuelt",
+        "scanRecipe": "Skann oppskrift",
+        "scanPages": "Skann alle sider",
+        "addPage": "Ta bilde",
+        "pageCount": "{{n}} / {{max}} sider",
+        "scanningPages": "Skanner {{n}} side(r)…",
+        "aiScanNotice": "Denne oppskriften ble fylt inn av AI — sjekk alle felt før du lagrer.",
+        "scanHint": "Ta bilde av hver side av oppskriften. Støtter opptil 6 sider."
       },
       "ingredients": {
         "title": "Ingredienser",
@@ -632,7 +654,8 @@
         "recipeScanError": "Kunne ikke lese oppskriften. Prøv et annet bilde eller skriv den inn manuelt.",
         "scanFront": "Skann produktforside",
         "scanningFront": "Skanner…",
-        "frontScanError": "Skanningen av forsiden mislyktes. Prøv igjen eller fyll inn manuelt."
+        "frontScanError": "Skanningen av forsiden mislyktes. Prøv igjen eller fyll inn manuelt.",
+        "recipeScanMultiError": "Skanningen av oppskriften mislyktes. Sjekk AI-kvoten din og prøv igjen."
       },
       "pantry": {
         "title": "Kjøleskapet",
@@ -751,7 +774,12 @@
         "roleAdmin": "Admin",
         "roleUser": "Bruker",
         "revokeCode": "Tilbakekall kode",
-        "codeUsed": "Brukt"
+        "codeUsed": "Brukt",
+        "appSettings": "App-innstillinger",
+        "aiUsage": "AI-bruk",
+        "scansUsed": "Skanninger brukt",
+        "aiUsageBar": "Bruk",
+        "totalUsers": "{{n}} brukere totalt"
       }
     }
   }

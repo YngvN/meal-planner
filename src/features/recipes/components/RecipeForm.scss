@@ -265,4 +265,38 @@
     border-top: 1px solid $color-border;
     background: $color-bg;
   }
+
+  // ── AI disclaimer banner ─────────────────────────────────────────────────
+
+  &__ai-notice {
+    display: flex;
+    align-items: center;
+    gap: $spacing-unit;
+    padding: $spacing-unit $spacing-unit * 1.5;
+    border-radius: 8px;
+    background: color-mix(in srgb, $color-accent 8%, $color-surface);
+    border: 1px solid color-mix(in srgb, $color-accent 30%, transparent);
+    color: $color-text;
+    font-size: 0.875rem;
+
+    > span { flex: 1; }
+
+    &-dismiss {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      border: none;
+      border-radius: 4px;
+      background: none;
+      color: $color-text-muted;
+      cursor: pointer;
+      flex-shrink: 0;
+
+      @media (hover: hover) {
+        &:hover { background: $color-surface-hover; }
+      }
+    }
+  }
 }

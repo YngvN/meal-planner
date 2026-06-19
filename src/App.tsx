@@ -9,6 +9,7 @@ import {
   Menu,
   Package,
   Settings,
+  ShieldCheck,
   ShoppingCart,
   type LucideIcon,
 } from 'lucide-react'
@@ -94,6 +95,12 @@ function App() {
               <TranslatedText id={labelId} />
             </NavLink>
           ))}
+          {user?.role === 'admin' && (
+            <NavLink to="/admin" onClick={() => setNavOpen(false)}>
+              <ShieldCheck size={20} aria-hidden />
+              <TranslatedText id="nav.admin" />
+            </NavLink>
+          )}
         </nav>
 
         <div className="app__sidebar-footer">

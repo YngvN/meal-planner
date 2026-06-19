@@ -19,6 +19,12 @@
     margin: 0;
   }
 
+  &__header-actions {
+    display: flex;
+    gap: $spacing-unit;
+    flex-wrap: wrap;
+  }
+
   &__toolbar {
     display: flex;
     gap: $spacing-unit;

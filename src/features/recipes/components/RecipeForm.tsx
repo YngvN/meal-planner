@@ -1,9 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Alert, Button, IngredientCombobox, Input, NumberInput, Select, TagInput } from '../../../components'
+import { Alert, Button, IngredientCombobox, Input, NumberInput, Select, TagInput, TranslatedText } from '../../../components'
 import { useAppDispatch, useAppSelector } from '../../../app/hooks'
 import { useLanguage } from '../../../i18n'
-import { Plus, X } from 'lucide-react'
+import { Info, Plus, X } from 'lucide-react'
 import { createIngredient } from '../../ingredients/ingredientsSlice'
 import { RecipeScanButton } from '../../ai/components/RecipeScanButton'
 import { createRecipe, updateRecipe } from '../recipesSlice'
@@ -18,6 +18,7 @@ import type {
   RecipeStep,
   SkillLevel,
 } from '../types'
+import type { RecipeDraft } from '../../ai/types'
 import './RecipeForm.scss'
 
 const DIETARY_TAGS: DietaryTag[] = ['vegetarian', 'vegan', 'gluten-free', 'dairy-free', 'nut-free']
@@ -97,6 +98,8 @@ const DEFAULT_FORM: FormState = {
 interface RecipeFormProps {
   /** Provide to switch to edit mode. The recipe must already be loaded. */
   initialValues?: Recipe
+  /** When provided, pre-fills the form with an AI-scanned draft on mount. */
+  initialDraft?: RecipeDraft
   /** When provided (modal mode), called on successful create instead of navigating. */
   onDone?: () => void
 }
@@ -105,8 +108,9 @@ interface RecipeFormProps {
  * Create / edit form for a recipe.
  * Modal mode: pass `onDone` — called on successful create.
  * Full-page edit mode: pass `initialValues` — navigates on save.
+ * AI scan mode: pass `initialDraft` — auto-applies draft on mount.
  */
-export function RecipeForm({ initialValues, onDone }: RecipeFormProps) {
+export function RecipeForm({ initialValues, initialDraft, onDone }: RecipeFormProps) {
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
   const { t } = useLanguage()
@@ -117,8 +121,13 @@ export function RecipeForm({ initialValues, onDone }: RecipeFormProps) {
   )
   const [isPrivate, setIsPrivate] = useState(initialValues?.isGlobal === false)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [aiNoticeVisible, setAiNoticeVisible] = useState(!!initialDraft)
 
   const { items: ingredientLibrary } = useAppSelector((s) => s.ingredients)
+
+  // Apply AI-scanned draft once on mount when provided.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { if (initialDraft) applyRecipeDraft(initialDraft) }, [])
 
   function patch<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }))
@@ -288,6 +297,22 @@ export function RecipeForm({ initialValues, onDone }: RecipeFormProps) {
             </Button>
             <Button type="submit">{t('common.save')}</Button>
           </div>
+        </div>
+      )}
+
+      {/* AI disclaimer — shown when the form was pre-filled by a scan */}
+      {aiNoticeVisible && (
+        <div className="recipe-form__ai-notice">
+          <Info size={15} aria-hidden />
+          <span><TranslatedText id="recipes.aiScanNotice" /></span>
+          <button
+            type="button"
+            className="recipe-form__ai-notice-dismiss"
+            onClick={() => setAiNoticeVisible(false)}
+            aria-label={t('common.delete')}
+          >
+            <X size={14} aria-hidden />
+          </button>
         </div>
       )}
 
