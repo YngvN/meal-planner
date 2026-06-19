@@ -28,4 +28,8 @@ export interface Settings {
     /** Which scoring factors contribute to the suggestion score. */
     scoringFactors: ScoringFactors
   }
+  /** ISO 3166-1 alpha-2 country code for country-aware features (e.g. OFF search). */
+  country: string
+  /** Preferred currency for price display and reporting (e.g. "NOK", "USD"). */
+  preferredCurrency: string
 }

@@ -2,6 +2,13 @@ import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
 import type { MealSlot } from '../mealPlan/types'
 import type { Settings, ScoringFactors } from './types'
 
+/** Infer country code from browser language (e.g. "no" → "NO", "en-US" → "US"). */
+function inferCountry(): string {
+  const lang = navigator.language ?? 'en'
+  const parts = lang.split('-')
+  return parts.length > 1 ? parts[1].toUpperCase() : parts[0].toUpperCase()
+}
+
 const DEFAULT_SETTINGS: Settings = {
   mealPlanner: {
     visibleSlots: ['breakfast', 'lunch', 'dinner', 'snack'],
@@ -16,6 +23,8 @@ const DEFAULT_SETTINGS: Settings = {
       slotAffinity: true,
     },
   },
+  country: inferCountry(),
+  preferredCurrency: 'NOK',
 }
 
 /** Load settings from localStorage, merging deeply with defaults so new keys always have values. */
@@ -33,6 +42,8 @@ function loadSettings(): Settings {
           ...parsed.mealPlanner?.scoringFactors,
         },
       },
+      country: parsed.country ?? DEFAULT_SETTINGS.country,
+      preferredCurrency: parsed.preferredCurrency ?? DEFAULT_SETTINGS.preferredCurrency,
     }
   } catch {
     return DEFAULT_SETTINGS
@@ -59,8 +70,21 @@ const settingsSlice = createSlice({
       const key = action.payload
       state.mealPlanner.scoringFactors[key] = !state.mealPlanner.scoringFactors[key]
     },
+
+    /** Set the user's country code (ISO 3166-1 alpha-2, e.g. "NO"). */
+    setCountry(state, action: PayloadAction<string>) {
+      state.country = action.payload.toUpperCase()
+    },
+
+    /** Set the preferred currency code (e.g. "NOK", "USD"). */
+    setPreferredCurrency(state, action: PayloadAction<string>) {
+      state.preferredCurrency = action.payload.toUpperCase()
+    },
   },
 })
 
-export const { setVisibleSlots, toggleAutoSuggest, toggleScoringFactor } = settingsSlice.actions
+export const {
+  setVisibleSlots, toggleAutoSuggest, toggleScoringFactor,
+  setCountry, setPreferredCurrency,
+} = settingsSlice.actions
 export default settingsSlice.reducer

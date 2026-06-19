@@ -57,6 +57,7 @@ export function ProductWizard({ ingredientId, existingProduct, onClose }: Props)
   const [carbs, setCarbs] = useState(String(existingProduct?.nutrition?.carbs ?? ''))
   const [fat, setFat] = useState(String(existingProduct?.nutrition?.fat ?? ''))
   const [fiber, setFiber] = useState(String(existingProduct?.nutrition?.fiber ?? ''))
+  const [stores, setStores] = useState((existingProduct?.stores ?? []).join(', '))
 
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -91,6 +92,7 @@ export function ProductWizard({ ingredientId, existingProduct, onClose }: Props)
         if (result.nutrition.fiber != null) setFiber(String(result.nutrition.fiber))
         setNutritionOpen(true)
       }
+      if (result.stores?.length) setStores(result.stores.join(', '))
     } else {
       setLookupState('not-found')
     }
@@ -157,6 +159,11 @@ export function ProductWizard({ ingredientId, existingProduct, onClose }: Props)
     }
     const hasNutrition = Object.values(nutritionPayload).some((v) => v !== undefined)
 
+    const storeList = stores
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean)
+
     const payload: CreateProductPayload = {
       ingredientId,
       name: name.trim(),
@@ -165,6 +172,7 @@ export function ProductWizard({ ingredientId, existingProduct, onClose }: Props)
       barcodeFormat: barcodeFormat || undefined,
       imageUrl: imageUrl.trim() || undefined,
       nutrition: hasNutrition ? nutritionPayload : undefined,
+      stores: storeList,
     }
 
     setSaving(true)
@@ -306,6 +314,15 @@ export function ProductWizard({ ingredientId, existingProduct, onClose }: Props)
               })}
             </div>
           </details>
+
+          {/* Stores (auto-filled from OFF, or manual entry) */}
+          <Input
+            id="pw-stores"
+            label={<TranslatedText id="ingredients.stores" />}
+            value={stores}
+            onChange={(e) => setStores(e.target.value)}
+            placeholder={<TranslatedText id="ingredients.storesPlaceholder" /> as unknown as string}
+          />
 
           {error && <p className="product-wizard__error">{error}</p>}
         </div>

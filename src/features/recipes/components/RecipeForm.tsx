@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useDraftPersistence } from '../../../hooks/useDraftPersistence'
 import { useNavigate } from 'react-router-dom'
 import { Alert, Button, IngredientCombobox, Input, NumberInput, Select, TagInput, TranslatedText } from '../../../components'
 import { useAppDispatch, useAppSelector } from '../../../app/hooks'
@@ -116,14 +117,27 @@ export function RecipeForm({ initialValues, initialDraft, onDone }: RecipeFormPr
   const { t } = useLanguage()
   const isEdit = !!initialValues
 
+  const draftKey = initialValues?.id ? `recipe:${initialValues.id}` : 'recipe:new'
   const [form, setForm] = useState<FormState>(() =>
     initialValues ? buildFormState(initialValues) : DEFAULT_FORM,
   )
   const [isPrivate, setIsPrivate] = useState(initialValues?.isGlobal === false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [aiNoticeVisible, setAiNoticeVisible] = useState(!!initialDraft)
+  const [draftBannerVisible, setDraftBannerVisible] = useState(false)
+
+  const { savedDraft, clearDraft } = useDraftPersistence(draftKey, form, !initialDraft)
 
   const { items: ingredientLibrary } = useAppSelector((s) => s.ingredients)
+
+  // Restore saved draft on mount (only when not driven by an AI scan draft).
+  useEffect(() => {
+    if (!initialDraft && savedDraft) {
+      setForm(savedDraft)
+      setDraftBannerVisible(true)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Apply AI-scanned draft once on mount when provided.
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -288,6 +302,7 @@ export function RecipeForm({ initialValues, initialDraft, onDone }: RecipeFormPr
   // ─── Cancel ───────────────────────────────────────────────────────────────
 
   function handleCancel() {
+    clearDraft()
     if (onDone) {
       onDone()
     } else {
@@ -326,9 +341,11 @@ export function RecipeForm({ initialValues, initialDraft, onDone }: RecipeFormPr
     try {
       if (isEdit) {
         await dispatch(updateRecipe({ id: initialValues.id, payload })).unwrap()
+        clearDraft()
         navigate(`/recipes/${initialValues.id}`)
       } else {
         const result = await dispatch(createRecipe(payload)).unwrap()
+        clearDraft()
         if (onDone) {
           onDone()
           navigate(`/recipes/${result.id}`)
@@ -353,6 +370,25 @@ export function RecipeForm({ initialValues, initialDraft, onDone }: RecipeFormPr
             <Button type="submit">{t('common.save')}</Button>
           </div>
         </div>
+      )}
+
+      {/* Draft restore banner */}
+      {draftBannerVisible && (
+        <Alert variant="info" className="recipe-form__draft-banner">
+          {t('common.draftRestored')}
+          {' '}
+          <button
+            type="button"
+            className="recipe-form__draft-discard"
+            onClick={() => {
+              clearDraft()
+              setForm(DEFAULT_FORM)
+              setDraftBannerVisible(false)
+            }}
+          >
+            {t('common.discardDraft')}
+          </button>
+        </Alert>
       )}
 
       {/* AI disclaimer — shown when the form was pre-filled by a scan */}

@@ -14,7 +14,9 @@ import {
 } from '../features/settings/adminSlice'
 import { updateProduct } from '../features/ingredients/ingredientsSlice'
 import { updateIngredient } from '../features/ingredients/ingredientsSlice'
-import { standardizeProducts, type ProductSuggestion } from '../features/ai/aiApi'
+import { aiReviewPrice, standardizeProducts, type ProductSuggestion } from '../features/ai/aiApi'
+import { fetchAllPriceReports, updatePriceReportStatus } from '../features/ingredients/productsApi'
+import type { PriceReport } from '../features/ingredients/types'
 import { Input } from '../components'
 import type { IngredientCategory } from '../features/ingredients/types'
 import './Admin.scss'
@@ -29,6 +31,12 @@ export function Admin() {
   const currentUser = useAppSelector((s) => s.auth.user)
   const { appSettings, inviteCodes, users } = useAppSelector((s) => s.admin)
   const ingredients = useAppSelector((s) => s.ingredients.items)
+
+  // Price moderation state
+  const [priceReports, setPriceReports] = useState<PriceReport[]>([])
+  const [priceReportsLoaded, setPriceReportsLoaded] = useState(false)
+  const [priceReviewLoading, setPriceReviewLoading] = useState<Set<string>>(new Set())
+  const [priceReviewMsg, setPriceReviewMsg] = useState<Record<string, string>>({})
 
   // Product standardization state
   const [standardizing, setStandardizing] = useState(false)
@@ -47,6 +55,30 @@ export function Admin() {
 
   const quota = appSettings.aiImageRequestsPerUser
   const totalScans = users.reduce((sum, u) => sum + u.aiImageRequestsUsed, 0)
+
+  async function loadPriceReports() {
+    setPriceReportsLoaded(false)
+    const reports = await fetchAllPriceReports('pending_review')
+    setPriceReports(reports)
+    setPriceReportsLoaded(true)
+  }
+
+  async function handlePriceAction(reportId: string, action: 'approve' | 'reject' | 'ai') {
+    setPriceReviewLoading((prev) => new Set(prev).add(reportId))
+    try {
+      if (action === 'ai') {
+        const { status, verdict } = await aiReviewPrice(reportId)
+        setPriceReviewMsg((prev) => ({ ...prev, [reportId]: `AI: ${status} — ${verdict}` }))
+      } else {
+        await updatePriceReportStatus(reportId, action === 'approve' ? 'approved' : 'rejected')
+      }
+      setPriceReports((prev) => prev.filter((r) => r.id !== reportId))
+    } catch (err) {
+      setPriceReviewMsg((prev) => ({ ...prev, [reportId]: err instanceof Error ? err.message : t('common.error') }))
+    } finally {
+      setPriceReviewLoading((prev) => { const s = new Set(prev); s.delete(reportId); return s })
+    }
+  }
 
   async function handleStandardize() {
     setStandardizing(true)
@@ -251,6 +283,59 @@ export function Admin() {
             </div>
           </div>
         )}
+      </section>
+
+      {/* ─── Price Report Moderation ─────────────────────────────────────── */}
+      <section className="admin-page__section">
+        <div className="admin-page__section-header">
+          <h2 className="admin-page__section-title"><TranslatedText id="admin.priceReports.title" /></h2>
+          <Button variant="secondary" onClick={loadPriceReports} disabled={!priceReportsLoaded && priceReports.length === 0}>
+            <TranslatedText id="admin.priceReports.load" />
+          </Button>
+        </div>
+        <p className="admin-page__hint"><TranslatedText id="admin.priceReports.hint" /></p>
+
+        {priceReportsLoaded && priceReports.length === 0 && (
+          <p className="admin-page__hint"><TranslatedText id="admin.priceReports.empty" /></p>
+        )}
+
+        {priceReports.map((report) => (
+          <div key={report.id} className="admin-page__price-report">
+            <div className="admin-page__price-report-info">
+              <strong>{report.storeName}</strong>
+              <span>{report.price} {report.currency}</span>
+              <code>{report.productId}</code>
+              <span className="admin-page__price-report-by">{t('admin.priceReports.by')} {report.reportedBy}</span>
+            </div>
+            {priceReviewMsg[report.id] && (
+              <p className="admin-page__price-report-verdict">{priceReviewMsg[report.id]}</p>
+            )}
+            <div className="admin-page__price-report-actions">
+              <Button
+                variant="secondary"
+                disabled={priceReviewLoading.has(report.id)}
+                onClick={() => handlePriceAction(report.id, 'approve')}
+              >
+                <TranslatedText id="admin.priceReports.approve" />
+              </Button>
+              <Button
+                variant="secondary"
+                disabled={priceReviewLoading.has(report.id)}
+                onClick={() => handlePriceAction(report.id, 'reject')}
+              >
+                <TranslatedText id="admin.priceReports.reject" />
+              </Button>
+              <Button
+                disabled={priceReviewLoading.has(report.id)}
+                onClick={() => handlePriceAction(report.id, 'ai')}
+              >
+                {priceReviewLoading.has(report.id)
+                  ? <><LoaderCircle size={15} className="icon-spin" aria-hidden /> <TranslatedText id="admin.priceReports.aiReviewing" /></>
+                  : <TranslatedText id="admin.priceReports.aiReview" />}
+              </Button>
+            </div>
+          </div>
+        ))}
       </section>
 
       {/* ─── Product Standardization ─────────────────────────────────────── */}

@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useDraftPersistence } from '../../../hooks/useDraftPersistence'
 import { LoaderCircle } from 'lucide-react'
 import { BarcodeScanner, Button, Input, Modal, TranslatedText } from '../../../components'
 import { useAppDispatch, useAppSelector } from '../../../app/hooks'
@@ -48,6 +49,28 @@ export function QuickScanAdd({ onClose, onDone }: Props) {
   const [fiber, setFiber] = useState('')
   const [nutritionOpen, setNutritionOpen] = useState(false)
 
+  // Draft persistence for the details step (not the scan step — no File objects).
+  const detailsSnapshot = { name, brand, selectedIngredientId, newCategoryName, calories, protein, carbs, fat, fiber }
+  const { savedDraft: savedDetailsDraft, clearDraft } = useDraftPersistence('product-scan', detailsSnapshot, step === 'details')
+
+  // Restore draft when entering the details step for the first time.
+  useEffect(() => {
+    if (step === 'details' && savedDetailsDraft && !name) {
+      const d = savedDetailsDraft
+      if (d.name) setName(d.name)
+      if (d.brand) setBrand(d.brand)
+      if (d.selectedIngredientId) setSelectedIngredientId(d.selectedIngredientId)
+      if (d.newCategoryName) setNewCategoryName(d.newCategoryName)
+      if (d.calories) setCalories(d.calories)
+      if (d.protein) setProtein(d.protein)
+      if (d.carbs) setCarbs(d.carbs)
+      if (d.fat) setFat(d.fat)
+      if (d.fiber) setFiber(d.fiber)
+    }
+  // Only on first details step entry
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step])
+
   // ── Barcode detected ───────────────────────────────────────────────────────
 
   async function handleBarcodeDetected(code: string, format: string) {
@@ -70,9 +93,13 @@ export function QuickScanAdd({ onClose, onDone }: Props) {
         if (result.nutrition.fiber != null) setFiber(String(result.nutrition.fiber))
         setNutritionOpen(true)
       }
-      // Try to match to an existing ingredient category by name
+      // Prefer OFF category suggestion for pre-selecting the ingredient; fall back to name match.
       const nameLower = result.name?.toLowerCase() ?? ''
-      const match = ingredients.find((i) => i.name.toLowerCase().includes(nameLower.split(' ')[0]))
+      const categoryMatch = result.suggestedCategory
+        ? ingredients.find((i) => i.category === result.suggestedCategory)
+        : null
+      const nameMatch = ingredients.find((i) => i.name.toLowerCase().includes(nameLower.split(' ')[0]))
+      const match = categoryMatch ?? nameMatch
       if (match) setSelectedIngredientId(match.id)
     } else {
       setLookupState('not-found')
@@ -127,6 +154,7 @@ export function QuickScanAdd({ onClose, onDone }: Props) {
         }),
       ).unwrap()
 
+      clearDraft()
       onDone?.(ingredientId)
       onClose()
     } catch (err) {
@@ -144,7 +172,7 @@ export function QuickScanAdd({ onClose, onDone }: Props) {
       footer={
         step === 'details' ? (
           <div className="quick-scan-add__footer">
-            <Button variant="secondary" onClick={onClose}>
+            <Button variant="secondary" onClick={() => { clearDraft(); onClose() }}>
               <TranslatedText id="common.cancel" />
             </Button>
             <Button onClick={handleSave} disabled={saving}>

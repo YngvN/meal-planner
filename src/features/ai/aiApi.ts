@@ -217,3 +217,13 @@ export async function standardizeProducts(
   return res.suggestions
 }
 
+/**
+ * Asks Claude Haiku to review a flagged price report and returns the verdict.
+ * Admin only — the server enforces the role check.
+ */
+export async function aiReviewPrice(
+  reportId: string,
+): Promise<{ status: 'approved' | 'rejected'; verdict: string }> {
+  return postJson('/review-price', { reportId })
+}
+

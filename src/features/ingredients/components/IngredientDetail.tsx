@@ -1,12 +1,102 @@
-import { useState } from 'react'
-import { Pencil, Plus, Trash2 } from 'lucide-react'
-import { Button, Modal, TranslatedText } from '../../../components'
+import { useEffect, useState } from 'react'
+import { Pencil, Plus, Store, Trash2 } from 'lucide-react'
+import { Button, Input, Modal, TranslatedText } from '../../../components'
 import { useAppDispatch, useAppSelector } from '../../../app/hooks'
 import { useLanguage } from '../../../i18n'
 import { deleteProduct } from '../ingredientsSlice'
-import type { Ingredient, Product } from '../types'
+import type { Ingredient, PriceReport, Product } from '../types'
+import { fetchCurrentPrices, reportProductPrice } from '../productsApi'
 import { ProductWizard } from './ProductWizard'
 import './IngredientDetail.scss'
+
+/** Inline panel showing crowd-sourced prices per store for a product. */
+function ProductPricePanel({ product }: { product: Product }) {
+  const { t } = useLanguage()
+  const settings = useAppSelector((s) => s.settings)
+  const currency = (settings as Record<string, unknown>).preferredCurrency as string ?? 'NOK'
+
+  const [prices, setPrices] = useState<PriceReport[]>([])
+  const [showForm, setShowForm] = useState(false)
+  const [storeName, setStoreName] = useState('')
+  const [priceVal, setPriceVal] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [submitMsg, setSubmitMsg] = useState<string | null>(null)
+
+  useEffect(() => {
+    fetchCurrentPrices(product.id).then(setPrices).catch(() => {})
+  }, [product.id])
+
+  async function handleSubmitPrice() {
+    const p = parseFloat(priceVal)
+    if (!storeName.trim() || isNaN(p) || p <= 0) return
+    setSubmitting(true)
+    setSubmitMsg(null)
+    try {
+      const { status } = await reportProductPrice(product.id, storeName.trim(), p, currency)
+      if (status === 'pending_review') {
+        setSubmitMsg(t('ingredients.pricePendingReview'))
+      } else {
+        setPrices(await fetchCurrentPrices(product.id))
+        setSubmitMsg(t('ingredients.priceThanks'))
+      }
+      setShowForm(false)
+      setStoreName('')
+      setPriceVal('')
+    } catch (err) {
+      setSubmitMsg(err instanceof Error ? err.message : t('common.error'))
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <div className="ingredient-detail__prices">
+      {prices.length > 0 && (
+        <ul className="ingredient-detail__price-list">
+          {prices.map((pr) => (
+            <li key={pr.id} className="ingredient-detail__price-item">
+              <Store size={12} aria-hidden />
+              <span>{pr.storeName}</span>
+              <strong>{pr.price} {pr.currency}</strong>
+            </li>
+          ))}
+        </ul>
+      )}
+      {submitMsg && <p className="ingredient-detail__price-msg">{submitMsg}</p>}
+      {showForm ? (
+        <div className="ingredient-detail__price-form">
+          <Input
+            id={`price-store-${product.id}`}
+            label={t('ingredients.storeName')}
+            value={storeName}
+            onChange={(e) => setStoreName(e.target.value)}
+          />
+          <Input
+            id={`price-val-${product.id}`}
+            label={`${t('ingredients.price')} (${currency})`}
+            type="number"
+            min={0}
+            step={0.01}
+            value={priceVal}
+            onChange={(e) => setPriceVal(e.target.value)}
+          />
+          <div className="ingredient-detail__price-actions">
+            <Button variant="secondary" onClick={() => setShowForm(false)}>{t('common.cancel')}</Button>
+            <Button onClick={handleSubmitPrice} disabled={submitting}>{t('ingredients.reportPrice')}</Button>
+          </div>
+        </div>
+      ) : (
+        <button
+          type="button"
+          className="ingredient-detail__price-btn"
+          onClick={() => setShowForm(true)}
+        >
+          + {t('ingredients.reportPrice')}
+        </button>
+      )}
+    </div>
+  )
+}
 
 interface Props {
   ingredient: Ingredient
@@ -110,6 +200,12 @@ export function IngredientDetail({ ingredient, onClose, onEditCategory }: Props)
                         ].filter(Boolean).join(' · ')}
                       </span>
                     )}
+                    {p.stores && p.stores.length > 0 && (
+                      <span className="ingredient-detail__product-stores">
+                        {p.stores.join(', ')}
+                      </span>
+                    )}
+                    <ProductPricePanel product={p} />
                   </div>
                   <div className="ingredient-detail__product-actions">
                     <button

@@ -8,7 +8,7 @@ import {
   updateUserPassword,
 } from '../features/auth/authSlice'
 import type { ScoringFactors } from '../features/settings/types'
-import { setVisibleSlots, toggleAutoSuggest, toggleScoringFactor } from '../features/settings/settingsSlice'
+import { setCountry, setPreferredCurrency, setVisibleSlots, toggleAutoSuggest, toggleScoringFactor } from '../features/settings/settingsSlice'
 import { MEAL_SLOT_ORDER, type MealSlot } from '../features/mealPlan/types'
 import { useLanguage } from '../i18n'
 import './Settings.scss'
@@ -36,6 +36,8 @@ export function Settings() {
   const { visibleSlots, autoSuggestEnabled, scoringFactors } = useAppSelector(
     (s) => s.settings.mealPlanner,
   )
+  const country = useAppSelector((s) => s.settings.country)
+  const preferredCurrency = useAppSelector((s) => s.settings.preferredCurrency)
   const appSettings = useAppSelector((s) => s.admin.appSettings)
 
   // ── Profile form state ─────────────────────────────────────────────────────
@@ -243,6 +245,30 @@ export function Settings() {
             </ul>
           </div>
         )}
+      </section>
+
+      {/* ── Regional ──────────────────────────────────────────────────────── */}
+      <section className="settings-page__section">
+        <h2 className="settings-page__section-title">{t('settings.regional')}</h2>
+        <div className="settings-page__field">
+          <Input
+            id="settings-country"
+            label={t('settings.country')}
+            value={country}
+            onChange={(e) => dispatch(setCountry(e.target.value))}
+            placeholder="NO"
+          />
+          <p className="settings-page__hint">{t('settings.countryHint')}</p>
+        </div>
+        <div className="settings-page__field">
+          <Input
+            id="settings-currency"
+            label={t('settings.preferredCurrency')}
+            value={preferredCurrency}
+            onChange={(e) => dispatch(setPreferredCurrency(e.target.value))}
+            placeholder="NOK"
+          />
+        </div>
       </section>
     </div>
   )

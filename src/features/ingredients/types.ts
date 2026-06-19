@@ -36,6 +36,24 @@ export interface Product {
   nameI18n?: Record<string, string>
   /** Free-form descriptive tags set by AI standardisation (e.g. "Condiment", "Sauce"). */
   tags?: string[]
+  /** Stores where this product is sold (from OFF or manual entry). */
+  stores?: string[]
+  /** Current crowd-sourced prices per store, loaded on demand. */
+  currentPrices?: PriceReport[]
+}
+
+/** A crowd-sourced price report for a product at a specific store. */
+export interface PriceReport {
+  id: string
+  productId: string
+  reportedBy: string
+  storeName: string
+  price: number
+  currency: string
+  /** 'active' | 'pending_review' | 'approved' | 'rejected' */
+  status: string
+  aiVerdict?: string
+  createdAt: string
 }
 
 /** Fields required to create a new product. */
