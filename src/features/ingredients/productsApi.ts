@@ -36,6 +36,22 @@ function productToDb(payload: Partial<CreateProductPayload>) {
 
 // ─── API ──────────────────────────────────────────────────────────────────────
 
+/**
+ * Looks up a product in the local database by its barcode.
+ * Returns null when no matching product is found.
+ */
+export async function findProductByBarcode(barcode: string): Promise<Product | null> {
+  if (useMock) return null
+  apiLog('products', `findProductByBarcode ${barcode}`)
+  const { data, error } = await supabase
+    .from('products')
+    .select('*')
+    .eq('barcode', barcode)
+    .maybeSingle()
+  if (error || !data) return null
+  return mapProduct(data as Record<string, unknown>)
+}
+
 /** Returns all products for a specific ingredient category. */
 export async function fetchProductsForIngredient(ingredientId: string): Promise<Product[]> {
   if (useMock) return []

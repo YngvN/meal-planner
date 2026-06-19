@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { Barcode, Plus } from 'lucide-react'
 import { Alert, Badge, Button, Modal, SearchBar, Spinner } from '../../../components'
 import { useAppDispatch, useAppSelector } from '../../../app/hooks'
 import { useLanguage } from '../../../i18n'
@@ -8,13 +9,15 @@ import { deleteIngredient, fetchIngredients } from '../ingredientsSlice'
 import type { Ingredient } from '../types'
 import { IngredientDetail } from './IngredientDetail'
 import { IngredientForm } from './IngredientForm'
+import { QuickScanAdd } from './QuickScanAdd'
 import './IngredientList.scss'
+
+type AddMode = 'choice' | 'scan' | 'manual'
 
 /**
  * Searchable ingredient library table.
- * Add/edit category forms open in a modal. Clicking a row name opens the
- * IngredientDetail panel to manage specific products.
- * Supports `?edit=<id>` query param to open the edit modal directly.
+ * "Add ingredient" shows a choice first: scan a barcode or fill in the form.
+ * Clicking an ingredient name opens the IngredientDetail panel for managing products.
  */
 export function IngredientList() {
   const dispatch = useAppDispatch()
@@ -23,7 +26,7 @@ export function IngredientList() {
   const [searchParams, setSearchParams] = useSearchParams()
 
   const [search, setSearch] = useState('')
-  const [showAdd, setShowAdd] = useState(false)
+  const [addMode, setAddMode] = useState<AddMode | null>(null)
   const [manualEdit, setManualEdit] = useState<Ingredient | null>(null)
   const [detailIngredient, setDetailIngredient] = useState<Ingredient | null>(null)
 
@@ -56,7 +59,10 @@ export function IngredientList() {
     <div className="ingredient-list">
       <div className="ingredient-list__header">
         <h1>{t('ingredients.title')}</h1>
-        <Button onClick={() => setShowAdd(true)}>{t('ingredients.addIngredient')}</Button>
+        <Button onClick={() => setAddMode('choice')}>
+          <Plus size={16} aria-hidden />
+          {t('ingredients.addIngredient')}
+        </Button>
       </div>
 
       <SearchBar value={search} onChange={setSearch} placeholder={t('ingredients.search')} />
@@ -107,19 +113,71 @@ export function IngredientList() {
         </tbody>
       </table>
 
-      {/* Add category modal */}
-      <Modal open={showAdd} onClose={() => setShowAdd(false)} title={t('ingredients.addIngredient')}>
-        <IngredientForm onDone={() => setShowAdd(false)} />
+      {/* ── Add choice modal ─────────────────────────────────────────────── */}
+      <Modal
+        open={addMode === 'choice'}
+        onClose={() => setAddMode(null)}
+        title={t('ingredients.addIngredient')}
+      >
+        <div className="ingredient-list__add-choice">
+          <button
+            type="button"
+            className="ingredient-list__add-option"
+            onClick={() => setAddMode('scan')}
+          >
+            <Barcode size={32} aria-hidden />
+            <span className="ingredient-list__add-option-label">
+              {t('ingredients.scanBarcode')}
+            </span>
+            <span className="ingredient-list__add-option-hint">
+              {t('ingredients.scanHint')}
+            </span>
+          </button>
+          <button
+            type="button"
+            className="ingredient-list__add-option"
+            onClick={() => setAddMode('manual')}
+          >
+            <Plus size={32} aria-hidden />
+            <span className="ingredient-list__add-option-label">
+              {t('ingredients.addManually')}
+            </span>
+            <span className="ingredient-list__add-option-hint">
+              {t('ingredients.addManuallyHint')}
+            </span>
+          </button>
+        </div>
       </Modal>
 
-      {/* Edit category modal */}
+      {/* ── Scan flow ────────────────────────────────────────────────────── */}
+      {addMode === 'scan' && (
+        <QuickScanAdd
+          onClose={() => setAddMode(null)}
+          onDone={(ingredientId) => {
+            setAddMode(null)
+            const ing = ingredients.find((i) => i.id === ingredientId)
+            if (ing) setDetailIngredient(ing)
+          }}
+        />
+      )}
+
+      {/* ── Manual add form ──────────────────────────────────────────────── */}
+      <Modal
+        open={addMode === 'manual'}
+        onClose={() => setAddMode(null)}
+        title={t('ingredients.addIngredient')}
+      >
+        <IngredientForm onDone={() => setAddMode(null)} />
+      </Modal>
+
+      {/* ── Edit category modal ──────────────────────────────────────────── */}
       <Modal open={!!editingIngredient} onClose={closeEditModal} title={t('common.edit')}>
         {editingIngredient && (
           <IngredientForm ingredient={editingIngredient} onDone={closeEditModal} />
         )}
       </Modal>
 
-      {/* Product detail panel */}
+      {/* ── Product detail panel ─────────────────────────────────────────── */}
       {detailIngredient && (
         <IngredientDetail
           ingredient={detailIngredient}

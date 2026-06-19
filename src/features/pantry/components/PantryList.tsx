@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import { TriangleAlert } from 'lucide-react'
-import { Alert, Badge, SearchBar, Spinner } from '../../../components'
+import { Barcode, Plus, TriangleAlert } from 'lucide-react'
+import { Alert, Badge, Button, SearchBar, Spinner } from '../../../components'
 import { useAppDispatch, useAppSelector } from '../../../app/hooks'
 import { useLanguage } from '../../../i18n'
 import { fetchIngredients } from '../../ingredients/ingredientsSlice'
@@ -8,6 +8,7 @@ import { localizedIngredientName } from '../../shared/localize'
 import { roundConverted } from '../../shared/units'
 import { fetchPantry, updatePantryItem } from '../pantrySlice'
 import { PantryDetailModal } from './PantryDetailModal'
+import { PantryScanAdd } from './PantryScanAdd'
 import './PantryList.scss'
 
 /** Snapshot of the current time taken once when the module first loads. */
@@ -33,6 +34,7 @@ export function PantryList() {
 
   const [search, setSearch] = useState('')
   const [detailIngredientId, setDetailIngredientId] = useState<string | null>(null)
+  const [showScan, setShowScan] = useState(false)
 
   useEffect(() => {
     if (ingredients.length === 0) dispatch(fetchIngredients())
@@ -82,6 +84,16 @@ export function PantryList() {
     <div className="pantry-list">
       <div className="pantry-list__header">
         <h1>{t('pantry.title')}</h1>
+        <div className="pantry-list__actions">
+          <Button variant="secondary" onClick={() => setShowScan(true)}>
+            <Barcode size={16} aria-hidden />
+            {t('pantry.scan')}
+          </Button>
+          <Button onClick={() => setDetailIngredientId('__pick__')}>
+            <Plus size={16} aria-hidden />
+            {t('common.add')}
+          </Button>
+        </div>
       </div>
 
       <SearchBar value={search} onChange={setSearch} placeholder={t('pantry.search')} />
@@ -159,12 +171,14 @@ export function PantryList() {
           </div>
         </section>
       ))}
-      {detailIngredientId && (
+      {detailIngredientId && detailIngredientId !== '__pick__' && (
         <PantryDetailModal
           ingredientId={detailIngredientId}
           onClose={() => setDetailIngredientId(null)}
         />
       )}
+
+      {showScan && <PantryScanAdd onClose={() => setShowScan(false)} />}
     </div>
   )
 }

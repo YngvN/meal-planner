@@ -11,11 +11,22 @@
   }
 
   &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: $spacing-unit;
+    flex-wrap: wrap;
+
     h1 {
       font-size: 1.75rem;
       font-weight: 800;
       margin: 0;
     }
+  }
+
+  &__actions {
+    display: flex;
+    gap: $spacing-unit;
   }
 
   &__group {

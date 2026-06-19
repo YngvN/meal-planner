@@ -190,7 +190,7 @@
         "search": "Search ingredients…",
         "noResults": "No ingredients found.",
         "name": "Name",
-        "category": "Category",
+        "category": "Ingredient category",
         "nutrition": "Nutritional values (per 100g)",
         "defaultExpiryDays": "Default shelf life (days)",
         "noDefaultExpiry": "No default",
@@ -229,7 +229,13 @@
         "lookingUpBarcode": "Looking up barcode…",
         "barcodeFound": "Product found in database!",
         "barcodeNotFound": "Not found in database — fill in details manually.",
-        "scanFront": "Scan package front"
+        "scanFront": "Scan package front",
+        "addManually": "Add manually",
+        "scanHint": "Scan a product barcode to auto-fill details",
+        "addManuallyHint": "Create a new ingredient category by hand",
+        "categoryRequired": "Please select or create an ingredient category",
+        "newCategory": "— Create new category —",
+        "newCategoryName": "New category name"
       },
       "converter": {
         "convertTo": "Convert to",
@@ -297,7 +303,13 @@
           "slice": "slice",
           "clove": "clove",
           "head": "head"
-        }
+        },
+        "scan": "Scan",
+        "scanToAdd": "Scan to add",
+        "scanAgain": "Scan again",
+        "markInStock": "Mark in stock",
+        "productNotFoundInDb": "Product not found — no product with this barcode has been added yet.",
+        "addProductFirst": "Go to Ingredients → scan the barcode there first, then come back to add it to your pantry."
       },
       "mealPlan": {
         "title": "Meal Planner",
@@ -556,7 +568,7 @@
         "search": "Søk etter ingredienser…",
         "noResults": "Ingen ingredienser funnet.",
         "name": "Navn",
-        "category": "Kategori",
+        "category": "Ingredienskategori",
         "nutrition": "Næringsinnhold (per 100g)",
         "defaultExpiryDays": "Standard holdbarhet (dager)",
         "noDefaultExpiry": "Ingen standard",
@@ -595,7 +607,13 @@
         "lookingUpBarcode": "Slår opp strekkode…",
         "barcodeFound": "Produkt funnet i database!",
         "barcodeNotFound": "Ikke funnet i database — fyll inn detaljer manuelt.",
-        "scanFront": "Skann produktforside"
+        "scanFront": "Skann produktforside",
+        "addManually": "Legg til manuelt",
+        "scanHint": "Skann en produktstrekkode for å fylle inn detaljer automatisk",
+        "addManuallyHint": "Opprett en ny ingredienskategori manuelt",
+        "categoryRequired": "Velg eller opprett en ingredienskategori",
+        "newCategory": "— Opprett ny kategori —",
+        "newCategoryName": "Navn på ny kategori"
       },
       "converter": {
         "convertTo": "Konverter til",
@@ -663,7 +681,13 @@
           "slice": "skive",
           "clove": "fedd",
           "head": "hode"
-        }
+        },
+        "scan": "Skann",
+        "scanToAdd": "Skann for å legge til",
+        "scanAgain": "Skann igjen",
+        "markInStock": "Merk som på lager",
+        "productNotFoundInDb": "Produktet ble ikke funnet — ingen produkt med denne strekkoden er lagt til ennå.",
+        "addProductFirst": "Gå til Ingredienser → skann strekkoden der først, og kom tilbake for å legge det til i pantryet."
       },
       "mealPlan": {
         "title": "Måltidsplanlegger",
