@@ -346,16 +346,9 @@ export async function searchOFFProducts(
 
   apiLog('products', `searchOFFProducts "${query}" country=${countryCode}`)
   try {
-    // Use the v2 API — has proper CORS headers unlike the legacy /cgi/search.pl endpoint.
-    const params = new URLSearchParams({
-      search_terms: query,
-      page_size: '15',
-      fields: 'code,product_name,brands,image_front_url,labels_tags,countries_tags,stores',
-    })
-    const res = await fetch(
-      `https://world.openfoodfacts.org/api/v2/search?${params.toString()}`,
-      { headers: { 'User-Agent': 'Hungri/1.0 (https://hungri.netlify.app)' } },
-    )
+    // Proxy through our own Netlify function to avoid CORS and OFF downtime issues.
+    const params = new URLSearchParams({ q: query, limit: '15' })
+    const res = await fetch(`/api/off/search?${params.toString()}`)
     if (!res.ok) return []
 
     const json = (await res.json()) as { products?: Record<string, unknown>[] }
