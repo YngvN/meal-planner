@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { Camera, LoaderCircle } from 'lucide-react'
-import { BarcodeScanner, Button, Input, Modal, TranslatedText } from '../../../components'
+import { BarcodeScanner, Button, InlineEdit, Input, Modal, TranslatedText } from '../../../components'
 import { useAppDispatch } from '../../../app/hooks'
 import { useLanguage } from '../../../i18n'
 import { transcribeFrontOfPackage, transcribeNutrition } from '../../ai/aiApi'
@@ -285,11 +285,15 @@ export function ProductWizard({ ingredientId, existingProduct, onClose }: Props)
             </Button>
           </div>
 
-          {/* Core fields — no image URL input; image comes from OFF barcode lookup only */}
-          <Input id="pw-name" label={<TranslatedText id="common.name" />}
-            value={name} onChange={(e) => setName(e.target.value)} required />
-          <Input id="pw-brand" label={<TranslatedText id="ingredients.brand" />}
-            value={brand} onChange={(e) => setBrand(e.target.value)} />
+          {/* Core fields — shown as InlineEdit so scanned values are readable before editing */}
+          <div className="product-wizard__inline-field">
+            <label className="product-wizard__inline-label"><TranslatedText id="common.name" /></label>
+            <InlineEdit value={name} onChange={setName} placeholder={t('common.name')} />
+          </div>
+          <div className="product-wizard__inline-field">
+            <label className="product-wizard__inline-label"><TranslatedText id="ingredients.brand" /></label>
+            <InlineEdit value={brand} onChange={setBrand} placeholder={t('ingredients.brand')} />
+          </div>
           <Input id="pw-barcode" label={<TranslatedText id="ingredients.barcode" />}
             value={barcode} onChange={(e) => setBarcode(e.target.value)} />
 

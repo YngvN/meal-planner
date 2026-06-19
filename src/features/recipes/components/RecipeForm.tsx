@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useDraftPersistence } from '../../../hooks/useDraftPersistence'
 import { useNavigate } from 'react-router-dom'
-import { Alert, Button, IngredientCombobox, Input, NumberInput, Select, TagInput, TranslatedText } from '../../../components'
+import { Alert, Button, IngredientCombobox, InlineEdit, Input, NumberInput, Select, TagInput, TranslatedText } from '../../../components'
 import { useAppDispatch, useAppSelector } from '../../../app/hooks'
 import { useLanguage } from '../../../i18n'
 import { Info, Plus, X } from 'lucide-react'
@@ -136,7 +136,7 @@ export function RecipeForm({ initialValues, initialDraft, onDone }: RecipeFormPr
       setForm(savedDraft)
       setDraftBannerVisible(true)
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Apply AI-scanned draft once on mount when provided.
@@ -503,7 +503,7 @@ export function RecipeForm({ initialValues, initialDraft, onDone }: RecipeFormPr
       {/* ─── Source ─────────────────────────────────────────────────── */}
       <section className="recipe-form__section">
         <div className="recipe-form__source-header">
-          <h2>{t('recipes.source')}</h2>
+          <h2>{t('recipes.source.source')}</h2>
           <label className="recipe-form__chip-label">
             <input
               type="checkbox"
@@ -529,8 +529,8 @@ export function RecipeForm({ initialValues, initialDraft, onDone }: RecipeFormPr
               onChange={(e) => patch('sourceName', e.target.value)}
               placeholder={
                 form.sourceType === 'website' ? 'e.g. Serious Eats'
-                : form.sourceType === 'book' ? 'e.g. The Silver Spoon'
-                : 'e.g. Grandma Maria'
+                  : form.sourceType === 'book' ? 'e.g. The Silver Spoon'
+                    : 'e.g. Grandma Maria'
               }
             />
             {form.sourceType === 'website' && (
@@ -637,8 +637,8 @@ export function RecipeForm({ initialValues, initialDraft, onDone }: RecipeFormPr
               <NumberInput
                 value={row.quantity}
                 onChange={(v) => updateIngredientRow(idx, { quantity: v })}
-                min={0.1}
-                step={0.5}
+                min={0.01}
+                step="any"
               />
               <select
                 className="recipe-form__unit-select"
@@ -676,30 +676,27 @@ export function RecipeForm({ initialValues, initialDraft, onDone }: RecipeFormPr
         <h2>{t('recipes.instructions')}</h2>
         {form.steps.map((step, idx) => (
           <div key={idx} className="recipe-form__step-row">
-            <span className="recipe-form__step-num">{idx + 1}</span>
-            <div className="recipe-form__step-fields">
-              <div className="input-field">
-                <textarea
-                  className="recipe-form__textarea recipe-form__textarea--step"
-                  value={step.description}
-                  onChange={(e) => updateStep(idx, { description: e.target.value })}
-                  placeholder={t('recipes.form.stepDescription')}
-                  rows={2}
-                />
-              </div>
-              <NumberInput
-                value={step.timerMinutes ?? 0}
-                onChange={(v) => updateStep(idx, { timerMinutes: v || undefined })}
-                min={0}
-                step={1}
-                label={`${t('recipes.form.timer')} (min, 0 = none)`}
-              />
+            <div className="recipe-form__step-header">
+              <span className="recipe-form__step-num">{idx + 1}</span>
+              {form.steps.length > 1 && (
+                <Button type="button" variant="secondary" onClick={() => removeStep(idx)} aria-label={t('common.delete')}>
+                  <X size={16} aria-hidden />
+                </Button>
+              )}
             </div>
-            {form.steps.length > 1 && (
-              <Button type="button" variant="secondary" onClick={() => removeStep(idx)} aria-label={t('common.delete')}>
-                <X size={16} aria-hidden />
-              </Button>
-            )}
+            <InlineEdit
+              multiline
+              value={step.description}
+              onChange={(v) => updateStep(idx, { description: v })}
+              placeholder={t('recipes.form.stepDescription')}
+            />
+            <NumberInput
+              value={step.timerMinutes ?? 0}
+              onChange={(v) => updateStep(idx, { timerMinutes: v || undefined })}
+              min={0}
+              step={1}
+              label={`${t('recipes.form.timer')} (min, 0 = none)`}
+            />
           </div>
         ))}
         <Button type="button" variant="secondary" onClick={addStep}>

@@ -29,10 +29,6 @@
     display: flex;
     flex-direction: column;
     gap: calc($spacing-unit * 1.5);
-    padding: calc($spacing-unit * 2);
-    background: $color-surface;
-    border: 1px solid $color-border;
-    border-radius: 10px;
 
     h2 {
       font-size: 1.125rem;
@@ -129,8 +125,14 @@
 
     // On mobile: combobox spans the full first row, controls wrap beneath
     @media (max-width: ($breakpoint-mobile - 1px)) {
-      .recipe-form__ingredient-combobox { width: 100%; min-width: 0; }
-      &--alternative { padding-left: $spacing-unit; }
+      .recipe-form__ingredient-combobox {
+        width: 100%;
+        min-width: 0;
+      }
+
+      &--alternative {
+        padding-left: $spacing-unit;
+      }
     }
   }
 
@@ -171,7 +173,11 @@
 
   &__unit-select {
     width: 90px;
-    @media (max-width: ($breakpoint-mobile - 1px)) { width: 70px; }
+
+    @media (max-width: ($breakpoint-mobile - 1px)) {
+      width: 70px;
+    }
+
     padding: $spacing-unit calc($spacing-unit * 1.5);
     border: 1px solid $color-border;
     border-radius: 6px;
@@ -188,7 +194,18 @@
 
   &__step-row {
     display: flex;
-    align-items: flex-start;
+    flex-direction: column;
+    gap: $spacing-unit;
+    background: $color-bg;
+    border: 1px solid $color-border;
+    border-radius: 8px;
+    padding: $spacing-unit * 1.5;
+  }
+
+  &__step-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     gap: $spacing-unit;
   }
 
@@ -204,14 +221,6 @@
     color: $color-accent-contrast;
     font-size: 0.875rem;
     font-weight: 700;
-    margin-top: calc($spacing-unit * 0.5);
-  }
-
-  &__step-fields {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: $spacing-unit;
   }
 
   &__row--image {
@@ -294,6 +303,12 @@
     padding: calc($spacing-unit * 2) calc($spacing-unit * 3);
     border-top: 1px solid $color-border;
     background: $color-bg;
+
+    // On mobile the modal body padding is 16px, not 24px — match the negative margins.
+    @media (max-width: ($breakpoint-mobile - 1px)) {
+      margin: 0 calc($spacing-unit * -2) calc($spacing-unit * -2);
+      padding: calc($spacing-unit * 1.5) calc($spacing-unit * 2);
+    }
   }
 
   // ── AI disclaimer banner ─────────────────────────────────────────────────
@@ -309,7 +324,9 @@
     color: $color-text;
     font-size: 0.875rem;
 
-    > span { flex: 1; }
+    >span {
+      flex: 1;
+    }
 
     &-dismiss {
       display: inline-flex;
@@ -325,7 +342,9 @@
       flex-shrink: 0;
 
       @media (hover: hover) {
-        &:hover { background: $color-surface-hover; }
+        &:hover {
+          background: $color-surface-hover;
+        }
       }
     }
   }

@@ -119,4 +119,16 @@
     gap: $spacing-unit;
     justify-content: flex-end;
   }
+
+  &__inline-field {
+    display: flex;
+    flex-direction: column;
+    gap: calc($spacing-unit * 0.5);
+  }
+
+  &__inline-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: $color-text;
+  }
 }

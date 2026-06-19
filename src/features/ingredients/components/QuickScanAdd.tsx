@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useDraftPersistence } from '../../../hooks/useDraftPersistence'
 import { LoaderCircle } from 'lucide-react'
-import { BarcodeScanner, Button, Input, Modal, TranslatedText } from '../../../components'
+import { BarcodeScanner, Button, InlineEdit, Input, Modal, TranslatedText } from '../../../components'
 import { useAppDispatch, useAppSelector } from '../../../app/hooks'
 import { useLanguage } from '../../../i18n'
 import { createIngredient, createProduct } from '../ingredientsSlice'
@@ -215,11 +215,15 @@ export function QuickScanAdd({ onClose, onDone }: Props) {
             </p>
           )}
 
-          {/* Product name + brand */}
-          <Input id="qsa-name" label={<TranslatedText id="common.name" />}
-            value={name} onChange={(e) => setName(e.target.value)} required />
-          <Input id="qsa-brand" label={<TranslatedText id="ingredients.brand" />}
-            value={brand} onChange={(e) => setBrand(e.target.value)} />
+          {/* Product name + brand — InlineEdit so the scan result is readable before editing */}
+          <div className="quick-scan-add__field">
+            <label className="quick-scan-add__label"><TranslatedText id="common.name" /></label>
+            <InlineEdit value={name} onChange={setName} placeholder={t('common.name')} />
+          </div>
+          <div className="quick-scan-add__field">
+            <label className="quick-scan-add__label"><TranslatedText id="ingredients.brand" /></label>
+            <InlineEdit value={brand} onChange={setBrand} placeholder={t('ingredients.brand')} />
+          </div>
 
           {/* Ingredient category */}
           <div className="quick-scan-add__field">

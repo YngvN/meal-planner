@@ -4,6 +4,7 @@
   display: flex;
   flex-direction: column;
   gap: calc($spacing-unit / 2);
+  width: fit-content;   // Don't stretch to fill the parent
 
   label {
     font-size: 0.875rem;
@@ -66,10 +67,14 @@
     background: $color-bg;
     color: $color-text;
 
-    // Hide native spinners — we use our own stepper buttons
+    // Hide native spinners in all browsers — we use our own stepper buttons
+    appearance: textfield;
+    -moz-appearance: textfield;
+
     &::-webkit-inner-spin-button,
     &::-webkit-outer-spin-button {
       appearance: none;
+      margin: 0;
     }
 
     &:focus {

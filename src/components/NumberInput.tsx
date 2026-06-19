@@ -8,7 +8,7 @@ interface NumberInputProps {
   onChange: (value: number) => void
   min?: number
   max?: number
-  step?: number
+  step?: number | 'any'
   id?: string
   className?: string
   error?: string
@@ -19,6 +19,9 @@ interface NumberInputProps {
  * Clamps the value between min and max when the stepper is used.
  */
 export function NumberInput({ label, value, onChange, min = 0, max, step = 1, id, className, error }: NumberInputProps) {
+  // Numeric step for the stepper buttons; "any" means free-form, default to 1 for buttons.
+  const numericStep = step === 'any' ? 1 : step
+
   function clamp(n: number) {
     if (min !== undefined && n < min) return min
     if (max !== undefined && n > max) return max
@@ -32,7 +35,7 @@ export function NumberInput({ label, value, onChange, min = 0, max, step = 1, id
         <button
           type="button"
           className="number-input__step"
-          onClick={() => onChange(clamp(value - step))}
+          onClick={() => onChange(clamp(value - numericStep))}
           aria-label="Decrease"
           disabled={min !== undefined && value <= min}
         >
@@ -51,7 +54,7 @@ export function NumberInput({ label, value, onChange, min = 0, max, step = 1, id
         <button
           type="button"
           className="number-input__step"
-          onClick={() => onChange(clamp(value + step))}
+          onClick={() => onChange(clamp(value + numericStep))}
           aria-label="Increase"
           disabled={max !== undefined && value >= max}
         >
