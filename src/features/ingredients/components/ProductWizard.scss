@@ -98,6 +98,10 @@
     grid-template-columns: 1fr 1fr;
     gap: $spacing-unit;
     margin-top: $spacing-unit;
+
+    @media (max-width: ($breakpoint-mobile - 1px)) {
+      grid-template-columns: 1fr;
+    }
   }
 
   &__error {

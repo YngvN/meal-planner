@@ -228,7 +228,8 @@ export function RecipeForm({ initialValues, initialDraft, onDone }: RecipeFormPr
         Object.values(i.nameI18n ?? {}).some((n) => n.toLowerCase() === term),
     )
     if (existing) return existing.id
-    return handleCreateIngredient(name.trim())
+    const capitalised = name.trim().charAt(0).toUpperCase() + name.trim().slice(1)
+    return handleCreateIngredient(capitalised)
   }
 
   /** Applies an AI-transcribed recipe draft to the form, resolving ingredients to the library. */

@@ -33,6 +33,11 @@
     line-height: 1;
     color: $color-text;
 
+    @media (max-width: ($breakpoint-mobile - 1px)) {
+      min-width: 44px;
+      min-height: 44px;
+    }
+
     &:disabled {
       opacity: 0.4;
       cursor: not-allowed;

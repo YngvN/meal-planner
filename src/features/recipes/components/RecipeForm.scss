@@ -126,6 +126,12 @@
       padding-left: calc($spacing-unit * 2.5);
       opacity: 0.85;
     }
+
+    // On mobile: combobox spans the full first row, controls wrap beneath
+    @media (max-width: ($breakpoint-mobile - 1px)) {
+      .recipe-form__ingredient-combobox { width: 100%; min-width: 0; }
+      &--alternative { padding-left: $spacing-unit; }
+    }
   }
 
   &__or-badge {
@@ -165,6 +171,7 @@
 
   &__unit-select {
     width: 90px;
+    @media (max-width: ($breakpoint-mobile - 1px)) { width: 70px; }
     padding: $spacing-unit calc($spacing-unit * 1.5);
     border: 1px solid $color-border;
     border-radius: 6px;

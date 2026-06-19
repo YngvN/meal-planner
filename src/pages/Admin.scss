@@ -165,6 +165,16 @@
     background: $color-surface;
     border-radius: 8px;
 
+    @media (max-width: ($breakpoint-mobile - 1px)) {
+      grid-template-columns: 1fr auto;
+      row-gap: calc($spacing-unit * 0.5);
+      // Role column: hide on mobile (too cramped)
+      > *:nth-child(2) { display: none; }
+      // Scans column: stays visible at auto width
+      // Usage bar: spans both columns
+      .admin-page__ai-bar-wrap { grid-column: 1 / -1; }
+    }
+
     &--header {
       font-size: 0.75rem;
       font-weight: 700;
@@ -238,5 +248,103 @@
     cursor: pointer;
 
     &:disabled { opacity: 0.5; cursor: not-allowed; }
+  }
+
+  // ── Price report moderation rows ──────────────────────────────────────────
+
+  &__price-report {
+    display: flex;
+    align-items: center;
+    gap: $spacing-unit * 1.5;
+    padding: $spacing-unit $spacing-unit * 1.5;
+    background: $color-surface;
+    border-radius: 8px;
+    margin-bottom: $spacing-unit;
+    flex-wrap: wrap;
+
+    @media (max-width: ($breakpoint-mobile - 1px)) {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+
+  &__price-report-info {
+    display: flex;
+    gap: $spacing-unit;
+    flex-wrap: wrap;
+    flex: 1;
+    min-width: 0;
+    font-size: 0.875rem;
+  }
+
+  &__price-report-verdict {
+    width: 100%;
+    font-size: 0.8125rem;
+    color: $color-text-muted;
+    font-style: italic;
+    margin: 0;
+  }
+
+  &__price-report-actions {
+    display: flex;
+    gap: $spacing-unit * 0.5;
+    flex-wrap: wrap;
+
+    @media (max-width: ($breakpoint-mobile - 1px)) {
+      width: 100%;
+      > button { flex: 1; }
+    }
+  }
+
+  // ── Product standardization table ─────────────────────────────────────────
+
+  &__standardize-table {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  &__standardize-header {
+    display: grid;
+    grid-template-columns: 2fr 2fr 1fr auto;
+    gap: $spacing-unit;
+    padding: $spacing-unit $spacing-unit * 1.5;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: $color-text-muted;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+
+    @media (max-width: ($breakpoint-mobile - 1px)) { display: none; }
+  }
+
+  &__standardize-row {
+    display: grid;
+    grid-template-columns: 2fr 2fr 1fr auto;
+    gap: $spacing-unit;
+    align-items: center;
+    padding: $spacing-unit $spacing-unit * 1.5;
+    background: $color-surface;
+    border-radius: 8px;
+    font-size: 0.875rem;
+
+    @media (max-width: ($breakpoint-mobile - 1px)) {
+      grid-template-columns: 1fr auto;
+      grid-template-rows: auto auto;
+      > *:nth-child(2) { grid-column: 1 / -1; font-size: 0.8125rem; color: $color-text-muted; }
+      > *:nth-child(3) { grid-column: 1; font-size: 0.8125rem; color: $color-text-muted; }
+    }
+  }
+
+  &__standardize-actions {
+    display: flex;
+    gap: $spacing-unit;
+    justify-content: flex-end;
+    margin-top: $spacing-unit * 1.5;
+
+    @media (max-width: ($breakpoint-mobile - 1px)) {
+      flex-direction: column;
+      > button { width: 100%; }
+    }
   }
 }

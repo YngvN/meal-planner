@@ -148,3 +148,24 @@
     }
   }
 }
+
+// ── Mobile: wrap qty/expiry/controls below the name row ────────────────────
+
+@media (max-width: ($breakpoint-mobile - 1px)) {
+  .pantry-row {
+    flex-wrap: wrap;
+    align-items: flex-start;
+
+    &__name {
+      // Name takes its own full-width row; controls wrap below it
+      flex-basis: calc(100% - 24px - $spacing-unit * 2); // exclude checkbox
+    }
+
+    &__qty,
+    &__expiry,
+    &__controls {
+      // Shift controls under the name by matching the checkbox + gap offset
+      margin-left: calc(16px + 4px + $spacing-unit);
+    }
+  }
+}

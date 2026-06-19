@@ -69,9 +69,10 @@
   &__product-name {
     font-weight: 500;
     font-size: 0.9375rem;
-    white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
   }
 
   &__product-brand {
@@ -115,11 +116,20 @@
 
     &:active { box-shadow: inset 0 2px 4px $color-shadow; }
 
+    @media (max-width: ($breakpoint-mobile - 1px)) {
+      width: 44px;
+      height: 44px;
+    }
+
     &--danger {
       @media (hover: hover) {
         &:hover { color: $color-error; border-color: $color-error-border; background: $color-error-bg; }
       }
     }
+  }
+
+  @media (max-width: ($breakpoint-mobile - 1px)) {
+    &__price-form { flex-direction: column; }
   }
 
   // ── Footer ────────────────────────────────────────────────────────────────

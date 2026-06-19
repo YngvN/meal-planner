@@ -113,4 +113,37 @@
     gap: $spacing-unit;
     justify-content: flex-end;
   }
+
+  // ── Pantry summary step ───────────────────────────────────────────────────
+
+  &__pantry-summary {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-unit * 1.5;
+  }
+
+  &__pantry-ratio {
+    font-size: 1rem;
+    margin: 0;
+  }
+
+  &__missing-list {
+    margin: 0;
+    padding-left: $spacing-unit * 2;
+    font-size: 0.9rem;
+    color: $color-text-muted;
+  }
+
+  &__pantry-actions {
+    display: flex;
+    gap: $spacing-unit;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+
+    @media (max-width: ($breakpoint-mobile - 1px)) {
+      flex-direction: column;
+
+      button { width: 100%; justify-content: center; }
+    }
+  }
 }
