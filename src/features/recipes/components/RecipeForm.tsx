@@ -375,7 +375,7 @@ export function RecipeForm({ initialValues, initialDraft, onDone }: RecipeFormPr
 
       {/* Draft restore banner */}
       {draftBannerVisible && (
-        <Alert variant="info" className="recipe-form__draft-banner">
+        <Alert variant="info">
           {t('common.draftRestored')}
           {' '}
           <button

@@ -12,8 +12,7 @@ import './IngredientDetail.scss'
 /** Inline panel showing crowd-sourced prices per store for a product. */
 function ProductPricePanel({ product }: { product: Product }) {
   const { t } = useLanguage()
-  const settings = useAppSelector((s) => s.settings)
-  const currency = (settings as Record<string, unknown>).preferredCurrency as string ?? 'NOK'
+  const currency = useAppSelector((s) => s.settings.preferredCurrency) ?? 'NOK'
 
   const [prices, setPrices] = useState<PriceReport[]>([])
   const [showForm, setShowForm] = useState(false)
