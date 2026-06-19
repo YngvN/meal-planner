@@ -185,3 +185,23 @@ begin
     );
   end loop;
 end $$;
+
+-- ─── Table-level privileges ────────────────────────────────────────────────────
+-- RLS only filters rows; PostgREST's anon/authenticated roles also need
+-- explicit table-level grants or every request returns 403 (42501).
+
+grant select                         on public.ingredients            to anon, authenticated;
+grant insert, update, delete         on public.ingredients            to authenticated;
+
+grant select                         on public.ingredient_subproducts to anon, authenticated;
+grant insert, update, delete         on public.ingredient_subproducts to authenticated;
+
+grant select                         on public.recipes                to anon, authenticated;
+grant insert, update, delete         on public.recipes                to authenticated;
+
+grant select                         on public.recipe_ingredients     to anon, authenticated;
+grant insert, update, delete         on public.recipe_ingredients     to authenticated;
+
+-- pantry and meal plan are per-user only (anon has no meaningful access)
+grant select, insert, update, delete on public.pantry_items           to authenticated;
+grant select, insert, update, delete on public.planned_meals          to authenticated;
