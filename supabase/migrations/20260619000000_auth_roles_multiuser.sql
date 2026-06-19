@@ -249,3 +249,19 @@ drop policy if exists "Allow all (single-user)" on planned_meals;
 create policy "planned_meals_own" on planned_meals for all
   using (user_id = auth.uid())
   with check (user_id = auth.uid());
+
+-- ─── Table-level privileges ────────────────────────────────────────────────────
+-- RLS policies only filter rows; the role must also have table-level SELECT/etc.
+-- Supabase's anon and authenticated roles are the PostgREST execution roles.
+
+-- profiles: public read (recipe attribution), auth write
+grant select                        on public.profiles     to anon, authenticated;
+grant insert, update                on public.profiles     to authenticated;
+
+-- app_settings: public read (signup invite-code check), admin write via RLS
+grant select                        on public.app_settings to anon, authenticated;
+grant update                        on public.app_settings to authenticated;
+
+-- invite_codes: anon read for validation, auth full for admin management
+grant select                        on public.invite_codes to anon;
+grant select, insert, update, delete on public.invite_codes to authenticated;
