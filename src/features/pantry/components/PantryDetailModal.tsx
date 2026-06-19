@@ -60,7 +60,17 @@ export function PantryDetailModal({ ingredientId, onClose }: PantryDetailModalPr
   const title = ingredient ? localizedIngredientName(ingredient, language) : ingredientId
 
   return (
-    <Modal open onClose={onClose} title={t('pantry.editItem')}>
+    <Modal
+      open
+      onClose={onClose}
+      title={t('pantry.editItem')}
+      footer={
+        <>
+          <Button variant="secondary" onClick={onClose}>{t('common.cancel')}</Button>
+          <Button onClick={handleSave}>{t('common.save')}</Button>
+        </>
+      }
+    >
       <div className="pantry-detail-modal">
         {ingredient?.imageUrl && (
           <img
@@ -142,11 +152,6 @@ export function PantryDetailModal({ ingredientId, onClose }: PantryDetailModalPr
               {t('pantry.low')}
             </label>
           </div>
-        </div>
-
-        <div className="pantry-detail-modal__footer">
-          <Button variant="secondary" onClick={onClose}>{t('common.cancel')}</Button>
-          <Button onClick={handleSave}>{t('common.save')}</Button>
         </div>
       </div>
     </Modal>

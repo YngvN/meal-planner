@@ -93,12 +93,4 @@
     cursor: pointer;
     accent-color: $color-accent;
   }
-
-  &__footer {
-    display: flex;
-    justify-content: flex-end;
-    gap: $spacing-unit;
-    padding-top: $spacing-unit;
-    border-top: 1px solid $color-border;
-  }
 }

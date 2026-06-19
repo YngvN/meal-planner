@@ -244,11 +244,4 @@
       font-size: 1rem;
     }
   }
-
-  &__modal-actions {
-    display: flex;
-    gap: $spacing-unit;
-    justify-content: flex-end;
-    margin-top: calc($spacing-unit * 2);
-  }
 }

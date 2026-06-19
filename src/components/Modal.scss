@@ -58,6 +58,17 @@
     }
   }
 
+  // Pinned footer — always visible below the scrolling body.
+  &__footer {
+    flex-shrink: 0;
+    display: flex;
+    justify-content: flex-end;
+    gap: $spacing-unit;
+    padding: calc($spacing-unit * 2) calc($spacing-unit * 3);
+    border-top: 1px solid $color-border;
+    background: $color-bg;
+  }
+
   &__close {
     position: absolute;
     top: $spacing-unit;

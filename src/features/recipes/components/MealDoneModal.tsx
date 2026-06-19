@@ -120,7 +120,18 @@ export function MealDoneModal({ recipe, mealId, onClose }: MealDoneModalProps) {
   }
 
   return (
-    <Modal open onClose={onClose} title={t('recipes.mealDoneTitle')} size="large">
+    <Modal
+      open
+      onClose={onClose}
+      title={t('recipes.mealDoneTitle')}
+      size="large"
+      footer={
+        <>
+          <Button variant="secondary" onClick={onClose}>{t('common.cancel')}</Button>
+          <Button onClick={handleConfirm}>{t('recipes.mealDoneConfirm')}</Button>
+        </>
+      }
+    >
       <div className="meal-done-modal">
         {recipe.imageUrl && (
           <img src={recipe.imageUrl} alt={recipe.title} className="meal-done-modal__hero" />
@@ -203,11 +214,6 @@ export function MealDoneModal({ recipe, mealId, onClose }: MealDoneModalProps) {
             {t('recipes.removeFromPlan')}
           </label>
         )}
-
-        <div className="meal-done-modal__footer">
-          <Button variant="secondary" onClick={onClose}>{t('common.cancel')}</Button>
-          <Button onClick={handleConfirm}>{t('recipes.mealDoneConfirm')}</Button>
-        </div>
       </div>
     </Modal>
   )

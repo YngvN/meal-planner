@@ -382,14 +382,16 @@ export function RecipeDetail({ recipeId }: RecipeDetailProps) {
         open={confirmDelete}
         onClose={() => setConfirmDelete(false)}
         title={t('common.confirmDeleteTitle')}
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setConfirmDelete(false)}>
+              {t('common.cancel')}
+            </Button>
+            <Button onClick={handleDelete}>{t('common.delete')}</Button>
+          </>
+        }
       >
         <p>{t('common.confirmDelete')}</p>
-        <div className="recipe-detail__modal-actions">
-          <Button variant="secondary" onClick={() => setConfirmDelete(false)}>
-            {t('common.cancel')}
-          </Button>
-          <Button onClick={handleDelete}>{t('common.delete')}</Button>
-        </div>
       </Modal>
     </article>
   )
