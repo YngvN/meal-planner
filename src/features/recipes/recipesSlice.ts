@@ -5,7 +5,7 @@ import type { CreateRecipePayload, Recipe, UpdateRecipePayload } from './types'
 interface RecipesState {
   items: Recipe[]
   selectedRecipe: Recipe | null
-  status: 'idle' | 'loading' | 'failed'
+  status: 'idle' | 'loading' | 'succeeded' | 'failed'
   error: string | null
 }
 
@@ -53,7 +53,7 @@ const recipesSlice = createSlice({
         state.error = null
       })
       .addCase(fetchRecipes.fulfilled, (state, action) => {
-        state.status = 'idle'
+        state.status = 'succeeded'
         state.items = Array.isArray(action.payload) ? action.payload : []
       })
       .addCase(fetchRecipes.rejected, (state, action) => {
@@ -68,7 +68,7 @@ const recipesSlice = createSlice({
         state.error = null
       })
       .addCase(fetchRecipeById.fulfilled, (state, action) => {
-        state.status = 'idle'
+        state.status = 'succeeded'
         state.selectedRecipe = action.payload
         // Also update in items list if present
         const idx = state.items.findIndex((r) => r.id === action.payload.id)

@@ -26,7 +26,17 @@ apiClient.interceptors.request.use((config) => {
 
 apiClient.interceptors.response.use(
   (response) => {
-    apiLog('api', `← ${response.status} ${response.config.url}`, response.data)
+    // A common misconfig: the base URL has no backend, so the host's SPA
+    // fallback returns index.html with a 200. Flag it loudly.
+    if (typeof response.data === 'string' && /^\s*<(!doctype|html)/i.test(response.data)) {
+      apiError(
+        'api',
+        `✗ ${response.config.url} returned HTML, not JSON. No backend at "${baseURL}" ` +
+          '(SPA fallback). Set VITE_API_BASE_URL to a real API, or VITE_USE_MOCK_DATA=true.',
+      )
+    } else {
+      apiLog('api', `← ${response.status} ${response.config.url}`, response.data)
+    }
     return response
   },
   (error) => {

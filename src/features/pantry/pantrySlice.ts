@@ -4,7 +4,7 @@ import type { PantryItem, UpdatePantryItemPayload } from './types'
 
 interface PantryState {
   items: PantryItem[]
-  status: 'idle' | 'loading' | 'failed'
+  status: 'idle' | 'loading' | 'succeeded' | 'failed'
   error: string | null
 }
 
@@ -39,7 +39,7 @@ const pantrySlice = createSlice({
         state.error = null
       })
       .addCase(fetchPantry.fulfilled, (state, action) => {
-        state.status = 'idle'
+        state.status = 'succeeded'
         state.items = Array.isArray(action.payload) ? action.payload : []
       })
       .addCase(fetchPantry.rejected, (state, action) => {

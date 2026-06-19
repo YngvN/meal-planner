@@ -4,7 +4,7 @@ import type { CreatePlannedMealPayload, PlannedMeal, UpdatePlannedMealPayload } 
 
 interface MealPlanState {
   items: PlannedMeal[]
-  status: 'idle' | 'loading' | 'failed'
+  status: 'idle' | 'loading' | 'succeeded' | 'failed'
   error: string | null
 }
 
@@ -41,7 +41,7 @@ const mealPlanSlice = createSlice({
         state.error = null
       })
       .addCase(fetchMealPlan.fulfilled, (state, action) => {
-        state.status = 'idle'
+        state.status = 'succeeded'
         state.items = Array.isArray(action.payload) ? action.payload : []
       })
       .addCase(fetchMealPlan.rejected, (state, action) => {

@@ -4,7 +4,7 @@ import type { CreateIngredientPayload, Ingredient, UpdateIngredientPayload } fro
 
 interface IngredientsState {
   items: Ingredient[]
-  status: 'idle' | 'loading' | 'failed'
+  status: 'idle' | 'loading' | 'succeeded' | 'failed'
   error: string | null
 }
 
@@ -43,7 +43,7 @@ const ingredientsSlice = createSlice({
         state.error = null
       })
       .addCase(fetchIngredients.fulfilled, (state, action) => {
-        state.status = 'idle'
+        state.status = 'succeeded'
         state.items = Array.isArray(action.payload) ? action.payload : []
       })
       .addCase(fetchIngredients.rejected, (state, action) => {

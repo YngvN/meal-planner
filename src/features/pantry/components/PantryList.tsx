@@ -86,6 +86,10 @@ export function PantryList() {
 
       <SearchBar value={search} onChange={setSearch} placeholder={t('pantry.search')} />
 
+      {grouped.length === 0 && (
+        <p className="pantry-list__empty">{t('pantry.empty')}</p>
+      )}
+
       {grouped.map(([category, rows]) => (
         <section key={category} className="pantry-list__group">
           <h2 className="pantry-list__group-title">

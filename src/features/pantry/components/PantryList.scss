@@ -5,6 +5,11 @@
   flex-direction: column;
   gap: calc($spacing-unit * 2.5);
 
+  &__empty {
+    color: $color-text-muted;
+    margin: 0;
+  }
+
   &__header {
     h1 {
       font-size: 1.75rem;
