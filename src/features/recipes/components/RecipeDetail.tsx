@@ -7,9 +7,10 @@ import { useLanguage } from '../../../i18n'
 import type { Ingredient } from '../../ingredients/types'
 import type { NutritionalValues } from '../../shared/types'
 import { deleteRecipe, fetchRecipeById, toggleFavorite } from '../recipesSlice'
+import { fetchIngredients } from '../../ingredients/ingredientsSlice'
 import type { Recipe, RecipeIngredient } from '../types'
 import { ALL_UNIT_KEYS, convertUnit, getUnitDimension, roundConverted } from '../../shared/units'
-import { localizedIngredientName, localizedProductName, localizeRecipe } from '../../shared/localize'
+import { localizedIngredientName, localizedProductName, localizeRecipe, localizeUnit } from '../../shared/localize'
 import { MealDoneModal } from './MealDoneModal'
 import { RecipePantryCheck } from '../../pantry/components/RecipePantryCheck'
 import './RecipeDetail.scss'
@@ -133,6 +134,12 @@ export function RecipeDetail({ recipeId }: RecipeDetailProps) {
   useEffect(() => {
     dispatch(fetchRecipeById(recipeId))
   }, [dispatch, recipeId])
+
+  // Ensure the ingredient library is loaded so names resolve correctly.
+  const ingredientsLoaded = useAppSelector((s) => s.ingredients.status !== 'idle')
+  useEffect(() => {
+    if (!ingredientsLoaded) dispatch(fetchIngredients())
+  }, [dispatch, ingredientsLoaded])
 
   if (status === 'loading') return <Spinner />
   if (status === 'failed') return <Alert variant="error">{error ?? t('common.error')}</Alert>
@@ -292,10 +299,10 @@ export function RecipeDetail({ recipeId }: RecipeDetailProps) {
                   {inPantry ? <Check size={16} aria-hidden /> : <X size={16} aria-hidden />}
                 </span>
                 <span className="recipe-detail__ingredient-qty">
-                  <strong>{ri.quantity} {ri.unit}</strong>
+                  <strong>{ri.quantity} {localizeUnit(ri.unit, t)}</strong>
                   {convertedQty !== null && targetUnit && (
                     <span className="recipe-detail__ingredient-converted">
-                      ≈ {roundConverted(convertedQty)} {targetUnit}
+                      ≈ {roundConverted(convertedQty)} {localizeUnit(targetUnit, t)}
                     </span>
                   )}
                 </span>
@@ -317,9 +324,9 @@ export function RecipeDetail({ recipeId }: RecipeDetailProps) {
                       }}
                       aria-label={t('converter.convertTo')}
                     >
-                      <option value="">{ri.unit}</option>
+                      <option value="">{localizeUnit(ri.unit, t)}</option>
                       {compatibleUnits.map((u) => (
-                        <option key={u} value={u}>{u}</option>
+                        <option key={u} value={u}>{localizeUnit(u, t)}</option>
                       ))}
                     </select>
                   </span>

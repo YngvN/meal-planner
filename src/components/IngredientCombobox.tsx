@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
-import { Plus, X } from 'lucide-react'
+import { Plus, Trash2, X } from 'lucide-react'
 import type { Ingredient } from '../features/ingredients/types'
 import './IngredientCombobox.scss'
 
@@ -155,7 +155,7 @@ export function IngredientCombobox({
             onClick={handleClear}
             aria-label="Clear selection"
           >
-            <X size={16} aria-hidden />
+            <Trash2 size={15} aria-hidden />
           </button>
         </div>
       ) : (

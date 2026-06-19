@@ -4,10 +4,11 @@ import { useNavigate } from 'react-router-dom'
 import { Alert, Button, IngredientCombobox, InlineEdit, Input, NumberInput, Select, TagInput, TranslatedText } from '../../../components'
 import { useAppDispatch, useAppSelector } from '../../../app/hooks'
 import { useLanguage } from '../../../i18n'
-import { Info, Plus, X } from 'lucide-react'
+import { Info, Plus, Trash2, X } from 'lucide-react'
 import { createIngredient } from '../../ingredients/ingredientsSlice'
 import { RecipeScanButton } from '../../ai/components/RecipeScanButton'
 import { createRecipe, updateRecipe } from '../recipesSlice'
+import { localizeUnit } from '../../shared/localize'
 import type {
   CreateRecipePayload,
   DietaryTag,
@@ -611,58 +612,69 @@ export function RecipeForm({ initialValues, initialDraft, onDone }: RecipeFormPr
                 isAlternative && 'recipe-form__ingredient-row--alternative',
               ].filter(Boolean).join(' ')}
             >
-              {isAlternative && (
-                <span className="recipe-form__or-badge" aria-label="or">or</span>
-              )}
-              <IngredientCombobox
-                value={row.ingredientId || undefined}
-                onChange={(id) => updateIngredientRow(idx, { ingredientId: id, productId: undefined })}
-                options={ingredientLibrary}
-                onCreateNew={handleCreateIngredient}
-                placeholder={t('recipes.form.selectIngredient')}
-                className="recipe-form__ingredient-combobox"
-              />
-              {products.length > 0 && (
-                <select
-                  className="recipe-form__product-select"
-                  value={row.productId ?? ''}
-                  onChange={(e) => updateIngredientRow(idx, { productId: e.target.value || undefined })}
+              {/* Top line: or-badge + combobox + delete */}
+              <div className="recipe-form__ing-top">
+                {isAlternative && (
+                  <span className="recipe-form__or-badge" aria-label="or">or</span>
+                )}
+                <IngredientCombobox
+                  value={row.ingredientId || undefined}
+                  onChange={(id) => updateIngredientRow(idx, { ingredientId: id, productId: undefined })}
+                  options={ingredientLibrary}
+                  onCreateNew={handleCreateIngredient}
+                  placeholder={t('recipes.form.selectIngredient')}
+                  className="recipe-form__ingredient-combobox"
+                />
+                <button
+                  type="button"
+                  className="recipe-form__ing-delete"
+                  onClick={() => removeIngredientRow(idx)}
+                  aria-label={t('common.delete')}
                 >
-                  <option value="">{t('recipes.form.defaultVariant')}</option>
-                  {products.map((p) => (
-                    <option key={p.id} value={p.id}>{p.name}{p.brand ? ` — ${p.brand}` : ''}</option>
+                  <Trash2 size={16} aria-hidden />
+                </button>
+              </div>
+              {/* Bottom line: quantity + unit + or button (primary only) */}
+              <div className="recipe-form__ing-bottom">
+                <NumberInput
+                  value={row.quantity}
+                  onChange={(v) => updateIngredientRow(idx, { quantity: v })}
+                  min={0.01}
+                  step="any"
+                />
+                <select
+                  className="recipe-form__unit-select"
+                  value={row.unit}
+                  onChange={(e) => updateIngredientRow(idx, { unit: e.target.value })}
+                >
+                  {COMMON_UNITS.map((u) => (
+                    <option key={u} value={u}>{localizeUnit(u, t)}</option>
                   ))}
                 </select>
-              )}
-              <NumberInput
-                value={row.quantity}
-                onChange={(v) => updateIngredientRow(idx, { quantity: v })}
-                min={0.01}
-                step="any"
-              />
-              <select
-                className="recipe-form__unit-select"
-                value={row.unit}
-                onChange={(e) => updateIngredientRow(idx, { unit: e.target.value })}
-              >
-                {COMMON_UNITS.map((u) => (
-                  <option key={u} value={u}>{u}</option>
-                ))}
-              </select>
-              {!isAlternative && (
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => addAlternativeRow(idx)}
-                  aria-label={t('recipes.form.addAlternative')}
-                  title={t('recipes.form.addAlternative')}
-                >
-                  <span className="recipe-form__or-btn-label">or</span>
-                </Button>
-              )}
-              <Button type="button" variant="secondary" onClick={() => removeIngredientRow(idx)} aria-label={t('common.delete')}>
-                <X size={16} aria-hidden />
-              </Button>
+                {products.length > 0 && (
+                  <select
+                    className="recipe-form__product-select"
+                    value={row.productId ?? ''}
+                    onChange={(e) => updateIngredientRow(idx, { productId: e.target.value || undefined })}
+                  >
+                    <option value="">{t('recipes.form.defaultVariant')}</option>
+                    {products.map((p) => (
+                      <option key={p.id} value={p.id}>{p.name}{p.brand ? ` — ${p.brand}` : ''}</option>
+                    ))}
+                  </select>
+                )}
+                {!isAlternative && (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => addAlternativeRow(idx)}
+                    aria-label={t('recipes.form.addAlternative')}
+                    title={t('recipes.form.addAlternative')}
+                  >
+                    <span className="recipe-form__or-btn-label">or</span>
+                  </Button>
+                )}
+              </div>
             </div>
           )
         })}

@@ -52,3 +52,14 @@ export function ingredientMissingLanguages(ing: Ingredient, langs: string[]): st
 export function recipeMissingLanguages(recipe: Recipe, langs: string[]): string[] {
   return langs.filter((l) => !recipe.titleI18n?.[l]?.trim())
 }
+
+/**
+ * Returns the localised display abbreviation for a unit key (e.g. "tsp" → "ts"
+ * in Norwegian). Falls back to the raw key when no translation exists.
+ * Pass the `t` function from `useLanguage()`.
+ */
+export function localizeUnit(unit: string, t: (key: string) => string): string {
+  const translated = t(`recipes.units.${unit}`)
+  // If the key wasn't found, t() returns the key path itself — fall back to the raw unit
+  return translated === `recipes.units.${unit}` ? unit : translated
+}

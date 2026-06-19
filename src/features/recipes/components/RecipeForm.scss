@@ -114,37 +114,74 @@
 
   &__ingredient-row {
     display: flex;
-    align-items: flex-end;
-    gap: $spacing-unit;
-    flex-wrap: wrap;
+    flex-direction: column;
+    gap: calc($spacing-unit * 0.75);
+
+    // Space before each primary (non-alternative) row except the very first
+    &:not(.recipe-form__ingredient-row--alternative):not(:first-child) {
+      margin-top: $spacing-unit * 1.5;
+    }
 
     &--alternative {
-      padding-left: calc($spacing-unit * 2.5);
-      opacity: 0.85;
+      opacity: 0.9;
     }
+  }
 
-    // On mobile: combobox spans the full first row, controls wrap beneath
-    @media (max-width: ($breakpoint-mobile - 1px)) {
-      .recipe-form__ingredient-combobox {
-        width: 100%;
-        min-width: 0;
-      }
+  &__ing-top {
+    display: flex;
+    align-items: center;
+    gap: $spacing-unit;
 
-      &--alternative {
-        padding-left: $spacing-unit;
-      }
+    .recipe-form__ingredient-combobox { flex: 1; min-width: 0; }
+  }
+
+  &__ing-bottom {
+    display: flex;
+    align-items: center;
+    gap: $spacing-unit;
+    flex-wrap: wrap;
+    // Indent to align under the combobox when there's an "or" badge
+    padding-left: 0;
+
+    .recipe-form__ingredient-row--alternative & {
+      padding-left: calc(2.5rem + $spacing-unit);  // width of "or" badge
     }
+  }
+
+  &__ing-delete {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: $color-text-muted;
+    cursor: pointer;
+
+    @media (hover: hover) {
+      &:hover { background: color-mix(in srgb, $color-error 10%, transparent); color: $color-error; }
+    }
+    &:active { box-shadow: inset 0 2px 4px $color-shadow; }
+
+    @media (max-width: ($breakpoint-mobile - 1px)) { width: 44px; height: 44px; }
   }
 
   &__or-badge {
     flex-shrink: 0;
-    font-size: 0.75rem;
-    font-weight: 600;
+    width: 2.5rem;
+    text-align: center;
+    font-size: 0.7rem;
+    font-weight: 700;
     color: $color-text-muted;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    padding: 0 calc($spacing-unit * 0.5);
-    align-self: center;
+    letter-spacing: 0.06em;
+    background: $color-surface;
+    border: 1px solid $color-border;
+    border-radius: 4px;
+    padding: 2px 4px;
   }
 
   &__or-btn-label {
@@ -290,12 +327,8 @@
     }
   }
 
-  // Pinned to the bottom of the scrolling modal body. Negative margins let it
-  // span the body's full width and sit flush against the bottom edge.
+  // Footer inside the modal — uses negative margins to sit flush at the bottom edge.
   &__modal-footer {
-    position: sticky;
-    bottom: 0;
-    z-index: 1;
     display: flex;
     justify-content: flex-end;
     gap: $spacing-unit;
@@ -304,7 +337,6 @@
     border-top: 1px solid $color-border;
     background: $color-bg;
 
-    // On mobile the modal body padding is 16px, not 24px — match the negative margins.
     @media (max-width: ($breakpoint-mobile - 1px)) {
       margin: 0 calc($spacing-unit * -2) calc($spacing-unit * -2);
       padding: calc($spacing-unit * 1.5) calc($spacing-unit * 2);
