@@ -12,10 +12,13 @@ dist
 dist-ssr
 *.local
 
-# Local secrets — never commit. (.env.development and .env.example stay tracked.)
+# Env files with real values are never committed.
+# Only .env.example (with placeholders) is tracked.
 .env
 .env.local
 .env*.local
+.env.development
+.env.production
 
 # Editor directories and files
 .vscode/*
