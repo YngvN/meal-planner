@@ -4,7 +4,7 @@ import type { CreateProductPayload, IngredientCategory, PriceReport, Product, Up
 import type { NutritionalValues } from '../shared/types'
 import { normalizeOffLabel, offCategoryToIngredientCategory } from './offCategoryMap'
 
-const useMock = import.meta.env.VITE_USE_MOCK_DATA === 'true'
+const useMock = process.env.EXPO_PUBLIC_USE_MOCK_DATA === 'true'
 
 // ─── Row mapper ────────────────────────────────────────────────────────────────
 

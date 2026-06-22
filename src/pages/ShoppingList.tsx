@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
-import { useAppDispatch, useAppSelector } from '../app/hooks'
+import { View } from 'react-native'
+import { useAppDispatch, useAppSelector } from '../store/hooks'
 import { fetchIngredients } from '../features/ingredients/ingredientsSlice'
 import { fetchMealPlan } from '../features/mealPlan/mealPlanSlice'
 import { fetchPantry } from '../features/pantry/pantrySlice'
@@ -27,9 +28,8 @@ export function ShoppingList() {
   }, [dispatch, recipes.length, ingredients.length, pantryItems.length, mealPlan.length])
 
   return (
-    <div>
-      <h1>{t('nav.shoppingList')}</h1>
+    <View className="flex-1">
       <ShoppingListView />
-    </div>
+    </View>
   )
 }

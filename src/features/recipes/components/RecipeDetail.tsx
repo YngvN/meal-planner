@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, ArrowLeftRight, Check, Clock, Pencil, Star, Trash2, X } from 'lucide-react'
-import { Alert, Badge, Button, Modal, Spinner } from '../../../components'
-import { useAppDispatch, useAppSelector } from '../../../app/hooks'
+import { View, Text, ScrollView, Pressable } from 'react-native'
+import { Image } from 'expo-image'
+import { useRouter, useLocalSearchParams } from 'expo-router'
+import { ArrowLeft, ArrowLeftRight, Check, Clock, Pencil, Star, Trash2, X } from 'lucide-react-native'
+import { Alert, Badge, Button, Modal, Select, Spinner } from '../../../components'
+import { useAppDispatch, useAppSelector } from '../../../store/hooks'
 import { useLanguage } from '../../../i18n'
 import type { Ingredient } from '../../ingredients/types'
 import type { NutritionalValues } from '../../shared/types'
@@ -13,7 +15,6 @@ import { ALL_UNIT_KEYS, convertUnit, getUnitDimension, roundConverted } from '..
 import { localizedIngredientName, localizedProductName, localizeRecipe, localizeUnit } from '../../shared/localize'
 import { MealDoneModal } from './MealDoneModal'
 import { RecipePantryCheck } from '../../pantry/components/RecipePantryCheck'
-import './RecipeDetail.scss'
 
 /**
  * Calculates total nutritional values for a recipe from its ingredient data.
@@ -31,7 +32,6 @@ function calculateNutrition(
     const ing = ingredientMap.get(ri.ingredientId)
     if (!ing) continue
 
-    // Use subproduct nutrition if selected, fall back to parent
     const nutrition = ri.productId
       ? (ing.products?.find((sp) => sp.id === ri.productId)?.nutrition ?? ing.nutrition)
       : ing.nutrition
@@ -58,50 +58,44 @@ function calculateNutrition(
 }
 
 /** Renders a nutrition block, shared between manual and calculated modes. */
-function NutritionBlock({
-  nutrition,
-  label,
-}: {
-  nutrition: NutritionalValues
-  label: string
-}) {
+function NutritionBlock({ nutrition, label }: { nutrition: NutritionalValues; label: string }) {
   const { t } = useLanguage()
   return (
-    <div className="recipe-detail__nutrition-block">
-      <span className="recipe-detail__nutrition-label">{label}</span>
-      <div className="recipe-detail__nutrition">
+    <View className="gap-2">
+      <Text className="text-xs text-text-muted dark:text-text-muted-dark">{label}</Text>
+      <View className="flex-row flex-wrap gap-3">
         {nutrition.calories !== undefined && (
-          <div className="recipe-detail__nutrient">
-            <span>{t('recipes.nutrients.calories')}</span>
-            <strong>{nutrition.calories} kcal</strong>
-          </div>
+          <View className="items-center">
+            <Text className="text-sm font-semibold text-app-text dark:text-text-dark">{nutrition.calories} kcal</Text>
+            <Text className="text-xs text-text-muted dark:text-text-muted-dark">{t('recipes.nutrients.calories')}</Text>
+          </View>
         )}
         {nutrition.protein !== undefined && (
-          <div className="recipe-detail__nutrient">
-            <span>{t('recipes.nutrients.protein')}</span>
-            <strong>{nutrition.protein}g</strong>
-          </div>
+          <View className="items-center">
+            <Text className="text-sm font-semibold text-app-text dark:text-text-dark">{nutrition.protein}g</Text>
+            <Text className="text-xs text-text-muted dark:text-text-muted-dark">{t('recipes.nutrients.protein')}</Text>
+          </View>
         )}
         {nutrition.carbs !== undefined && (
-          <div className="recipe-detail__nutrient">
-            <span>{t('recipes.nutrients.carbs')}</span>
-            <strong>{nutrition.carbs}g</strong>
-          </div>
+          <View className="items-center">
+            <Text className="text-sm font-semibold text-app-text dark:text-text-dark">{nutrition.carbs}g</Text>
+            <Text className="text-xs text-text-muted dark:text-text-muted-dark">{t('recipes.nutrients.carbs')}</Text>
+          </View>
         )}
         {nutrition.fat !== undefined && (
-          <div className="recipe-detail__nutrient">
-            <span>{t('recipes.nutrients.fat')}</span>
-            <strong>{nutrition.fat}g</strong>
-          </div>
+          <View className="items-center">
+            <Text className="text-sm font-semibold text-app-text dark:text-text-dark">{nutrition.fat}g</Text>
+            <Text className="text-xs text-text-muted dark:text-text-muted-dark">{t('recipes.nutrients.fat')}</Text>
+          </View>
         )}
         {nutrition.fiber !== undefined && (
-          <div className="recipe-detail__nutrient">
-            <span>{t('recipes.nutrients.fiber')}</span>
-            <strong>{nutrition.fiber}g</strong>
-          </div>
+          <View className="items-center">
+            <Text className="text-sm font-semibold text-app-text dark:text-text-dark">{nutrition.fiber}g</Text>
+            <Text className="text-xs text-text-muted dark:text-text-muted-dark">{t('recipes.nutrients.fiber')}</Text>
+          </View>
         )}
-      </div>
-    </div>
+      </View>
+    </View>
   )
 }
 
@@ -116,26 +110,25 @@ interface RecipeDetailProps {
  */
 export function RecipeDetail({ recipeId }: RecipeDetailProps) {
   const dispatch = useAppDispatch()
-  const navigate = useNavigate()
+  const router = useRouter()
   const { t, language } = useLanguage()
+  const params = useLocalSearchParams<{ mealId?: string }>()
 
   const { selectedRecipe: rawRecipe, status, error } = useAppSelector((s) => s.recipes)
   const pantryItems = useAppSelector((s) => s.pantry.items)
   const ingredients = useAppSelector((s) => s.ingredients.items)
 
-  const [searchParams] = useSearchParams()
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [showMealDone, setShowMealDone] = useState(false)
   // ingredientId → target unit key selected in the toggle
   const [convertedUnits, setConvertedUnits] = useState<Map<string, string>>(new Map())
 
-  const mealId = searchParams.get('mealId') ?? undefined
+  const mealId = params.mealId ?? undefined
 
   useEffect(() => {
     dispatch(fetchRecipeById(recipeId))
   }, [dispatch, recipeId])
 
-  // Ensure the ingredient library is loaded so names resolve correctly.
   const ingredientsLoaded = useAppSelector((s) => s.ingredients.status !== 'idle')
   useEffect(() => {
     if (!ingredientsLoaded) dispatch(fetchIngredients())
@@ -166,109 +159,104 @@ export function RecipeDetail({ recipeId }: RecipeDetailProps) {
 
   async function handleDelete() {
     await dispatch(deleteRecipe(recipe!.id))
-    navigate('/recipes')
+    router.push('/recipes' as any)
   }
 
   const totalMinutes = recipe.prepTimeMinutes + recipe.cookTimeMinutes
   const calculatedNutrition = calculateNutrition(recipe, ingredientMap)
 
   return (
-    <article className="recipe-detail">
-      <div className="recipe-detail__actions-top">
-        <Button variant="secondary" onClick={() => navigate('/recipes')}>
-          <ArrowLeft size={16} aria-hidden /> {t('common.back')}
-        </Button>
-        <div className="recipe-detail__action-group">
-          <Button onClick={() => setShowMealDone(true)}>
-            <Check size={16} aria-hidden /> {t('recipes.mealDone')}
+    <ScrollView className="flex-1 bg-bg dark:bg-bg-dark">
+      <View className="p-4 gap-4">
+        {/* Top action bar */}
+        <View className="flex-row items-center justify-between flex-wrap gap-2">
+          <Button variant="secondary" onPress={() => router.push('/recipes' as any)}>
+            <ArrowLeft size={16} color="#6b7280" />
+            <Text className="text-app-text dark:text-text-dark">{t('common.back')}</Text>
           </Button>
-          <Button
-            variant="secondary"
-            onClick={() => dispatch(toggleFavorite(recipe.id))}
-            title={recipe.isFavorite ? t('recipes.unfavorite') : t('recipes.favorite')}
-          >
-            <Star size={16} fill={recipe.isFavorite ? 'currentColor' : 'none'} aria-hidden /> {recipe.isFavorite ? t('recipes.unfavorite') : t('recipes.favorite')}
-          </Button>
-          <Button variant="secondary" onClick={() => navigate(`/recipes/${recipe.id}/edit`)}>
-            <Pencil size={15} aria-hidden /> {t('common.edit')}
-          </Button>
-          <Button variant="secondary" onClick={() => setConfirmDelete(true)}>
-            <Trash2 size={15} aria-hidden /> {t('common.delete')}
-          </Button>
-        </div>
-      </div>
+          <View className="flex-row flex-wrap gap-2">
+            <Button onPress={() => setShowMealDone(true)}>
+              <Check size={16} color="#ffffff" />
+              <Text className="text-accent-contrast dark:text-accent-contrast-dark">{t('recipes.mealDone')}</Text>
+            </Button>
+            <Button
+              variant="secondary"
+              onPress={() => dispatch(toggleFavorite(recipe.id))}
+            >
+              <Star size={16} fill={recipe.isFavorite ? '#f59e0b' : 'none'} color={recipe.isFavorite ? '#f59e0b' : '#6b7280'} />
+            </Button>
+            <Button variant="secondary" onPress={() => router.push(`/recipes/${recipe.id}/edit` as any)}>
+              <Pencil size={15} color="#6b7280" />
+            </Button>
+            <Button variant="secondary" onPress={() => setConfirmDelete(true)}>
+              <Trash2 size={15} color="#6b7280" />
+            </Button>
+          </View>
+        </View>
 
-      {recipe.imageUrl && (
-        <img
-          src={recipe.imageUrl}
-          alt={recipe.title}
-          className="recipe-detail__hero"
-          loading="lazy"
-        />
-      )}
-
-      <header className="recipe-detail__header">
-        <h1 className="recipe-detail__title">{recipe.title}</h1>
-        {recipe.description && <p className="recipe-detail__description">{recipe.description}</p>}
-
-        {recipe.source && (
-          <p className="recipe-detail__source">
-            <span className="recipe-detail__source-label">{t('recipes.source.source')}: </span>
-            {recipe.source.type === 'website' && recipe.source.url ? (
-              <a href={recipe.source.url} target="_blank" rel="noopener noreferrer">
-                {recipe.source.name}
-              </a>
-            ) : (
-              <span>{recipe.source.name}</span>
-            )}
-            <Badge variant="neutral">{t(`recipes.sourceType.${recipe.source.type}`)}</Badge>
-          </p>
+        {/* Hero image */}
+        {recipe.imageUrl && (
+          <Image
+            source={{ uri: recipe.imageUrl }}
+            style={{ width: '100%', height: 220, borderRadius: 12 }}
+            contentFit="cover"
+          />
         )}
-      </header>
 
-      <div className="recipe-detail__meta">
-        <div className="recipe-detail__meta-item">
-          <span className="recipe-detail__meta-label">{t('recipes.prepTime')}</span>
-          <span>{recipe.prepTimeMinutes} {t('recipes.minutes')}</span>
-        </div>
-        <div className="recipe-detail__meta-item">
-          <span className="recipe-detail__meta-label">{t('recipes.cookTime')}</span>
-          <span>{recipe.cookTimeMinutes} {t('recipes.minutes')}</span>
-        </div>
-        <div className="recipe-detail__meta-item">
-          <span className="recipe-detail__meta-label">{t('recipes.totalTime')}</span>
-          <span>{totalMinutes} {t('recipes.minutes')}</span>
-        </div>
-        <div className="recipe-detail__meta-item">
-          <span className="recipe-detail__meta-label">{t('recipes.portions')}</span>
-          <span>{recipe.portions}</span>
-        </div>
-        <div className="recipe-detail__meta-item">
-          <span className="recipe-detail__meta-label">{t('recipes.skillLevel')}</span>
-          <span>{t(`recipes.skill.${recipe.skillLevel}`)}</span>
-        </div>
-      </div>
+        {/* Title + description */}
+        <View className="gap-1">
+          <Text className="text-2xl font-bold text-app-text dark:text-text-dark">{recipe.title}</Text>
+          {recipe.description && (
+            <Text className="text-base text-text-muted dark:text-text-muted-dark">{recipe.description}</Text>
+          )}
+          {recipe.source && (
+            <View className="flex-row flex-wrap items-center gap-2">
+              <Text className="text-sm text-text-muted dark:text-text-muted-dark">
+                {t('recipes.source.source')}: {recipe.source.name}
+              </Text>
+              <Badge variant="neutral">{t(`recipes.sourceType.${recipe.source.type}`)}</Badge>
+            </View>
+          )}
+        </View>
 
-      <div className="recipe-detail__tags">
-        {recipe.dietaryTags.map((tag) => (
-          <Badge key={tag} variant="success">{tag}</Badge>
-        ))}
-        {recipe.mealTags.map((tag) => (
-          <Badge key={tag} variant="info">{t(`recipes.mealTag.${tag}`)}</Badge>
-        ))}
-        {recipe.cuisineTypes.map((c) => (
-          <Badge key={c} variant="neutral">{c}</Badge>
-        ))}
-        {recipe.tags.map((tag) => (
-          <Badge key={tag} variant="neutral">{tag}</Badge>
-        ))}
-      </div>
+        {/* Meta grid */}
+        <View className="flex-row flex-wrap gap-3 bg-surface dark:bg-surface-dark rounded-xl p-3">
+          {[
+            { label: t('recipes.prepTime'), value: `${recipe.prepTimeMinutes} ${t('recipes.minutes')}` },
+            { label: t('recipes.cookTime'), value: `${recipe.cookTimeMinutes} ${t('recipes.minutes')}` },
+            { label: t('recipes.totalTime'), value: `${totalMinutes} ${t('recipes.minutes')}` },
+            { label: t('recipes.portions'), value: String(recipe.portions) },
+            { label: t('recipes.skillLevel'), value: t(`recipes.skill.${recipe.skillLevel}`) },
+          ].map(({ label, value }) => (
+            <View key={label} className="items-center min-w-16">
+              <Text className="text-xs text-text-muted dark:text-text-muted-dark">{label}</Text>
+              <Text className="text-sm font-semibold text-app-text dark:text-text-dark">{value}</Text>
+            </View>
+          ))}
+        </View>
 
-      <RecipePantryCheck ingredients={recipe.ingredients} />
+        {/* Tags */}
+        <View className="flex-row flex-wrap gap-1">
+          {recipe.dietaryTags.map((tag) => (
+            <Badge key={tag} variant="success">{tag}</Badge>
+          ))}
+          {recipe.mealTags.map((tag) => (
+            <Badge key={tag} variant="info">{t(`recipes.mealTag.${tag}`)}</Badge>
+          ))}
+          {recipe.cuisineTypes.map((c) => (
+            <Badge key={c} variant="neutral">{c}</Badge>
+          ))}
+          {recipe.tags.map((tag) => (
+            <Badge key={tag} variant="neutral">{tag}</Badge>
+          ))}
+        </View>
 
-      <section className="recipe-detail__section">
-        <h2>{t('recipes.ingredients')}</h2>
-        <ul className="recipe-detail__ingredient-list">
+        {/* Pantry check */}
+        <RecipePantryCheck ingredients={recipe.ingredients} />
+
+        {/* Ingredients */}
+        <View className="gap-2">
+          <Text className="text-lg font-semibold text-app-text dark:text-text-dark">{t('recipes.ingredients')}</Text>
           {recipe.ingredients.map((ri) => {
             const inPantry = isInPantry(ri.ingredientId)
             const ing = ingredientMap.get(ri.ingredientId)
@@ -277,7 +265,6 @@ export function RecipeDetail({ recipeId }: RecipeDetailProps) {
               ? convertUnit(ri.quantity, ri.unit, targetUnit, ing?.density)
               : null
 
-            // Only offer target units that are in the same or cross dimension
             const fromDim = getUnitDimension(ri.unit)
             const compatibleUnits = fromDim
               ? ALL_UNIT_KEYS.filter((u) => {
@@ -285,101 +272,104 @@ export function RecipeDetail({ recipeId }: RecipeDetailProps) {
                   const toDim = getUnitDimension(u)
                   if (!toDim || toDim === 'count') return false
                   if (toDim === fromDim) return true
-                  // Cross-dimension only if density is set
                   return ing?.density !== undefined
                 })
               : []
 
             return (
-              <li
+              <View
                 key={`${ri.ingredientId}-${ri.productId ?? ''}`}
-                className={['recipe-detail__ingredient', !inPantry && 'recipe-detail__ingredient--missing'].filter(Boolean).join(' ')}
+                className={`flex-row items-center gap-2 p-2 rounded-lg ${!inPantry ? 'bg-warning-bg dark:bg-warning-bg-dark' : 'bg-surface dark:bg-surface-dark'}`}
               >
-                <span className="recipe-detail__ingredient-status">
-                  {inPantry ? <Check size={16} aria-hidden /> : <X size={16} aria-hidden />}
-                </span>
-                <span className="recipe-detail__ingredient-qty">
-                  <strong>{ri.quantity} {localizeUnit(ri.unit, t)}</strong>
-                  {convertedQty !== null && targetUnit && (
-                    <span className="recipe-detail__ingredient-converted">
-                      ≈ {roundConverted(convertedQty)} {localizeUnit(targetUnit, t)}
-                    </span>
-                  )}
-                </span>
-                <span className="recipe-detail__ingredient-name">{getIngredientName(ri)}</span>
-                {!inPantry && (
-                  <Badge variant="warning">{t('recipes.missingFromPantry')}</Badge>
-                )}
+                {inPantry
+                  ? <Check size={16} color="#22c55e" />
+                  : <X size={16} color="#ef4444" />
+                }
+                <View className="flex-1 gap-0.5">
+                  <Text className="text-sm font-medium text-app-text dark:text-text-dark">
+                    {ri.quantity} {localizeUnit(ri.unit, t)}
+                    {convertedQty !== null && targetUnit && (
+                      <Text className="text-xs text-text-muted dark:text-text-muted-dark">
+                        {' '}≈ {roundConverted(convertedQty)} {localizeUnit(targetUnit, t)}
+                      </Text>
+                    )}
+                  </Text>
+                  <Text className="text-sm text-app-text dark:text-text-dark">{getIngredientName(ri)}</Text>
+                </View>
+                {!inPantry && <Badge variant="warning">{t('recipes.missingFromPantry')}</Badge>}
                 {compatibleUnits.length > 0 && (
-                  <span className="recipe-detail__unit-toggle">
-                    <ArrowLeftRight size={14} aria-hidden />
-                    <select
-                      className="recipe-detail__unit-toggle-select"
-                      value={targetUnit ?? ''}
-                      onChange={(e) => {
-                        const next = new Map(convertedUnits)
-                        if (e.target.value) next.set(ri.ingredientId, e.target.value)
-                        else next.delete(ri.ingredientId)
-                        setConvertedUnits(next)
-                      }}
-                      aria-label={t('converter.convertTo')}
-                    >
-                      <option value="">{localizeUnit(ri.unit, t)}</option>
-                      {compatibleUnits.map((u) => (
-                        <option key={u} value={u}>{localizeUnit(u, t)}</option>
-                      ))}
-                    </select>
-                  </span>
+                  <Select
+                    value={targetUnit ?? ''}
+                    onChange={(v) => {
+                      const next = new Map(convertedUnits)
+                      if (v) next.set(ri.ingredientId, v)
+                      else next.delete(ri.ingredientId)
+                      setConvertedUnits(next)
+                    }}
+                    options={[
+                      { value: '', label: localizeUnit(ri.unit, t) },
+                      ...compatibleUnits.map((u) => ({ value: u, label: localizeUnit(u, t) })),
+                    ]}
+                  />
                 )}
-              </li>
+              </View>
             )
           })}
-        </ul>
-      </section>
+        </View>
 
-      <section className="recipe-detail__section">
-        <h2>{t('recipes.instructions')}</h2>
-        <ol className="recipe-detail__steps">
+        {/* Instructions */}
+        <View className="gap-2">
+          <Text className="text-lg font-semibold text-app-text dark:text-text-dark">{t('recipes.instructions')}</Text>
           {recipe.instructions
             .slice()
             .sort((a, b) => a.order - b.order)
             .map((step) => (
-              <li key={step.order} className="recipe-detail__step">
-                <p>{step.description}</p>
-                {step.timerMinutes && (
-                  <span className="recipe-detail__step-timer">
-                    <Clock size={14} aria-hidden /> {step.timerMinutes} {t('recipes.minutes')}
-                  </span>
-                )}
-              </li>
+              <View key={step.order} className="flex-row gap-3 bg-surface dark:bg-surface-dark rounded-lg p-3">
+                <View className="w-6 h-6 rounded-full bg-accent dark:bg-accent-dark items-center justify-center flex-shrink-0 mt-0.5">
+                  <Text className="text-xs font-bold text-accent-contrast">{step.order}</Text>
+                </View>
+                <View className="flex-1 gap-1">
+                  <Text className="text-sm text-app-text dark:text-text-dark">{step.description}</Text>
+                  {step.timerMinutes != null && (
+                    <View className="flex-row items-center gap-1">
+                      <Clock size={12} color="#6b7280" />
+                      <Text className="text-xs text-text-muted dark:text-text-muted-dark">
+                        {step.timerMinutes} {t('recipes.minutes')}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              </View>
             ))}
-        </ol>
-      </section>
+        </View>
 
-      {recipe.notes && (
-        <section className="recipe-detail__section">
-          <h2>{t('recipes.notes')}</h2>
-          <p className="recipe-detail__notes">{recipe.notes}</p>
-        </section>
-      )}
+        {/* Notes */}
+        {recipe.notes && (
+          <View className="gap-2">
+            <Text className="text-lg font-semibold text-app-text dark:text-text-dark">{t('recipes.notes')}</Text>
+            <Text className="text-sm text-app-text dark:text-text-dark bg-surface dark:bg-surface-dark rounded-lg p-3">
+              {recipe.notes}
+            </Text>
+          </View>
+        )}
 
-      {(recipe.nutrition || calculatedNutrition) && (
-        <section className="recipe-detail__section">
-          <h2>{t('recipes.nutrition.nutrition')}</h2>
-          {recipe.nutrition ? (
-            <NutritionBlock
-              nutrition={recipe.nutrition}
-              label={t('recipes.nutrition.manual')}
-            />
-          ) : calculatedNutrition ? (
-            <NutritionBlock
-              nutrition={calculatedNutrition}
-              label={t('recipes.nutrition.calculated')}
-            />
-          ) : null}
-        </section>
-      )}
+        {/* Nutrition */}
+        {(recipe.nutrition || calculatedNutrition) && (
+          <View className="gap-2 bg-surface dark:bg-surface-dark rounded-xl p-3">
+            <Text className="text-lg font-semibold text-app-text dark:text-text-dark">
+              {t('recipes.nutrition.nutrition')}
+            </Text>
+            {recipe.nutrition ? (
+              <NutritionBlock nutrition={recipe.nutrition} label={t('recipes.nutrition.manual')} />
+            ) : calculatedNutrition ? (
+              <NutritionBlock nutrition={calculatedNutrition} label={t('recipes.nutrition.calculated')} />
+            ) : null}
+          </View>
+        )}
 
+      </View>
+
+      {/* Meal done modal */}
       {showMealDone && (
         <MealDoneModal
           recipe={recipe}
@@ -388,21 +378,22 @@ export function RecipeDetail({ recipeId }: RecipeDetailProps) {
         />
       )}
 
+      {/* Delete confirmation */}
       <Modal
         open={confirmDelete}
         onClose={() => setConfirmDelete(false)}
         title={t('common.confirmDeleteTitle')}
         footer={
-          <>
-            <Button variant="secondary" onClick={() => setConfirmDelete(false)}>
+          <View className="flex-row gap-2">
+            <Button variant="secondary" onPress={() => setConfirmDelete(false)}>
               {t('common.cancel')}
             </Button>
-            <Button onClick={handleDelete}>{t('common.delete')}</Button>
-          </>
+            <Button onPress={handleDelete}>{t('common.delete')}</Button>
+          </View>
         }
       >
-        <p>{t('common.confirmDelete')}</p>
+        <Text className="text-base text-app-text dark:text-text-dark">{t('common.confirmDelete')}</Text>
       </Modal>
-    </article>
+    </ScrollView>
   )
 }

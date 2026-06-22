@@ -1,90 +1,57 @@
-import { useEffect, useRef, useState } from 'react'
-import { Pencil } from 'lucide-react'
-import './InlineEdit.scss'
+import { View, Text, TextInput, Pressable } from 'react-native'
+import { useState } from 'react'
+import { Pencil } from 'lucide-react-native'
 
 interface InlineEditProps {
   value: string
   onChange: (v: string) => void
   placeholder?: string
-  /** Render a textarea instead of a single-line input. */
+  /** Render a multi-line input instead of a single line. */
   multiline?: boolean
   className?: string
-  /** aria-label for the edit trigger button. */
+  /** Accessibility label for the edit trigger. */
   label?: string
-}
-
-/** Auto-grows a textarea to fit its content. */
-function autoResize(el: HTMLTextAreaElement) {
-  el.style.height = 'auto'
-  el.style.height = `${el.scrollHeight}px`
 }
 
 /**
  * Shows a value as readable text with a pencil icon.
- * Clicking the text or the icon switches to an editable input/textarea.
+ * Tapping the text or icon switches to an editable TextInput.
  * Starts in edit mode when the value is empty (e.g. new step).
  */
 export function InlineEdit({ value, onChange, placeholder, multiline, className, label }: InlineEditProps) {
   const [editing, setEditing] = useState(!value)
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
-
-  // Keep textarea height in sync when switching into edit mode.
-  useEffect(() => {
-    if (editing && textareaRef.current) autoResize(textareaRef.current)
-  }, [editing])
-
-  // Auto-expand on initial render if editing.
-  useEffect(() => {
-    if (textareaRef.current) autoResize(textareaRef.current)
-  }, [])
 
   function handleBlur() {
-    // Only collapse to display mode when the field has content.
     if (value.trim()) setEditing(false)
   }
 
   if (editing) {
-    return multiline ? (
-      <textarea
-        ref={textareaRef}
-        className={`inline-edit__textarea ${className ?? ''}`}
+    return (
+      <TextInput
+        className={`border border-accent dark:border-accent-dark rounded-lg px-3 py-2 text-base text-app-text dark:text-text-dark bg-bg dark:bg-bg-dark ${className ?? ''}`}
         value={value}
+        onChangeText={onChange}
         placeholder={placeholder}
-        rows={1}
+        placeholderTextColor="#6b6375"
+        multiline={multiline}
         autoFocus
-        onChange={(e) => { onChange(e.target.value); autoResize(e.target) }}
         onBlur={handleBlur}
-      />
-    ) : (
-      <input
-        ref={inputRef}
-        type="text"
-        className={`inline-edit__input ${className ?? ''}`}
-        value={value}
-        placeholder={placeholder}
-        autoFocus
-        onChange={(e) => onChange(e.target.value)}
-        onBlur={handleBlur}
+        returnKeyType={multiline ? 'default' : 'done'}
       />
     )
   }
 
   return (
-    <div
-      className={`inline-edit ${className ?? ''}`}
-      onClick={() => setEditing(true)}
-      onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setEditing(true)}
-      role="button"
-      tabIndex={0}
-      aria-label={label ?? 'Edit'}
+    <Pressable
+      onPress={() => setEditing(true)}
+      className={`flex-row items-start gap-2 ${className ?? ''}`}
+      accessibilityLabel={label ?? 'Edit'}
+      accessibilityRole="button"
     >
-      {value ? (
-        <span className="inline-edit__text">{value}</span>
-      ) : (
-        <span className="inline-edit__placeholder">{placeholder}</span>
-      )}
-      <Pencil size={13} aria-hidden className="inline-edit__icon" />
-    </div>
+      <Text className="flex-1 text-base text-app-text dark:text-text-dark">
+        {value || <Text className="text-text-muted dark:text-text-muted-dark">{placeholder}</Text>}
+      </Text>
+      <Pencil size={13} className="text-text-muted dark:text-text-muted-dark mt-0.5" />
+    </Pressable>
   )
 }

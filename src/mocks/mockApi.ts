@@ -1,7 +1,7 @@
 /**
  * Drop-in mock implementation of all feature API modules.
  * Returns copies of the in-memory arrays so mutations don't affect the source data.
- * Activated when VITE_USE_MOCK_DATA=true in .env.development.
+ * Activated when EXPO_PUBLIC_USE_MOCK_DATA=true in .env.development.
  */
 import type { CreateIngredientPayload, Ingredient, UpdateIngredientPayload } from '../features/ingredients/types'
 import type { CreatePlannedMealPayload, PlannedMeal, UpdatePlannedMealPayload } from '../features/mealPlan/types'

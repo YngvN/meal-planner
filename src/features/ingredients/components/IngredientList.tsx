@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
-import { Barcode, Pencil, Plus, Trash2 } from 'lucide-react'
+import { View, Text, FlatList, Pressable } from 'react-native'
+import { useLocalSearchParams, useRouter } from 'expo-router'
+import { Barcode, Pencil, Plus, Trash2 } from 'lucide-react-native'
 import { Alert, Badge, Button, Modal, SearchBar, Spinner } from '../../../components'
-import { useAppDispatch, useAppSelector } from '../../../app/hooks'
+import { useAppDispatch, useAppSelector } from '../../../store/hooks'
 import { useLanguage } from '../../../i18n'
 import { localizedIngredientName } from '../../shared/localize'
 import { deleteIngredient, fetchIngredients } from '../ingredientsSlice'
@@ -10,20 +11,19 @@ import type { Ingredient } from '../types'
 import { IngredientDetail } from './IngredientDetail'
 import { IngredientForm } from './IngredientForm'
 import { QuickScanAdd } from './QuickScanAdd'
-import './IngredientList.scss'
 
 type AddMode = 'choice' | 'scan' | 'manual'
 
 /**
- * Searchable ingredient library table.
+ * Searchable ingredient library list.
  * "Add ingredient" shows a choice first: scan a barcode or fill in the form.
- * Clicking an ingredient name opens the IngredientDetail panel for managing products.
+ * Tapping an ingredient name opens the IngredientDetail panel for managing products.
  */
 export function IngredientList() {
   const dispatch = useAppDispatch()
   const { t, language } = useLanguage()
   const { items: ingredients, status, error } = useAppSelector((s) => s.ingredients)
-  const [searchParams, setSearchParams] = useSearchParams()
+  const params = useLocalSearchParams<{ edit?: string }>()
 
   const [search, setSearch] = useState('')
   const [addMode, setAddMode] = useState<AddMode | null>(null)
@@ -34,12 +34,11 @@ export function IngredientList() {
     if (status === 'idle' && ingredients.length === 0) dispatch(fetchIngredients())
   }, [dispatch, status, ingredients.length])
 
-  const editId = searchParams.get('edit')
+  const editId = params.edit
   const urlEditIngredient = editId ? (ingredients.find((i) => i.id === editId) ?? null) : null
   const editingIngredient = urlEditIngredient ?? manualEdit
 
   function closeEditModal() {
-    if (editId) setSearchParams({}, { replace: true })
     setManualEdit(null)
   }
 
@@ -48,7 +47,6 @@ export function IngredientList() {
   )
 
   async function handleDelete(ingredient: Ingredient) {
-    if (!window.confirm(t('common.confirmDelete'))) return
     dispatch(deleteIngredient(ingredient.id))
   }
 
@@ -56,72 +54,63 @@ export function IngredientList() {
   if (status === 'failed') return <Alert variant="error">{error ?? t('common.error')}</Alert>
 
   return (
-    <div className="ingredient-list">
-      <div className="ingredient-list__header">
-        <h1>{t('ingredients.title')}</h1>
-        <Button onClick={() => setAddMode('choice')}>
-          <Plus size={16} aria-hidden />
-          {t('ingredients.addIngredient')}
-        </Button>
-      </div>
+    <View className="flex-1 bg-bg dark:bg-bg-dark">
+      <View className="px-4 pt-4 pb-2 gap-3">
+        <View className="flex-row items-center justify-between">
+          <Text className="text-2xl font-bold text-app-text dark:text-text-dark">
+            {t('ingredients.title')}
+          </Text>
+          <Button onPress={() => setAddMode('choice')}>
+            <Plus size={16} color="#ffffff" />
+          </Button>
+        </View>
+        <SearchBar value={search} onChange={setSearch} placeholder={t('ingredients.search')} />
+      </View>
 
-      <SearchBar value={search} onChange={setSearch} placeholder={t('ingredients.search')} />
-
-      <table className="ingredient-list__table">
-        <thead>
-          <tr>
-            <th>{t('ingredients.name')}</th>
-            <th>{t('ingredients.category')}</th>
-            <th>{t('common.actions')}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {filtered.map((ing) => (
-            <tr key={ing.id}>
-              <td>
-                <button
-                  type="button"
-                  className="ingredient-list__name-btn"
-                  onClick={() => setDetailIngredient(ing)}
-                >
-                  {localizedIngredientName(ing, language)}
-                </button>
-                {(ing.products?.length ?? 0) > 0 && (
-                  <Badge variant="neutral">{ing.products!.length}</Badge>
-                )}
-              </td>
-              <td>
-                <span className="ingredient-list__category">
-                  {t(`ingredients.categories.${ing.category}`)}
-                </span>
-              </td>
-              <td className="ingredient-list__actions">
-                <button
-                  type="button"
-                  className="ingredient-list__icon-btn"
-                  aria-label={t('common.edit')}
-                  onClick={() => setManualEdit(ing)}
-                >
-                  <Pencil size={15} aria-hidden />
-                </button>
-                <button
-                  type="button"
-                  className="ingredient-list__icon-btn ingredient-list__icon-btn--danger"
-                  aria-label={t('common.delete')}
-                  onClick={() => handleDelete(ing)}
-                >
-                  <Trash2 size={15} aria-hidden />
-                </button>
-              </td>
-            </tr>
-          ))}
-          {filtered.length === 0 && (
-            <tr>
-              <td colSpan={3} className="ingredient-list__empty">{t('ingredients.noResults')}</td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+      <FlatList
+        data={filtered}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16 }}
+        ListEmptyComponent={
+          <Text className="text-center text-text-muted dark:text-text-muted-dark py-8">
+            {t('ingredients.noResults')}
+          </Text>
+        }
+        renderItem={({ item: ing }) => (
+          <View className="flex-row items-center gap-2 py-3 border-b border-border dark:border-border-dark">
+            <Pressable
+              onPress={() => setDetailIngredient(ing)}
+              className="flex-1 flex-row items-center gap-2 active:opacity-70"
+            >
+              <Text className="text-base text-app-text dark:text-text-dark">
+                {localizedIngredientName(ing, language)}
+              </Text>
+              {(ing.products?.length ?? 0) > 0 && (
+                <Badge variant="neutral">{ing.products!.length}</Badge>
+              )}
+            </Pressable>
+            <Text className="text-sm text-text-muted dark:text-text-muted-dark">
+              {t(`ingredients.categories.${ing.category}`)}
+            </Text>
+            <View className="flex-row gap-1">
+              <Pressable
+                onPress={() => setManualEdit(ing)}
+                className="p-2 active:opacity-70"
+                accessibilityLabel={t('common.edit')}
+              >
+                <Pencil size={15} color="#6b7280" />
+              </Pressable>
+              <Pressable
+                onPress={() => handleDelete(ing)}
+                className="p-2 active:opacity-70"
+                accessibilityLabel={t('common.delete')}
+              >
+                <Trash2 size={15} color="#ef4444" />
+              </Pressable>
+            </View>
+          </View>
+        )}
+      />
 
       {/* ── Add choice modal ─────────────────────────────────────────────── */}
       <Modal
@@ -129,34 +118,28 @@ export function IngredientList() {
         onClose={() => setAddMode(null)}
         title={t('ingredients.addIngredient')}
       >
-        <div className="ingredient-list__add-choice">
-          <button
-            type="button"
-            className="ingredient-list__add-option"
-            onClick={() => setAddMode('scan')}
+        <View className="gap-3 py-2">
+          <Pressable
+            className="flex-row items-center gap-3 bg-surface dark:bg-surface-dark rounded-xl p-4 border border-border dark:border-border-dark active:opacity-80"
+            onPress={() => setAddMode('scan')}
           >
-            <Barcode size={32} aria-hidden />
-            <span className="ingredient-list__add-option-label">
-              {t('ingredients.scanBarcode')}
-            </span>
-            <span className="ingredient-list__add-option-hint">
-              {t('ingredients.scanHint')}
-            </span>
-          </button>
-          <button
-            type="button"
-            className="ingredient-list__add-option"
-            onClick={() => setAddMode('manual')}
+            <Barcode size={32} color="#7c3aed" />
+            <View className="flex-1">
+              <Text className="font-semibold text-app-text dark:text-text-dark">{t('ingredients.scanBarcode')}</Text>
+              <Text className="text-sm text-text-muted dark:text-text-muted-dark">{t('ingredients.scanHint')}</Text>
+            </View>
+          </Pressable>
+          <Pressable
+            className="flex-row items-center gap-3 bg-surface dark:bg-surface-dark rounded-xl p-4 border border-border dark:border-border-dark active:opacity-80"
+            onPress={() => setAddMode('manual')}
           >
-            <Plus size={32} aria-hidden />
-            <span className="ingredient-list__add-option-label">
-              {t('ingredients.addManually')}
-            </span>
-            <span className="ingredient-list__add-option-hint">
-              {t('ingredients.addManuallyHint')}
-            </span>
-          </button>
-        </div>
+            <Plus size={32} color="#7c3aed" />
+            <View className="flex-1">
+              <Text className="font-semibold text-app-text dark:text-text-dark">{t('ingredients.addManually')}</Text>
+              <Text className="text-sm text-text-muted dark:text-text-muted-dark">{t('ingredients.addManuallyHint')}</Text>
+            </View>
+          </Pressable>
+        </View>
       </Modal>
 
       {/* ── Scan flow ────────────────────────────────────────────────────── */}
@@ -180,7 +163,7 @@ export function IngredientList() {
         <IngredientForm onDone={() => setAddMode(null)} />
       </Modal>
 
-      {/* ── Edit category modal ──────────────────────────────────────────── */}
+      {/* ── Edit modal ──────────────────────────────────────────────────── */}
       <Modal open={!!editingIngredient} onClose={closeEditModal} title={t('common.edit')}>
         {editingIngredient && (
           <IngredientForm ingredient={editingIngredient} onDone={closeEditModal} />
@@ -195,6 +178,6 @@ export function IngredientList() {
           onEditCategory={() => { setManualEdit(detailIngredient); setDetailIngredient(null) }}
         />
       )}
-    </div>
+    </View>
   )
 }

@@ -1,19 +1,19 @@
 import axios from 'axios'
 import { apiError, apiLog } from './logger'
 
-const baseURL = import.meta.env.VITE_API_BASE_URL ?? '/api'
-const useMockData = import.meta.env.VITE_USE_MOCK_DATA === 'true'
+const baseURL = process.env.EXPO_PUBLIC_API_BASE_URL ?? '/api'
+const useMockData = process.env.EXPO_PUBLIC_USE_MOCK_DATA === 'true'
 
-// Optional Supabase anon key — required when VITE_API_BASE_URL points to a
+// Optional Supabase anon key — required when EXPO_PUBLIC_API_BASE_URL points to a
 // Supabase PostgREST endpoint (https://xxx.supabase.co/rest/v1).
-// Set VITE_SUPABASE_ANON_KEY in Netlify → Site settings → Environment variables.
-const supabaseAnonKey: string | undefined = import.meta.env.VITE_SUPABASE_ANON_KEY
+// Set EXPO_PUBLIC_SUPABASE_ANON_KEY in Netlify → Site settings → Environment variables.
+const supabaseAnonKey: string | undefined = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY
 
 // Log the effective data-layer config once at startup so it's clear in any
 // environment (local / Netlify) whether the app talks to a real backend.
 apiLog(
   'api',
-  `config → baseURL="${baseURL}" · VITE_USE_MOCK_DATA=${useMockData} · supabaseKey=${supabaseAnonKey ? '✓ set' : '✗ not set'}`,
+  `config → baseURL="${baseURL}" · EXPO_PUBLIC_USE_MOCK_DATA=${useMockData} · supabaseKey=${supabaseAnonKey ? '✓ set' : '✗ not set'}`,
 )
 if (useMockData) {
   apiLog('api', 'MOCK data mode is ON — writes are in-memory only and are NOT persisted to any backend.')
@@ -48,7 +48,7 @@ apiClient.interceptors.response.use(
       apiError(
         'api',
         `✗ ${response.config.url} returned HTML, not JSON. No backend at "${baseURL}" ` +
-          '(SPA fallback). Set VITE_API_BASE_URL to a real API, or VITE_USE_MOCK_DATA=true.',
+          '(SPA fallback). Set EXPO_PUBLIC_API_BASE_URL to a real API, or EXPO_PUBLIC_USE_MOCK_DATA=true.',
       )
     } else {
       apiLog('api', `← ${response.status} ${response.config.url}`, response.data)

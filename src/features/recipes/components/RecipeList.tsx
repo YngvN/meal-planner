@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Camera, Plus } from 'lucide-react'
+import { View, Text, FlatList } from 'react-native'
+import { Camera, Plus } from 'lucide-react-native'
 import { Alert, Button, Modal, SearchBar, Spinner } from '../../../components'
-import { useAppDispatch, useAppSelector } from '../../../app/hooks'
+import { useAppDispatch, useAppSelector } from '../../../store/hooks'
 import { useLanguage } from '../../../i18n'
 import { RecipePhotoScanner } from '../../ai/components/RecipePhotoScanner'
 import type { RecipeDraft } from '../../ai/types'
@@ -10,10 +11,9 @@ import type { RecipeFilters } from '../types'
 import { RecipeCard } from './RecipeCard'
 import { RecipeFilters as RecipeFiltersPanel } from './RecipeFilters'
 import { RecipeForm } from './RecipeForm'
-import './RecipeList.scss'
 
 /**
- * Full recipe browser: search bar, collapsible filter panel, responsive card grid.
+ * Full recipe browser: search bar, collapsible filter panel, scrollable card list.
  * New recipe creation opens in a large modal; a camera button opens the
  * multi-photo AI scanner which pre-fills the creation form on success.
  */
@@ -65,45 +65,55 @@ export function RecipeList() {
   if (status === 'failed') return <Alert variant="error">{error ?? t('common.error')}</Alert>
 
   return (
-    <div className="recipe-list">
-      <div className="recipe-list__header">
-        <h1 className="recipe-list__title">{t('recipes.title')}</h1>
-        <div className="recipe-list__header-actions">
-          <Button variant="secondary" onClick={() => setShowScanner(true)}>
-            <Camera size={16} aria-hidden />
-            {t('recipes.scanRecipe')}
-          </Button>
-          <Button onClick={() => setShowAdd(true)}>
-            <Plus size={16} aria-hidden />
-            {t('recipes.addRecipe')}
-          </Button>
-        </div>
-      </div>
+    <View className="flex-1 bg-bg dark:bg-bg-dark">
+      {/* Header */}
+      <View className="px-4 pt-4 pb-2 gap-3">
+        <View className="flex-row items-center justify-between">
+          <Text className="text-2xl font-bold text-app-text dark:text-text-dark">
+            {t('recipes.title')}
+          </Text>
+          <View className="flex-row gap-2">
+            <Button variant="secondary" onPress={() => setShowScanner(true)}>
+              <Camera size={16} color="#6b7280" />
+            </Button>
+            <Button onPress={() => setShowAdd(true)}>
+              <Plus size={16} color="#ffffff" />
+            </Button>
+          </View>
+        </View>
 
-      <div className="recipe-list__toolbar">
-        <SearchBar
-          value={search}
-          onChange={setSearch}
-          placeholder={t('recipes.search')}
-          className="recipe-list__search"
-        />
-        <Button variant="secondary" onClick={() => setShowFilters((v) => !v)}>
-          {showFilters ? t('recipes.filters.hide') : t('recipes.filters.show')}
-        </Button>
-      </div>
+        <View className="flex-row gap-2 items-center">
+          <View className="flex-1">
+            <SearchBar
+              value={search}
+              onChange={setSearch}
+              placeholder={t('recipes.search')}
+            />
+          </View>
+          <Button variant="secondary" onPress={() => setShowFilters((v) => !v)}>
+            {showFilters ? t('recipes.filters.hide') : t('recipes.filters.show')}
+          </Button>
+        </View>
 
-      {showFilters && (
-        <RecipeFiltersPanel filters={filters} onChange={setFilters} />
-      )}
+        {showFilters && (
+          <RecipeFiltersPanel filters={filters} onChange={setFilters} />
+        )}
+      </View>
 
       {filtered.length === 0 ? (
-        <p className="recipe-list__empty">{t('recipes.noResults')}</p>
+        <View className="flex-1 items-center justify-center p-8">
+          <Text className="text-text-muted dark:text-text-muted-dark text-center">
+            {t('recipes.noResults')}
+          </Text>
+        </View>
       ) : (
-        <div className="recipe-list__grid">
-          {filtered.map((recipe) => (
-            <RecipeCard key={recipe.id} recipe={recipe} />
-          ))}
-        </div>
+        <FlatList
+          data={filtered}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => <RecipeCard recipe={item} />}
+          contentContainerStyle={{ padding: 16, gap: 12 }}
+          showsVerticalScrollIndicator={false}
+        />
       )}
 
       {/* Multi-photo AI scanner */}
@@ -126,6 +136,6 @@ export function RecipeList() {
           onDone={closeAddModal}
         />
       </Modal>
-    </div>
+    </View>
   )
 }

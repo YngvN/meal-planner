@@ -1,13 +1,13 @@
 import { useEffect } from 'react'
-import { useAppDispatch, useAppSelector } from '../app/hooks'
+import { ScrollView, View } from 'react-native'
+import { useAppDispatch, useAppSelector } from '../store/hooks'
 import { fetchIngredients } from '../features/ingredients/ingredientsSlice'
 import { PantryList } from '../features/pantry/components/PantryList'
 import { RecipeMatcher } from '../features/pantry/components/RecipeMatcher'
 import { fetchPantry } from '../features/pantry/pantrySlice'
 import { fetchRecipes } from '../features/recipes/recipesSlice'
-import './Pantry.scss'
 
-/** Route: /pantry — pantry inventory + recipe matcher side by side. */
+/** Route: /pantry — pantry inventory + recipe matcher stacked vertically on mobile. */
 export function Pantry() {
   const dispatch = useAppDispatch()
   const recipes = useAppSelector((s) => s.recipes.items)
@@ -21,13 +21,8 @@ export function Pantry() {
   }, [dispatch, recipes.length, ingredients.length, pantry.length])
 
   return (
-    <div className="pantry-page">
-      <div className="pantry-page__inventory">
-        <PantryList />
-      </div>
-      <div className="pantry-page__matcher">
-        <RecipeMatcher />
-      </div>
-    </div>
+    <View className="flex-1">
+      <PantryList />
+    </View>
   )
 }

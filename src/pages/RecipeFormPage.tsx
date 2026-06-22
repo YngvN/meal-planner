@@ -1,14 +1,14 @@
 import { useEffect } from 'react'
-import { useParams } from 'react-router-dom'
+import { useLocalSearchParams } from 'expo-router'
 import { Spinner } from '../components'
-import { useAppDispatch, useAppSelector } from '../app/hooks'
+import { useAppDispatch, useAppSelector } from '../store/hooks'
 import { fetchIngredients } from '../features/ingredients/ingredientsSlice'
 import { RecipeForm } from '../features/recipes/components/RecipeForm'
 import { fetchRecipeById } from '../features/recipes/recipesSlice'
 
 /** Route: /recipes/new and /recipes/:id/edit */
 export function RecipeFormPage() {
-  const { id } = useParams<{ id: string }>()
+  const { id } = useLocalSearchParams<{ id: string }>()
   const dispatch = useAppDispatch()
 
   const { selectedRecipe, status } = useAppSelector((s) => s.recipes)

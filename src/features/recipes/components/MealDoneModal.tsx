@@ -1,14 +1,15 @@
 import { useMemo, useState } from 'react'
-import { TriangleAlert } from 'lucide-react'
-import { Button, Modal } from '../../../components'
-import { useAppDispatch, useAppSelector } from '../../../app/hooks'
+import { View, Text, TextInput } from 'react-native'
+import { TriangleAlert } from 'lucide-react-native'
+import { Button, Checkbox, Modal } from '../../../components'
+import { useAppDispatch, useAppSelector } from '../../../store/hooks'
 import { removePlannedMeal } from '../../mealPlan/mealPlanSlice'
 import { bulkUpdatePantry } from '../../pantry/pantrySlice'
 import { convertUnit, roundConverted } from '../../shared/units'
 import { localizedIngredientName } from '../../shared/localize'
 import { useLanguage } from '../../../i18n'
+import { Image } from 'expo-image'
 import type { Recipe } from '../types'
-import './MealDoneModal.scss'
 
 interface MealDoneModalProps {
   recipe: Recipe
@@ -51,7 +52,6 @@ export function MealDoneModal({ recipe, mealId, onClose }: MealDoneModalProps) {
       const deduction = ri.quantity * scale
       const pantryQty = pantryItem?.quantity
 
-      // Determine how the deduction was (or wasn't) resolved
       let defaultWillHave: number | undefined
       let conversionNote: 'exact' | 'converted' | 'manual' = 'manual'
 
@@ -61,7 +61,6 @@ export function MealDoneModal({ recipe, mealId, onClose }: MealDoneModalProps) {
           defaultWillHave = roundConverted(Math.max(0, pantryQty - deduction))
           conversionNote = 'exact'
         } else {
-          // Try auto-conversion (same-dimension or cross-dimension via density)
           const converted = convertUnit(deduction, ri.unit, pantryItem.unit, ingredient?.density)
           if (converted !== null) {
             defaultWillHave = roundConverted(Math.max(0, pantryQty - converted))
@@ -83,7 +82,7 @@ export function MealDoneModal({ recipe, mealId, onClose }: MealDoneModalProps) {
     })
   }, [recipe.ingredients, ingredients, pantryItems, scale, language])
 
-  // "Will have" editable state per ingredient — stored as strings to allow empty input
+  // "Will have" editable state per ingredient
   const [willHaveMap, setWillHaveMap] = useState<Map<string, string>>(
     () => new Map(rows.map((r) => [r.ingredientId, r.defaultWillHave?.toString() ?? ''])),
   )
@@ -126,95 +125,72 @@ export function MealDoneModal({ recipe, mealId, onClose }: MealDoneModalProps) {
       title={t('recipes.mealDoneTitle')}
       size="large"
       footer={
-        <>
-          <Button variant="secondary" onClick={onClose}>{t('common.cancel')}</Button>
-          <Button onClick={handleConfirm}>{t('recipes.mealDoneConfirm')}</Button>
-        </>
+        <View className="flex-row gap-2">
+          <Button variant="secondary" onPress={onClose}>{t('common.cancel')}</Button>
+          <Button onPress={handleConfirm}>{t('recipes.mealDoneConfirm')}</Button>
+        </View>
       }
     >
-      <div className="meal-done-modal">
+      <View className="gap-4">
         {recipe.imageUrl && (
-          <img src={recipe.imageUrl} alt={recipe.title} className="meal-done-modal__hero" />
+          <Image source={{ uri: recipe.imageUrl }} style={{ width: '100%', height: 120, borderRadius: 8 }} contentFit="cover" />
         )}
 
-        <p className="meal-done-modal__subtitle">
+        <Text className="text-base font-semibold text-app-text dark:text-text-dark">
           {recipe.title}
           {scale !== 1 && (
-            <span className="meal-done-modal__scale">
-              {' '}× {Math.round(scale * 10) / 10}
-            </span>
+            <Text className="text-text-muted dark:text-text-muted-dark"> × {Math.round(scale * 10) / 10}</Text>
           )}
-        </p>
+        </Text>
 
-        <div className="meal-done-modal__table-wrap">
-          <table className="meal-done-modal__table">
-            <thead>
-              <tr>
-                <th>{t('common.name')}</th>
-                <th>{t('recipes.recipeUses')}</th>
-                <th>{t('recipes.currentlyHave')}</th>
-                <th>{t('recipes.willHave')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr key={row.ingredientId}>
-                  <td className="meal-done-modal__name-cell">{row.name}</td>
-                  <td className="meal-done-modal__num-cell">
-                    {roundConverted(row.recipeQty)} {row.recipeUnit}
-                  </td>
-                  <td className="meal-done-modal__num-cell">
-                    {row.pantryQty !== undefined
-                      ? `${roundConverted(row.pantryQty)} ${row.pantryUnit ?? ''}`
-                      : '—'}
-                    {row.conversionNote === 'manual' && row.pantryQty !== undefined && (
-                      <span className="meal-done-modal__mismatch" title={t('recipes.unitsMismatch')}>
-                        {' '}<TriangleAlert size={14} aria-hidden />
-                      </span>
-                    )}
-                  </td>
-                  <td className="meal-done-modal__will-have-cell">
-                    <input
-                      type="number"
-                      className="meal-done-modal__qty-input"
-                      value={willHaveMap.get(row.ingredientId) ?? ''}
-                      onChange={(e) => setWillHave(row.ingredientId, e.target.value)}
-                      min={0}
-                      step={0.1}
-                      placeholder="—"
-                    />
-                    <span className="meal-done-modal__unit">
-                      {row.pantryUnit ?? row.recipeUnit}
-                    </span>
-                    {row.conversionNote === 'converted' && (
-                      <span className="meal-done-modal__converted-note">
-                        {t('converter.converted')}
-                      </span>
-                    )}
-                    {row.conversionNote === 'manual' && row.pantryUnit && (
-                      <span className="meal-done-modal__mismatch-note">
-                        {t('recipes.unitsMismatch')}
-                      </span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        {/* Column headers */}
+        <View className="flex-row gap-1">
+          <Text className="flex-1 text-xs font-semibold text-text-muted dark:text-text-muted-dark">{t('common.name')}</Text>
+          <Text className="w-16 text-xs font-semibold text-text-muted dark:text-text-muted-dark text-right">{t('recipes.recipeUses')}</Text>
+          <Text className="w-16 text-xs font-semibold text-text-muted dark:text-text-muted-dark text-right">{t('recipes.currentlyHave')}</Text>
+          <Text className="w-20 text-xs font-semibold text-text-muted dark:text-text-muted-dark text-right">{t('recipes.willHave')}</Text>
+        </View>
+
+        {rows.map((row) => (
+          <View key={row.ingredientId} className="flex-row gap-1 items-center">
+            <Text className="flex-1 text-sm text-app-text dark:text-text-dark" numberOfLines={2}>{row.name}</Text>
+            <Text className="w-16 text-xs text-text-muted dark:text-text-muted-dark text-right">
+              {roundConverted(row.recipeQty)} {row.recipeUnit}
+            </Text>
+            <View className="w-16 flex-row items-center justify-end gap-0.5">
+              <Text className="text-xs text-text-muted dark:text-text-muted-dark text-right">
+                {row.pantryQty !== undefined
+                  ? `${roundConverted(row.pantryQty)} ${row.pantryUnit ?? ''}`
+                  : '—'}
+              </Text>
+              {row.conversionNote === 'manual' && row.pantryQty !== undefined && (
+                <TriangleAlert size={12} color="#f59e0b" />
+              )}
+            </View>
+            <View className="w-20 flex-row items-center gap-1">
+              <TextInput
+                className="flex-1 border border-border dark:border-border-dark rounded px-1.5 py-1 text-xs text-app-text dark:text-text-dark bg-bg dark:bg-bg-dark text-right"
+                value={willHaveMap.get(row.ingredientId) ?? ''}
+                onChangeText={(v) => setWillHave(row.ingredientId, v)}
+                keyboardType="numeric"
+                placeholder="—"
+                placeholderTextColor="#6b6375"
+              />
+              <Text className="text-xs text-text-muted dark:text-text-muted-dark">
+                {row.pantryUnit ?? row.recipeUnit}
+              </Text>
+            </View>
+          </View>
+        ))}
 
         {mealId && (
-          <label className="meal-done-modal__remove-label">
-            <input
-              type="checkbox"
-              checked={removeFromPlan}
-              onChange={(e) => setRemoveFromPlan(e.target.checked)}
-              className="meal-done-modal__checkbox"
-            />
-            {t('recipes.removeFromPlan')}
-          </label>
+          <Checkbox
+            label={t('recipes.removeFromPlan')}
+            checked={removeFromPlan}
+            onChange={setRemoveFromPlan}
+          />
         )}
-      </div>
+      </View>
     </Modal>
   )
 }

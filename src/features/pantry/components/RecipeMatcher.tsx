@@ -1,10 +1,10 @@
 import { useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { View, Text, Pressable, FlatList } from 'react-native'
+import { useRouter } from 'expo-router'
 import { Badge, Button } from '../../../components'
-import { useAppSelector } from '../../../app/hooks'
+import { useAppSelector } from '../../../store/hooks'
 import { useLanguage } from '../../../i18n'
 import type { RecipeMatch } from '../types'
-import './RecipeMatcher.scss'
 
 interface RecipeMatcherProps {
   /** Limit the number of results shown. Omit to show all. */
@@ -18,7 +18,7 @@ interface RecipeMatcherProps {
  */
 export function RecipeMatcher({ limit }: RecipeMatcherProps) {
   const { t } = useLanguage()
-  const navigate = useNavigate()
+  const router = useRouter()
 
   const recipes = useAppSelector((s) => s.recipes.items)
   const pantryItems = useAppSelector((s) => s.pantry.items)
@@ -48,48 +48,55 @@ export function RecipeMatcher({ limit }: RecipeMatcherProps) {
   if (recipes.length === 0) return null
 
   return (
-    <section className="recipe-matcher">
-      <h2 className="recipe-matcher__title">{t('pantry.whatCanIMake')}</h2>
-      <div className="recipe-matcher__list">
-        {matches.map(({ recipeId, matchRatio, missingIngredientIds }) => {
-          const recipe = recipeMap.get(recipeId)
-          if (!recipe) return null
-          const pct = Math.round(matchRatio * 100)
-          const canMake = missingIngredientIds.length === 0
+    <View className="gap-2">
+      {matches.map(({ recipeId, matchRatio, missingIngredientIds }) => {
+        const recipe = recipeMap.get(recipeId)
+        if (!recipe) return null
+        const pct = Math.round(matchRatio * 100)
+        const canMake = missingIngredientIds.length === 0
 
-          return (
-            <div
-              key={recipeId}
-              className={['matcher-card', canMake && 'matcher-card--ready'].filter(Boolean).join(' ')}
-            >
-              <div className="matcher-card__bar" style={{ width: `${pct}%` }} />
-              <div className="matcher-card__content">
-                <div className="matcher-card__top">
-                  <span className="matcher-card__name">{recipe.title}</span>
-                  <span className="matcher-card__pct">{pct}%</span>
-                </div>
+        return (
+          <View
+            key={recipeId}
+            className={`bg-surface dark:bg-surface-dark rounded-xl border overflow-hidden ${canMake ? 'border-success dark:border-success-dark' : 'border-border dark:border-border-dark'}`}
+          >
+            {/* Progress bar */}
+            <View className="h-1.5 bg-border dark:bg-border-dark">
+              <View
+                className={`h-full ${canMake ? 'bg-success' : 'bg-accent dark:bg-accent-dark'}`}
+                style={{ width: `${pct}%` }}
+              />
+            </View>
 
-                {missingIngredientIds.length > 0 ? (
-                  <p className="matcher-card__missing">
-                    {t('pantry.missing', { count: String(missingIngredientIds.length) })}:{' '}
-                    {missingIngredientIds.map((id) => ingredientMap.get(id)?.name ?? id).join(', ')}
-                  </p>
-                ) : (
-                  <Badge variant="success">{t('pantry.readyToMake')}</Badge>
-                )}
+            <View className="p-3 gap-2">
+              <View className="flex-row items-center justify-between">
+                <Text className="flex-1 text-sm font-semibold text-app-text dark:text-text-dark">
+                  {recipe.title}
+                </Text>
+                <Text className="text-sm font-semibold text-text-muted dark:text-text-muted-dark">
+                  {pct}%
+                </Text>
+              </View>
 
-                <Button
-                  variant="secondary"
-                  className="matcher-card__btn"
-                  onClick={() => navigate(`/recipes/${recipeId}`)}
-                >
-                  {t('recipes.viewRecipe')}
-                </Button>
-              </div>
-            </div>
-          )
-        })}
-      </div>
-    </section>
+              {missingIngredientIds.length > 0 ? (
+                <Text className="text-xs text-text-muted dark:text-text-muted-dark">
+                  {t('pantry.missing', { count: String(missingIngredientIds.length) })}:{' '}
+                  {missingIngredientIds.map((id) => ingredientMap.get(id)?.name ?? id).join(', ')}
+                </Text>
+              ) : (
+                <Badge variant="success">{t('pantry.readyToMake')}</Badge>
+              )}
+
+              <Button
+                variant="secondary"
+                onPress={() => router.push(`/recipes/${recipeId}` as any)}
+              >
+                {t('recipes.viewRecipe')}
+              </Button>
+            </View>
+          </View>
+        )
+      })}
+    </View>
   )
 }

@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
-import { useAppDispatch, useAppSelector } from '../app/hooks'
+import { View, Text, ScrollView } from 'react-native'
+import { useAppDispatch, useAppSelector } from '../store/hooks'
 import { fetchIngredients } from '../features/ingredients/ingredientsSlice'
 import { WeekCalendar } from '../features/mealPlan/components/WeekCalendar'
 import { fetchMealPlan } from '../features/mealPlan/mealPlanSlice'
@@ -24,9 +25,8 @@ export function MealPlan() {
   }, [dispatch, recipes.length, ingredients.length, mealPlan.length])
 
   return (
-    <div>
-      <h1>{t('nav.mealPlan')}</h1>
+    <View className="flex-1">
       <WeekCalendar />
-    </div>
+    </View>
   )
 }

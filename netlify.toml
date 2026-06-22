@@ -6,9 +6,9 @@
   functions = "netlify/functions"
 
 [dev]
-  command = "npm run dev"   # Vite dev server
-  targetPort = 5173         # Port Vite listens on
-  port = 8888               # Port netlify dev exposes (functions + frontend)
+  command = "expo start --web"
+  targetPort = 8081
+  port = 8888
 
 # NOTE: never put ANTHROPIC_API_KEY here — this file is committed to git.
 # Set it in Netlify: Site settings → Environment variables (encrypted), or in a

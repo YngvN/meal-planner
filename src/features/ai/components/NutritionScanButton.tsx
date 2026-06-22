@@ -1,10 +1,10 @@
-import { useRef, useState } from 'react'
-import { Camera, LoaderCircle } from 'lucide-react'
+import { View } from 'react-native'
+import * as ImagePicker from 'expo-image-picker'
+import { Camera } from 'lucide-react-native'
 import { Button } from '../../../components'
 import { useLanguage } from '../../../i18n'
-import type { NutritionalValues } from '../../shared/types'
 import { transcribeNutrition } from '../aiApi'
-import './NutritionScanButton.scss'
+import type { NutritionalValues } from '../../shared/types'
 
 interface NutritionScanButtonProps {
   /** Called with the transcribed nutrition values for the parent to pre-fill. */
@@ -13,69 +13,33 @@ interface NutritionScanButtonProps {
   onError?: (message: string) => void
 }
 
-/** Reads a File as a base64 string (without the data: prefix). */
-function fileToBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => {
-      const result = reader.result as string
-      resolve(result.split(',')[1] ?? '')
-    }
-    reader.onerror = () => reject(reader.error ?? new Error('Failed to read file'))
-    reader.readAsDataURL(file)
-  })
-}
-
 /**
- * Button + hidden file input that lets the user photograph or upload a nutrition
- * label. The image is sent to the AI endpoint and the transcribed values are
- * returned to the parent via `onResult`.
+ * Button that opens the device camera/gallery and sends the selected
+ * nutrition-label photo to Claude for extraction.
  */
 export function NutritionScanButton({ onResult, onError }: NutritionScanButtonProps) {
   const { t } = useLanguage()
-  const inputRef = useRef<HTMLInputElement>(null)
-  const [scanning, setScanning] = useState(false)
 
-  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    // Reset so selecting the same file again re-triggers onChange
-    e.target.value = ''
-    if (!file) return
-
-    setScanning(true)
+  async function handlePress() {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      base64: true,
+      quality: 0.8,
+      mediaTypes: 'images',
+    })
+    if (result.canceled || !result.assets[0].base64) return
+    const asset = result.assets[0]
     try {
-      const base64 = await fileToBase64(file)
-      const nutrition = await transcribeNutrition(base64, file.type)
+      const nutrition = await transcribeNutrition(asset.base64!, 'image/jpeg')
       onResult(nutrition)
     } catch (err) {
-      onError?.(err instanceof Error ? err.message : t('ai.scanError'))
-    } finally {
-      setScanning(false)
+      onError?.(err instanceof Error ? err.message : t('ai.nutritionScanError'))
     }
   }
 
   return (
-    <div className="nutrition-scan">
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/*"
-        capture="environment"
-        className="nutrition-scan__input"
-        onChange={handleFile}
-      />
-      <Button
-        type="button"
-        variant="secondary"
-        onClick={() => inputRef.current?.click()}
-        disabled={scanning}
-      >
-        {scanning ? (
-          <><LoaderCircle size={16} className="icon-spin" aria-hidden /> {t('ai.scanning')}</>
-        ) : (
-          <><Camera size={16} aria-hidden /> {t('ai.scanNutrition')}</>
-        )}
-      </Button>
-    </div>
+    <Button variant="secondary" onPress={handlePress}>
+      <Camera size={16} color="#6b7280" />
+      {t('ai.scanNutrition')}
+    </Button>
   )
 }

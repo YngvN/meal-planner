@@ -1,8 +1,7 @@
 import { useState, type FormEvent } from 'react'
-import { useAppDispatch, useAppSelector } from '../../app/hooks'
+import { useAppDispatch, useAppSelector } from '../../store/hooks'
 import { Button, Input, TranslatedText } from '../../components'
 import { loginUser } from './authSlice'
-import './AuthForm.scss'
 
 export function AuthForm() {
   const dispatch = useAppDispatch()

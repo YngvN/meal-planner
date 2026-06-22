@@ -1,6 +1,6 @@
-import { useEffect, type ReactNode } from 'react'
-import { X } from 'lucide-react'
-import './Modal.scss'
+import { Modal as RNModal, View, Text, Pressable, ScrollView } from 'react-native'
+import { X } from 'lucide-react-native'
+import type { ReactNode } from 'react'
 
 interface ModalProps {
   open: boolean
@@ -9,46 +9,62 @@ interface ModalProps {
   children: ReactNode
   /** Pinned footer (e.g. action buttons). Stays visible while the body scrolls. */
   footer?: ReactNode
-  /** 'default' = 480px max-width. 'large' = 800px with scrollable body for complex forms. */
+  /** 'default' = standard width. 'large' = wider for complex forms. */
   size?: 'default' | 'large'
 }
 
 export function Modal({ open, onClose, title, children, footer, size = 'default' }: ModalProps) {
-  useEffect(() => {
-    if (!open) return
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose()
-    }
-
-    // Lock background scroll while the modal is open, restoring on close.
-    const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-
-    window.addEventListener('keydown', handleKeyDown)
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown)
-      document.body.style.overflow = previousOverflow
-    }
-  }, [open, onClose])
-
-  if (!open) return null
-
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div
-        className={['modal', size === 'large' && 'modal--large'].filter(Boolean).join(' ')}
-        role="dialog"
-        aria-modal="true"
-        onClick={(event) => event.stopPropagation()}
+    <RNModal
+      visible={open}
+      transparent
+      animationType="fade"
+      onRequestClose={onClose}
+      statusBarTranslucent
+    >
+      {/* Dim overlay */}
+      <Pressable
+        className="flex-1 bg-overlay dark:bg-overlay-dark items-center justify-center p-4"
+        onPress={onClose}
       >
-        {title && <h3 className="modal__title">{title}</h3>}
-        <div className="modal__body">{children}</div>
-        {footer && <div className="modal__footer">{footer}</div>}
-        <button type="button" className="modal__close" onClick={onClose} aria-label="Close">
-          <X size={20} aria-hidden />
-        </button>
-      </div>
-    </div>
+        {/* Dialog panel — stop touches propagating to the overlay */}
+        <Pressable
+          className={`bg-bg dark:bg-bg-dark rounded-2xl border border-border dark:border-border-dark w-full ${size === 'large' ? 'max-w-2xl' : 'max-w-md'} overflow-hidden`}
+          onPress={(e) => e.stopPropagation()}
+        >
+          {/* Header */}
+          <View className="flex-row items-center justify-between px-4 pt-4 pb-2">
+            {title ? (
+              <Text className="text-lg font-semibold text-app-text dark:text-text-dark flex-1 mr-2">
+                {title}
+              </Text>
+            ) : <View className="flex-1" />}
+            <Pressable
+              onPress={onClose}
+              className="w-8 h-8 items-center justify-center rounded-full bg-surface dark:bg-surface-dark active:opacity-70"
+              accessibilityLabel="Close"
+            >
+              <X size={18} className="text-app-text dark:text-text-dark" />
+            </Pressable>
+          </View>
+
+          {/* Scrollable body */}
+          <ScrollView
+            className="px-4"
+            contentContainerClassName="pb-4"
+            keyboardShouldPersistTaps="handled"
+          >
+            {children}
+          </ScrollView>
+
+          {/* Pinned footer */}
+          {footer && (
+            <View className="px-4 pb-4 pt-2 border-t border-border dark:border-border-dark">
+              {footer}
+            </View>
+          )}
+        </Pressable>
+      </Pressable>
+    </RNModal>
   )
 }

@@ -2,7 +2,7 @@ import { supabase } from '../../lib/supabaseClient'
 import { apiLog } from '../../lib/logger'
 import type { PantryItem, UpdatePantryItemPayload } from './types'
 
-const useMock = import.meta.env.VITE_USE_MOCK_DATA === 'true'
+const useMock = process.env.EXPO_PUBLIC_USE_MOCK_DATA === 'true'
 
 apiLog('pantry', `module loaded · mode=${useMock ? 'MOCK' : 'Supabase'}`)
 

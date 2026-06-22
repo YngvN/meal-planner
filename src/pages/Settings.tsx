@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { Button, FilterChip, Input, LanguageSwitcher, ThemeToggle } from '../components'
-import { useAppDispatch, useAppSelector } from '../app/hooks'
+import { View, Text, ScrollView, Switch } from 'react-native'
+import { Button, Checkbox, FilterChip, Input, LanguageSwitcher, ThemeToggle } from '../components'
+import { useAppDispatch, useAppSelector } from '../store/hooks'
 import {
   fetchCurrentUser,
   updateUserEmail,
@@ -11,7 +12,6 @@ import type { ScoringFactors } from '../features/settings/types'
 import { setCountry, setPreferredCurrency, setVisibleSlots, toggleAutoSuggest, toggleScoringFactor } from '../features/settings/settingsSlice'
 import { MEAL_SLOT_ORDER, type MealSlot } from '../features/mealPlan/types'
 import { useLanguage } from '../i18n'
-import './Settings.scss'
 
 const SCORING_FACTOR_KEYS: (keyof ScoringFactors)[] = [
   'pantryMatch',
@@ -89,187 +89,166 @@ export function Settings() {
   const remaining = Math.max(0, quota - used)
 
   return (
-    <div className="settings-page">
-      <h1>{t('settings.title')}</h1>
+    <ScrollView className="flex-1 bg-bg dark:bg-bg-dark">
+      <View className="p-4 gap-6">
 
-      {/* ── Profile ─────────────────────────────────────────────────────────── */}
-      {user && (
-        <section className="settings-page__section">
-          <h2 className="settings-page__section-title">{t('profile.title')}</h2>
+        {/* ── Profile ─────────────────────────────────────────────────────── */}
+        {user && (
+          <View className="gap-4">
+            <Text className="text-lg font-semibold text-app-text dark:text-text-dark">{t('profile.title')}</Text>
 
-          <div className="settings-page__field">
-            <label className="settings-page__label">{t('profile.changeUsername')}</label>
-            <div className="settings-page__input-row">
-              <Input
-                id="settings-username"
-                label={null}
-                value={newUsername}
-                onChange={(e) => setNewUsername(e.target.value)}
-              />
-              <Button
-                onClick={handleSaveUsername}
-                disabled={authStatus === 'loading' || newUsername === user.username}
-              >
-                {t('profile.save')}
-              </Button>
-            </div>
-          </div>
-
-          <div className="settings-page__field">
-            <label className="settings-page__label">{t('profile.changeEmail')}</label>
-            <div className="settings-page__input-row">
-              <Input
-                id="settings-email"
-                label={null}
-                type="email"
-                value={newEmail}
-                onChange={(e) => { setNewEmail(e.target.value); setEmailSent(false) }}
-              />
-              <Button
-                onClick={handleSaveEmail}
-                disabled={authStatus === 'loading' || newEmail === user.email}
-              >
-                {t('profile.save')}
-              </Button>
-            </div>
-            {emailSent && <p className="settings-page__hint">{t('profile.emailConfirmationSent')}</p>}
-          </div>
-
-          <div className="settings-page__field">
-            <label className="settings-page__label">{t('profile.changePassword')}</label>
-            <div className="settings-page__input-row">
-              <Input
-                id="settings-password"
-                label={null}
-                type="password"
-                value={newPassword}
-                onChange={(e) => { setNewPassword(e.target.value); setPasswordSaved(false) }}
-                placeholder="••••••••"
-              />
-              <Button
-                onClick={handleSavePassword}
-                disabled={authStatus === 'loading' || newPassword.length < 6}
-              >
-                {t('profile.save')}
-              </Button>
-            </div>
-            {passwordSaved && <p className="settings-page__hint">{t('profile.passwordSaved')}</p>}
-          </div>
-
-          <div className="settings-page__field">
-            <label className="settings-page__label">{t('profile.aiRequestsRemaining')}</label>
-            <p className="settings-page__static-value">
-              {remaining} / {quota}
-            </p>
-          </div>
-
-          {authError && <p className="settings-page__error">{authError}</p>}
-        </section>
-      )}
-
-      {/* ── Appearance ──────────────────────────────────────────────────────── */}
-      <section className="settings-page__section">
-        <h2 className="settings-page__section-title">{t('settings.appearance')}</h2>
-
-        <div className="settings-page__field">
-          <div className="settings-page__row">
-            <span className="settings-page__row-label">{t('settings.theme')}</span>
-            <ThemeToggle />
-          </div>
-        </div>
-
-        <div className="settings-page__field">
-          <div className="settings-page__row">
-            <span className="settings-page__row-label">{t('settings.language')}</span>
-            <LanguageSwitcher />
-          </div>
-        </div>
-      </section>
-
-      {/* ── Meal Planner ────────────────────────────────────────────────────── */}
-      <section className="settings-page__section">
-        <h2 className="settings-page__section-title">{t('settings.mealPlanner')}</h2>
-
-        <div className="settings-page__field">
-          <label className="settings-page__label">{t('settings.visibleSlots')}</label>
-          <div className="settings-page__chips">
-            {MEAL_SLOT_ORDER.map((slot) => {
-              const isLast = visibleSlots.length === 1 && visibleSlots.includes(slot)
-              return (
-                <FilterChip
-                  key={slot}
-                  active={visibleSlots.includes(slot)}
-                  onClick={isLast ? undefined : () => handleSlotToggle(slot)}
-                  className={isLast ? 'settings-page__chip--locked' : undefined}
+            <View className="gap-2">
+              <Text className="text-sm font-medium text-app-text dark:text-text-dark">{t('profile.changeUsername')}</Text>
+              <View className="flex-row gap-2 items-end">
+                <View className="flex-1">
+                  <Input
+                    label={undefined}
+                    value={newUsername}
+                    onChangeText={setNewUsername}
+                  />
+                </View>
+                <Button
+                  onPress={handleSaveUsername}
+                  disabled={authStatus === 'loading' || newUsername === user.username}
                 >
-                  {t(`mealPlan.slot.${slot}`)}
-                </FilterChip>
-              )
-            })}
-          </div>
-        </div>
+                  {t('profile.save')}
+                </Button>
+              </View>
+            </View>
 
-        <div className="settings-page__field">
-          <label className="settings-page__toggle-label" htmlFor="auto-suggest-toggle">
-            <span>{t('settings.autoSuggest')}</span>
-            <button
-              id="auto-suggest-toggle"
-              type="button"
-              role="switch"
-              aria-checked={autoSuggestEnabled}
-              className={`settings-page__toggle${autoSuggestEnabled ? ' settings-page__toggle--on' : ''}`}
-              onClick={() => dispatch(toggleAutoSuggest())}
-            >
-              <span className="settings-page__toggle-knob" />
-            </button>
-          </label>
-        </div>
+            <View className="gap-2">
+              <Text className="text-sm font-medium text-app-text dark:text-text-dark">{t('profile.changeEmail')}</Text>
+              <View className="flex-row gap-2 items-end">
+                <View className="flex-1">
+                  <Input
+                    label={undefined}
+                    value={newEmail}
+                    onChangeText={(v) => { setNewEmail(v); setEmailSent(false) }}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                  />
+                </View>
+                <Button
+                  onPress={handleSaveEmail}
+                  disabled={authStatus === 'loading' || newEmail === user.email}
+                >
+                  {t('profile.save')}
+                </Button>
+              </View>
+              {emailSent && <Text className="text-xs text-text-muted dark:text-text-muted-dark">{t('profile.emailConfirmationSent')}</Text>}
+            </View>
 
-        {autoSuggestEnabled && (
-          <div className="settings-page__field settings-page__field--indented">
-            <label className="settings-page__label">{t('settings.scoringFactors')}</label>
-            <ul className="settings-page__factor-list">
-              {SCORING_FACTOR_KEYS.map((key) => (
-                <li key={key} className="settings-page__factor-item">
-                  <label className="settings-page__factor-label">
-                    <input
-                      type="checkbox"
-                      checked={scoringFactors[key]}
-                      onChange={() => dispatch(toggleScoringFactor(key))}
-                      className="settings-page__factor-checkbox"
-                    />
-                    <span>{t(`settings.factors.${key}`)}</span>
-                  </label>
-                </li>
-              ))}
-            </ul>
-          </div>
+            <View className="gap-2">
+              <Text className="text-sm font-medium text-app-text dark:text-text-dark">{t('profile.changePassword')}</Text>
+              <View className="flex-row gap-2 items-end">
+                <View className="flex-1">
+                  <Input
+                    label={undefined}
+                    value={newPassword}
+                    onChangeText={(v) => { setNewPassword(v); setPasswordSaved(false) }}
+                    secureTextEntry
+                    placeholder="••••••••"
+                  />
+                </View>
+                <Button
+                  onPress={handleSavePassword}
+                  disabled={authStatus === 'loading' || newPassword.length < 6}
+                >
+                  {t('profile.save')}
+                </Button>
+              </View>
+              {passwordSaved && <Text className="text-xs text-text-muted dark:text-text-muted-dark">{t('profile.passwordSaved')}</Text>}
+            </View>
+
+            <View className="gap-1">
+              <Text className="text-sm font-medium text-app-text dark:text-text-dark">{t('profile.aiRequestsRemaining')}</Text>
+              <Text className="text-base text-app-text dark:text-text-dark">{remaining} / {quota}</Text>
+            </View>
+
+            {authError && <Text className="text-sm text-error dark:text-error-dark">{authError}</Text>}
+          </View>
         )}
-      </section>
 
-      {/* ── Regional ──────────────────────────────────────────────────────── */}
-      <section className="settings-page__section">
-        <h2 className="settings-page__section-title">{t('settings.regional')}</h2>
-        <div className="settings-page__field">
+        {/* ── Appearance ──────────────────────────────────────────────────── */}
+        <View className="gap-3">
+          <Text className="text-lg font-semibold text-app-text dark:text-text-dark">{t('settings.appearance')}</Text>
+
+          <View className="flex-row items-center justify-between">
+            <Text className="text-base text-app-text dark:text-text-dark">{t('settings.theme')}</Text>
+            <ThemeToggle />
+          </View>
+
+          <View className="flex-row items-center justify-between">
+            <Text className="text-base text-app-text dark:text-text-dark">{t('settings.language')}</Text>
+            <LanguageSwitcher />
+          </View>
+        </View>
+
+        {/* ── Meal Planner ────────────────────────────────────────────────── */}
+        <View className="gap-3">
+          <Text className="text-lg font-semibold text-app-text dark:text-text-dark">{t('settings.mealPlanner')}</Text>
+
+          <View className="gap-2">
+            <Text className="text-sm font-medium text-app-text dark:text-text-dark">{t('settings.visibleSlots')}</Text>
+            <View className="flex-row flex-wrap gap-2">
+              {MEAL_SLOT_ORDER.map((slot) => {
+                const isLast = visibleSlots.length === 1 && visibleSlots.includes(slot)
+                return (
+                  <FilterChip
+                    key={slot}
+                    active={visibleSlots.includes(slot)}
+                    onPress={isLast ? undefined : () => handleSlotToggle(slot)}
+                  >
+                    {t(`mealPlan.slot.${slot}`)}
+                  </FilterChip>
+                )
+              })}
+            </View>
+          </View>
+
+          <View className="flex-row items-center justify-between">
+            <Text className="text-base text-app-text dark:text-text-dark">{t('settings.autoSuggest')}</Text>
+            <Switch
+              value={autoSuggestEnabled}
+              onValueChange={() => dispatch(toggleAutoSuggest())}
+            />
+          </View>
+
+          {autoSuggestEnabled && (
+            <View className="gap-2 pl-4">
+              <Text className="text-sm font-medium text-app-text dark:text-text-dark">{t('settings.scoringFactors')}</Text>
+              {SCORING_FACTOR_KEYS.map((key) => (
+                <Checkbox
+                  key={key}
+                  label={t(`settings.factors.${key}`)}
+                  checked={scoringFactors[key]}
+                  onChange={() => dispatch(toggleScoringFactor(key))}
+                />
+              ))}
+            </View>
+          )}
+        </View>
+
+        {/* ── Regional ──────────────────────────────────────────────────── */}
+        <View className="gap-3">
+          <Text className="text-lg font-semibold text-app-text dark:text-text-dark">{t('settings.regional')}</Text>
           <Input
-            id="settings-country"
             label={t('settings.country')}
             value={country}
-            onChange={(e) => dispatch(setCountry(e.target.value))}
+            onChangeText={(v) => dispatch(setCountry(v))}
             placeholder="NO"
+            autoCapitalize="characters"
           />
-          <p className="settings-page__hint">{t('settings.countryHint')}</p>
-        </div>
-        <div className="settings-page__field">
           <Input
-            id="settings-currency"
             label={t('settings.preferredCurrency')}
             value={preferredCurrency}
-            onChange={(e) => dispatch(setPreferredCurrency(e.target.value))}
+            onChangeText={(v) => dispatch(setPreferredCurrency(v))}
             placeholder="NOK"
+            autoCapitalize="characters"
           />
-        </div>
-      </section>
-    </div>
+        </View>
+
+      </View>
+    </ScrollView>
   )
 }

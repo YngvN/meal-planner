@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Barcode, Plus, TriangleAlert } from 'lucide-react'
-import { Alert, Badge, Button, SearchBar, Spinner } from '../../../components'
-import { useAppDispatch, useAppSelector } from '../../../app/hooks'
+import { View, Text, Pressable, FlatList, SectionList } from 'react-native'
+import { Barcode, Plus, TriangleAlert } from 'lucide-react-native'
+import { Alert, Badge, Button, Checkbox, SearchBar, Spinner } from '../../../components'
+import { useAppDispatch, useAppSelector } from '../../../store/hooks'
 import { useLanguage } from '../../../i18n'
 import { fetchIngredients } from '../../ingredients/ingredientsSlice'
 import { localizedIngredientName } from '../../shared/localize'
@@ -9,7 +10,6 @@ import { roundConverted } from '../../shared/units'
 import { fetchPantry, updatePantryItem } from '../pantrySlice'
 import { PantryDetailModal } from './PantryDetailModal'
 import { PantryScanAdd } from './PantryScanAdd'
-import './PantryList.scss'
 
 /** Snapshot of the current time taken once when the module first loads. */
 const MODULE_LOAD_TIME = Date.now()
@@ -52,14 +52,16 @@ export function PantryList() {
       }))
   }, [ingredients, pantryMap, search])
 
-  const grouped = useMemo(() => {
+  const sections = useMemo(() => {
     const map = new Map<string, typeof rows>()
     for (const row of rows) {
       const cat = row.ingredient.category
       if (!map.has(cat)) map.set(cat, [])
       map.get(cat)!.push(row)
     }
-    return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b))
+    return Array.from(map.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([category, data]) => ({ title: category, data }))
   }, [rows])
 
   function handleToggle(ingredientId: string, inStock: boolean) {
@@ -81,96 +83,84 @@ export function PantryList() {
   if (status === 'failed') return <Alert variant="error">{error ?? t('common.error')}</Alert>
 
   return (
-    <div className="pantry-list">
-      <div className="pantry-list__header">
-        <h1>{t('pantry.title')}</h1>
-        <div className="pantry-list__actions">
-          <Button variant="secondary" onClick={() => setShowScan(true)}>
-            <Barcode size={16} aria-hidden />
-            {t('pantry.scan')}
-          </Button>
-          <Button onClick={() => setDetailIngredientId('__pick__')}>
-            <Plus size={16} aria-hidden />
-            {t('common.add')}
-          </Button>
-        </div>
-      </div>
+    <View className="flex-1 bg-bg dark:bg-bg-dark">
+      <View className="px-4 pt-4 pb-2 gap-3">
+        <View className="flex-row items-center justify-between">
+          <Text className="text-2xl font-bold text-app-text dark:text-text-dark">{t('pantry.title')}</Text>
+          <View className="flex-row gap-2">
+            <Button variant="secondary" onPress={() => setShowScan(true)}>
+              <Barcode size={16} color="#6b7280" />
+            </Button>
+            <Button onPress={() => setDetailIngredientId('__pick__')}>
+              <Plus size={16} color="#ffffff" />
+            </Button>
+          </View>
+        </View>
+        <SearchBar value={search} onChange={setSearch} placeholder={t('pantry.search')} />
+      </View>
 
-      <SearchBar value={search} onChange={setSearch} placeholder={t('pantry.search')} />
+      <SectionList
+        sections={sections}
+        keyExtractor={(item) => item.ingredient.id}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16 }}
+        ListEmptyComponent={
+          <Text className="text-center text-text-muted dark:text-text-muted-dark py-8">
+            {t('pantry.empty')}
+          </Text>
+        }
+        renderSectionHeader={({ section }) => (
+          <Text className="text-sm font-semibold text-text-muted dark:text-text-muted-dark py-2 mt-2 uppercase tracking-wide">
+            {t(`ingredients.categories.${section.title}`)}
+          </Text>
+        )}
+        renderItem={({ item: { ingredient, pantryItem } }) => {
+          const expiring = isExpiringSoon(pantryItem.expiresAt)
+          return (
+            <Pressable
+              className={`flex-row items-center gap-2 py-3 border-b border-border dark:border-border-dark ${!pantryItem.inStock ? 'opacity-60' : ''}`}
+              onPress={() => setDetailIngredientId(ingredient.id)}
+              accessibilityLabel={t('pantry.editItem')}
+            >
+              {/* Checkbox — stop press propagation so tapping it doesn't also open detail */}
+              <Pressable onPress={(e) => { e.stopPropagation(); handleToggle(ingredient.id, !pantryItem.inStock) }}>
+                <Checkbox
+                  label=""
+                  checked={pantryItem.inStock}
+                  onChange={(v) => handleToggle(ingredient.id, v)}
+                />
+              </Pressable>
 
-      {grouped.length === 0 && (
-        <p className="pantry-list__empty">{t('pantry.empty')}</p>
-      )}
+              <Text className="flex-1 text-base text-app-text dark:text-text-dark">
+                {localizedIngredientName(ingredient, language)}
+              </Text>
 
-      {grouped.map(([category, rows]) => (
-        <section key={category} className="pantry-list__group">
-          <h2 className="pantry-list__group-title">
-            {t(`ingredients.categories.${category}`)}
-          </h2>
-          <div className="pantry-list__rows">
-            {rows.map(({ ingredient, pantryItem }) => {
-              const expiring = isExpiringSoon(pantryItem.expiresAt)
-              return (
-                <div
-                  key={ingredient.id}
-                  className={['pantry-row', !pantryItem.inStock && 'pantry-row--out'].filter(Boolean).join(' ')}
-                  onClick={() => setDetailIngredientId(ingredient.id)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => e.key === 'Enter' && setDetailIngredientId(ingredient.id)}
-                  aria-label={t('pantry.editItem')}
+              <View className="flex-row items-center gap-1 flex-shrink-0">
+                {pantryItem.quantity !== undefined && (
+                  <Text className="text-xs text-text-muted dark:text-text-muted-dark">
+                    {roundConverted(pantryItem.quantity)}{pantryItem.unit ? ` ${pantryItem.unit}` : ''}
+                  </Text>
+                )}
+                {pantryItem.isLow && <Badge variant="warning">{t('pantry.low')}</Badge>}
+                {expiring && <Badge variant="error">{t('pantry.expiringSoon')}</Badge>}
+
+                {/* Low-stock toggle */}
+                <Pressable
+                  onPress={() => handleLowToggle(ingredient.id, !pantryItem.isLow)}
+                  className="p-1 active:opacity-70"
+                  accessibilityLabel={t('pantry.markLow')}
                 >
-                  {/* Label wraps only the checkbox so clicking the name doesn't toggle it */}
-                  <label
-                    className="pantry-row__check-area"
-                    onClick={(e) => e.stopPropagation()}
-                    aria-label={pantryItem.inStock ? t('pantry.inStock') : t('pantry.outOfStock')}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={pantryItem.inStock}
-                      onChange={(e) => handleToggle(ingredient.id, e.target.checked)}
-                      className="pantry-row__checkbox"
-                    />
-                  </label>
-                  <span className="pantry-row__name">{localizedIngredientName(ingredient, language)}</span>
+                  <TriangleAlert
+                    size={16}
+                    color={pantryItem.isLow ? '#f59e0b' : '#d1d5db'}
+                    fill={pantryItem.isLow ? '#f59e0b' : 'none'}
+                  />
+                </Pressable>
+              </View>
+            </Pressable>
+          )
+        }}
+      />
 
-                  <div className="pantry-row__badges">
-                    {pantryItem.quantity !== undefined && (
-                      <span className="pantry-row__qty">
-                        {roundConverted(pantryItem.quantity)}{pantryItem.unit ? ` ${pantryItem.unit}` : ''}
-                      </span>
-                    )}
-                    {pantryItem.isLow && (
-                      <Badge variant="warning">{t('pantry.low')}</Badge>
-                    )}
-                    {expiring && (
-                      <Badge variant="error">{t('pantry.expiringSoon')}</Badge>
-                    )}
-                    {pantryItem.expiresAt && (
-                      <span className="pantry-row__expiry">
-                        {t('pantry.expires')}: {new Date(pantryItem.expiresAt).toLocaleDateString()}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="pantry-row__controls">
-                    <button
-                      type="button"
-                      className={['pantry-row__low-btn', pantryItem.isLow && 'pantry-row__low-btn--active'].filter(Boolean).join(' ')}
-                      onClick={(e) => { e.stopPropagation(); handleLowToggle(ingredient.id, !pantryItem.isLow) }}
-                      title={t('pantry.markLow')}
-                      aria-label={t('pantry.markLow')}
-                    >
-                      <TriangleAlert size={16} aria-hidden />
-                    </button>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </section>
-      ))}
       {detailIngredientId && detailIngredientId !== '__pick__' && (
         <PantryDetailModal
           ingredientId={detailIngredientId}
@@ -179,6 +169,6 @@ export function PantryList() {
       )}
 
       {showScan && <PantryScanAdd onClose={() => setShowScan(false)} />}
-    </div>
+    </View>
   )
 }

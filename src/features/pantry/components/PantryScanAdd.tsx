@@ -1,12 +1,13 @@
 import { useState } from 'react'
-import { LoaderCircle } from 'lucide-react'
+import { View, Text } from 'react-native'
+import { Image } from 'expo-image'
+import { LoaderCircle } from 'lucide-react-native'
 import { BarcodeScanner, Button, Modal, TranslatedText } from '../../../components'
-import { useAppDispatch, useAppSelector } from '../../../app/hooks'
+import { useAppDispatch, useAppSelector } from '../../../store/hooks'
 import { useLanguage } from '../../../i18n'
 import { findProductByBarcode } from '../../ingredients/productsApi'
 import { updatePantryItem } from '../pantrySlice'
 import type { Product } from '../../ingredients/types'
-import './PantryScanAdd.scss'
 
 interface Props {
   onClose: () => void
@@ -71,68 +72,70 @@ export function PantryScanAdd({ onClose }: Props) {
       onClose={onClose}
       footer={
         step === 'confirm' ? (
-          <div className="pantry-scan-add__footer">
-            <Button variant="secondary" onClick={() => setStep('scan')}>
+          <View className="flex-row gap-2">
+            <Button variant="secondary" onPress={() => setStep('scan')}>
               <TranslatedText id="pantry.scanAgain" />
             </Button>
-            <Button onClick={handleMarkInStock} disabled={saving}>
+            <Button onPress={handleMarkInStock} disabled={saving}>
               {saving
-                ? <LoaderCircle size={16} className="icon-spin" aria-hidden />
+                ? <LoaderCircle size={16} color="#6b7280" />
                 : <TranslatedText id="pantry.markInStock" />}
             </Button>
-          </div>
+          </View>
         ) : step === 'not-found' ? (
-          <div className="pantry-scan-add__footer">
-            <Button variant="secondary" onClick={() => setStep('scan')}>
+          <View className="flex-row gap-2">
+            <Button variant="secondary" onPress={() => setStep('scan')}>
               <TranslatedText id="pantry.scanAgain" />
             </Button>
-            <Button variant="secondary" onClick={onClose}>
+            <Button variant="secondary" onPress={onClose}>
               <TranslatedText id="common.cancel" />
             </Button>
-          </div>
+          </View>
         ) : undefined
       }
     >
       {(step === 'scan' || looking) && (
-        <div className="pantry-scan-add__scan">
+        <View>
           {looking ? (
-            <p className="pantry-scan-add__status">
-              <LoaderCircle size={14} className="icon-spin" aria-hidden />
-              {' '}<TranslatedText id="ingredients.lookingUpBarcode" />
-            </p>
+            <View className="flex-row items-center gap-2 py-4">
+              <LoaderCircle size={14} color="#6b7280" />
+              <Text className="text-sm text-text-muted dark:text-text-muted-dark">
+                <TranslatedText id="ingredients.lookingUpBarcode" />
+              </Text>
+            </View>
           ) : (
             <BarcodeScanner onDetected={handleBarcodeDetected} onCancel={onClose} />
           )}
-        </div>
+        </View>
       )}
 
       {step === 'confirm' && product && (
-        <div className="pantry-scan-add__confirm">
+        <View className="flex-row gap-3 py-2">
           {product.imageUrl && (
-            <img src={product.imageUrl} alt={product.name} className="pantry-scan-add__img" />
+            <Image source={{ uri: product.imageUrl }} style={{ width: 64, height: 64, borderRadius: 8 }} contentFit="contain" />
           )}
-          <div className="pantry-scan-add__product-info">
+          <View className="flex-1 gap-1">
             {ingredientName && (
-              <span className="pantry-scan-add__category">{ingredientName}</span>
+              <Text className="text-xs text-text-muted dark:text-text-muted-dark">{ingredientName}</Text>
             )}
-            <span className="pantry-scan-add__name">{product.name}</span>
+            <Text className="text-base font-semibold text-app-text dark:text-text-dark">{product.name}</Text>
             {product.brand && (
-              <span className="pantry-scan-add__brand">{product.brand}</span>
+              <Text className="text-sm text-text-muted dark:text-text-muted-dark">{product.brand}</Text>
             )}
-            <code className="pantry-scan-add__barcode">{barcode}</code>
-          </div>
-        </div>
+            <Text className="text-xs font-mono text-text-muted dark:text-text-muted-dark">{barcode}</Text>
+          </View>
+        </View>
       )}
 
       {step === 'not-found' && (
-        <div className="pantry-scan-add__not-found">
-          <p className="pantry-scan-add__status pantry-scan-add__status--muted">
+        <View className="py-2 gap-2">
+          <Text className="text-sm text-text-muted dark:text-text-muted-dark">
             <TranslatedText id="pantry.productNotFoundInDb" />
-          </p>
-          <p className="pantry-scan-add__hint">
+          </Text>
+          <Text className="text-sm text-text-muted dark:text-text-muted-dark">
             <TranslatedText id="pantry.addProductFirst" />
-          </p>
-        </div>
+          </Text>
+        </View>
       )}
     </Modal>
   )

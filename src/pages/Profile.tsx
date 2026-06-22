@@ -1,9 +1,9 @@
-import { Navigate } from 'react-router-dom'
+import { Redirect } from 'expo-router'
 
 /**
  * Profile and account management now live in Settings.
  * Redirect any bookmarked /profile links there.
  */
 export function Profile() {
-  return <Navigate to="/settings" replace />
+  return <Redirect href="/settings" />
 }

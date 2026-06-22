@@ -1,8 +1,10 @@
 import { useEffect, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { ArrowRight } from 'lucide-react'
+import { View, Text, Pressable, ScrollView } from 'react-native'
+import { useRouter } from 'expo-router'
+import { Image } from 'expo-image'
+import { ArrowRight } from 'lucide-react-native'
 import { Badge, Button } from '../components'
-import { useAppDispatch, useAppSelector } from '../app/hooks'
+import { useAppDispatch, useAppSelector } from '../store/hooks'
 import type { Ingredient } from '../features/ingredients/types'
 import { fetchIngredients } from '../features/ingredients/ingredientsSlice'
 import { fetchMealPlan } from '../features/mealPlan/mealPlanSlice'
@@ -13,7 +15,6 @@ import { fetchRecipes } from '../features/recipes/recipesSlice'
 import { TranslationTodo } from '../features/ai/components/TranslationTodo'
 import { localizedIngredientName } from '../features/shared/localize'
 import { useLanguage } from '../i18n'
-import './Home.scss'
 
 /** Number of days ahead to consider an item "expiring soon" on the dashboard. */
 const EXPIRY_WINDOW_DAYS = 7
@@ -41,7 +42,7 @@ function getMissingFields(ing: Ingredient): string[] {
  */
 export function Home() {
   const dispatch = useAppDispatch()
-  const navigate = useNavigate()
+  const router = useRouter()
   const { t, language } = useLanguage()
 
   const recipes = useAppSelector((s) => s.recipes.items)
@@ -105,115 +106,114 @@ export function Home() {
   }
 
   return (
-    <div className="home">
-      {/* ── Next meal ─────────────────────────────────────────────────────── */}
-      <section className="home__section">
-        <h2 className="home__section-title">{t('home.nextMeal')}</h2>
-        {nextMeal && nextMealRecipe ? (
-          <div className="home__next-meal" onClick={() => navigate(`/recipes/${nextMealRecipe.id}?mealId=${nextMeal.id}`)} role="button" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && navigate(`/recipes/${nextMealRecipe.id}?mealId=${nextMeal.id}`)}>
-            {nextMealRecipe.imageUrl && (
-              <img src={nextMealRecipe.imageUrl} alt="" className="home__next-meal-img" />
-            )}
-            <div className="home__next-meal-body">
-              <span className="home__next-meal-when">
-                {dateLabel(nextMeal.date)} · {t(`mealPlan.slot.${nextMeal.slot}`)}
-              </span>
-              <span className="home__next-meal-title">{nextMealRecipe.titleI18n?.[language] || nextMealRecipe.title}</span>
-              <span className="home__next-meal-meta">
-                {nextMealRecipe.portions} {t('recipes.portions').toLowerCase()} · {nextMealRecipe.prepTimeMinutes + nextMealRecipe.cookTimeMinutes} {t('recipes.minutes')}
-              </span>
-            </div>
-            <Button variant="secondary" onClick={(e) => { e.stopPropagation(); navigate('/meal-plan') }}>
-              {t('home.planMeals')}
-            </Button>
-          </div>
-        ) : (
-          <div className="home__no-next-meal">
-            <p className="home__all-fresh">{t('home.noMealsPlanned')}</p>
-            <Button onClick={() => navigate('/meal-plan')}>{t('home.planMeals')}</Button>
-          </div>
-        )}
-      </section>
+    <ScrollView className="flex-1 bg-bg dark:bg-bg-dark">
+      <View className="p-4 gap-6">
 
-      {/* ── What can I make ───────────────────────────────────────────────── */}
-      <section className="home__section">
-        <h2 className="home__section-title">{t('home.whatCanIMake')}</h2>
-        <RecipeMatcher limit={5} />
-      </section>
+        {/* ── Next meal ─────────────────────────────────────────────────────── */}
+        <View className="gap-2">
+          <Text className="text-lg font-semibold text-app-text dark:text-text-dark">{t('home.nextMeal')}</Text>
+          {nextMeal && nextMealRecipe ? (
+            <Pressable
+              className="bg-surface dark:bg-surface-dark rounded-xl border border-border dark:border-border-dark overflow-hidden active:opacity-80"
+              onPress={() => router.push(`/recipes/${nextMealRecipe.id}?mealId=${nextMeal.id}` as any)}
+            >
+              {nextMealRecipe.imageUrl && (
+                <Image source={{ uri: nextMealRecipe.imageUrl }} style={{ width: '100%', height: 140 }} contentFit="cover" />
+              )}
+              <View className="p-3 gap-1">
+                <Text className="text-xs text-text-muted dark:text-text-muted-dark">
+                  {dateLabel(nextMeal.date)} · {t(`mealPlan.slot.${nextMeal.slot}`)}
+                </Text>
+                <Text className="text-base font-semibold text-app-text dark:text-text-dark">
+                  {nextMealRecipe.titleI18n?.[language] || nextMealRecipe.title}
+                </Text>
+                <Text className="text-sm text-text-muted dark:text-text-muted-dark">
+                  {nextMealRecipe.portions} {t('recipes.portions').toLowerCase()} · {nextMealRecipe.prepTimeMinutes + nextMealRecipe.cookTimeMinutes} {t('recipes.minutes')}
+                </Text>
+                <Button variant="secondary" onPress={(e) => { router.push('/meal-plan' as any) }}>
+                  {t('home.planMeals')}
+                </Button>
+              </View>
+            </Pressable>
+          ) : (
+            <View className="gap-3">
+              <Text className="text-text-muted dark:text-text-muted-dark">{t('home.noMealsPlanned')}</Text>
+              <Button onPress={() => router.push('/meal-plan' as any)}>{t('home.planMeals')}</Button>
+            </View>
+          )}
+        </View>
 
-      {/* ── Expiring soon ─────────────────────────────────────────────────── */}
-      <section className="home__section">
-        <h2 className="home__section-title">{t('home.expiringSoon')}</h2>
-        {expiringSoon.length === 0 ? (
-          <p className="home__all-fresh">
+        {/* ── What can I make ───────────────────────────────────────────────── */}
+        <View className="gap-2">
+          <Text className="text-lg font-semibold text-app-text dark:text-text-dark">{t('home.whatCanIMake')}</Text>
+          <RecipeMatcher limit={5} />
+        </View>
+
+        {/* ── Expiring soon ─────────────────────────────────────────────────── */}
+        <View className="gap-2">
+          <Text className="text-lg font-semibold text-app-text dark:text-text-dark">{t('home.expiringSoon')}</Text>
+          {expiringSoon.length === 0 ? (
             <Badge variant="success">{t('home.allFresh')}</Badge>
-          </p>
-        ) : (
-          <ul className="home__expiry-list">
-            {expiringSoon.map((item) => {
-              const ing = ingredientMap.get(item.ingredientId)
-              if (!ing) return null
-              const days = daysUntilExpiry(item.expiresAt!)
-              const isUrgent = days <= 2
+          ) : (
+            <View className="gap-2">
+              {expiringSoon.map((item) => {
+                const ing = ingredientMap.get(item.ingredientId)
+                if (!ing) return null
+                const days = daysUntilExpiry(item.expiresAt!)
+                const isUrgent = days <= 2
 
-              return (
-                <li key={item.ingredientId} className="home__expiry-item">
-                  <span className="home__expiry-name">{localizedIngredientName(ing, language)}</span>
-                  <Badge variant={isUrgent ? 'error' : 'warning'}>
-                    {t('home.daysLeft', { count: String(days) })}
-                  </Badge>
-                  <button
-                    type="button"
-                    className="home__expiry-link"
-                    onClick={() => navigate('/pantry')}
-                  >
-                    {t('pantry.title')} <ArrowRight size={14} aria-hidden />
-                  </button>
-                </li>
-              )
-            })}
-          </ul>
-        )}
-      </section>
+                return (
+                  <View key={item.ingredientId} className="flex-row items-center justify-between bg-surface dark:bg-surface-dark rounded-lg p-3 gap-2">
+                    <Text className="flex-1 text-app-text dark:text-text-dark">{localizedIngredientName(ing, language)}</Text>
+                    <Badge variant={isUrgent ? 'error' : 'warning'}>
+                      {t('home.daysLeft', { count: String(days) })}
+                    </Badge>
+                    <Pressable onPress={() => router.push('/pantry' as any)} className="flex-row items-center gap-1 active:opacity-70">
+                      <Text className="text-sm text-accent dark:text-accent-dark">{t('pantry.title')}</Text>
+                      <ArrowRight size={14} color="#7c3aed" />
+                    </Pressable>
+                  </View>
+                )
+              })}
+            </View>
+          )}
+        </View>
 
-      {/* ── Things to do ──────────────────────────────────────────────────── */}
-      <section className="home__section">
-        <h2 className="home__section-title">{t('home.thingsToDo')}</h2>
-        {incompleteIngredients.length === 0 ? (
-          <p className="home__all-fresh">
+        {/* ── Things to do ──────────────────────────────────────────────────── */}
+        <View className="gap-2">
+          <Text className="text-lg font-semibold text-app-text dark:text-text-dark">{t('home.thingsToDo')}</Text>
+          {incompleteIngredients.length === 0 ? (
             <Badge variant="success">{t('home.allComplete')}</Badge>
-          </p>
-        ) : (
-          <>
-            <p className="home__todo-count">
-              {t('home.ingredientsNeedAttention', { count: String(ingredients.filter((i) => getMissingFields(i).length > 0).length) })}
-            </p>
-            <ul className="home__todo-list">
+          ) : (
+            <View className="gap-2">
+              <Text className="text-sm text-text-muted dark:text-text-muted-dark">
+                {t('home.ingredientsNeedAttention', { count: String(ingredients.filter((i) => getMissingFields(i).length > 0).length) })}
+              </Text>
               {incompleteIngredients.map(({ ing, missing }) => (
-                <li key={ing.id} className="home__todo-item">
+                <View key={ing.id} className="flex-row items-center gap-2 bg-surface dark:bg-surface-dark rounded-lg p-3">
                   {ing.imageUrl && (
-                    <img src={ing.imageUrl} alt="" className="home__todo-thumb" />
+                    <Image source={{ uri: ing.imageUrl }} style={{ width: 36, height: 36, borderRadius: 6 }} contentFit="cover" />
                   )}
-                  <span className="home__todo-name">{localizedIngredientName(ing, language)}</span>
-                  <span className="home__todo-missing">
-                    {t('home.missingData', { items: missing.map((k) => t(`ingredients.${k}`)).join(', ') })}
-                  </span>
-                  <button
-                    type="button"
-                    className="home__expiry-link"
-                    onClick={() => navigate(`/ingredients?edit=${ing.id}`)}
-                  >
-                    {t('common.edit')} <ArrowRight size={14} aria-hidden />
-                  </button>
-                </li>
+                  <View className="flex-1 gap-0.5">
+                    <Text className="text-sm font-medium text-app-text dark:text-text-dark">{localizedIngredientName(ing, language)}</Text>
+                    <Text className="text-xs text-text-muted dark:text-text-muted-dark">
+                      {t('home.missingData', { items: missing.map((k) => t(`ingredients.${k}`)).join(', ') })}
+                    </Text>
+                  </View>
+                  <Pressable onPress={() => router.push(`/ingredients?edit=${ing.id}` as any)} className="flex-row items-center gap-1 active:opacity-70">
+                    <Text className="text-sm text-accent dark:text-accent-dark">{t('common.edit')}</Text>
+                    <ArrowRight size={14} color="#7c3aed" />
+                  </Pressable>
+                </View>
               ))}
-            </ul>
-          </>
-        )}
-      </section>
+            </View>
+          )}
+        </View>
 
-      {/* ── Needs translation ─────────────────────────────────────────────── */}
-      <TranslationTodo />
-    </div>
+        {/* ── Needs translation ─────────────────────────────────────────────── */}
+        <TranslationTodo />
+
+      </View>
+    </ScrollView>
   )
 }

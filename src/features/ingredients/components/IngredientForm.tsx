@@ -1,11 +1,12 @@
 import { useState } from 'react'
+import { View, Text, Switch } from 'react-native'
+import { Image } from 'expo-image'
 import { Alert, Button, Input, NumberInput, Select } from '../../../components'
-import { useAppDispatch } from '../../../app/hooks'
+import { useAppDispatch } from '../../../store/hooks'
 import { useLanguage } from '../../../i18n'
 import { createIngredient, updateIngredient } from '../ingredientsSlice'
 import { NutritionScanButton } from '../../ai/components/NutritionScanButton'
 import type { Ingredient, IngredientCategory } from '../types'
-import './IngredientForm.scss'
 
 const CATEGORIES: IngredientCategory[] = [
   'produce', 'dairy', 'meat', 'seafood', 'pantry', 'frozen', 'bakery', 'beverages', 'other',
@@ -47,8 +48,7 @@ export function IngredientForm({ ingredient, onDone }: IngredientFormProps) {
     return isNaN(n) ? undefined : n
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
+  async function handleSubmit() {
     setError(null)
 
     if (!name.trim()) {
@@ -88,65 +88,58 @@ export function IngredientForm({ ingredient, onDone }: IngredientFormProps) {
   }
 
   return (
-    <form className="ingredient-form" onSubmit={handleSubmit}>
+    <View className="gap-4">
       {error && <Alert variant="error">{error}</Alert>}
 
-      <div className="ingredient-form__section">
-        <div className="ingredient-form__fields">
-          <Input
-            id="ingredient-name"
-            label={t('ingredients.name')}
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-            autoFocus
-          />
-          <Select
-            id="ingredient-category"
-            label={t('ingredients.category')}
-            value={category}
-            onChange={(e) => setCategory(e.target.value as IngredientCategory)}
-            options={CATEGORIES.map((c) => ({ value: c, label: t(`ingredients.categories.${c}`) }))}
-          />
-        </div>
-        <div className="ingredient-form__image-row">
-          <div className="input-field">
-            <label htmlFor="ingredient-image">{t('ingredients.imageUrl')}</label>
-            <input
-              id="ingredient-image"
-              type="url"
-              className="input"
-              value={imageUrl}
-              onChange={(e) => setImageUrl(e.target.value)}
-              placeholder="https://…"
-            />
-          </div>
-          {imageUrl.trim() && (
-            <img
-              src={imageUrl}
-              alt={t('common.imagePreview')}
-              className="ingredient-form__image-preview"
-            />
-          )}
-        </div>
-        <div className="ingredient-form__expiry">
-          <NumberInput
-            id="ingredient-expiry"
-            label={t('ingredients.defaultExpiryDays')}
-            value={defaultExpiryDays}
-            onChange={setDefaultExpiryDays}
-            min={0}
-            step={1}
-          />
-          <span className="ingredient-form__expiry-hint">
-            {defaultExpiryDays === 0 ? t('ingredients.noDefaultExpiry') : `${defaultExpiryDays} days`}
-          </span>
-        </div>
-      </div>
+      <Input
+        label={t('ingredients.name')}
+        value={name}
+        onChangeText={setName}
+      />
 
-      <div className="ingredient-form__section">
-        <div className="ingredient-form__section-header">
-          <h4 className="ingredient-form__section-title">{t('ingredients.nutrition')}</h4>
+      <Select
+        label={t('ingredients.category')}
+        value={category}
+        onChange={(v) => setCategory(v as IngredientCategory)}
+        options={CATEGORIES.map((c) => ({ value: c, label: t(`ingredients.categories.${c}`) }))}
+      />
+
+      <Input
+        label={t('ingredients.imageUrl')}
+        value={imageUrl}
+        onChangeText={setImageUrl}
+        placeholder="https://…"
+        keyboardType="url"
+        autoCapitalize="none"
+      />
+
+      {imageUrl.trim() && (
+        <Image
+          source={{ uri: imageUrl }}
+          style={{ width: 80, height: 80, borderRadius: 8, alignSelf: 'center' }}
+          contentFit="contain"
+        />
+      )}
+
+      <NumberInput
+        label={t('ingredients.defaultExpiryDays')}
+        value={defaultExpiryDays}
+        onChange={setDefaultExpiryDays}
+        min={0}
+        step={1}
+      />
+      {defaultExpiryDays === 0 ? (
+        <Text className="text-xs text-text-muted dark:text-text-muted-dark">{t('ingredients.noDefaultExpiry')}</Text>
+      ) : (
+        <Text className="text-xs text-text-muted dark:text-text-muted-dark">{defaultExpiryDays} days</Text>
+      )}
+
+      {/* Nutrition per 100g */}
+      <View className="gap-2">
+        <View className="flex-row items-center justify-between">
+          <Text className="text-sm font-semibold text-app-text dark:text-text-dark">
+            {t('ingredients.nutrition')}
+          </Text>
           <NutritionScanButton
             onResult={(n) => {
               if (n.calories !== undefined) setCalories(String(n.calories))
@@ -157,83 +150,47 @@ export function IngredientForm({ ingredient, onDone }: IngredientFormProps) {
             }}
             onError={(msg) => setError(msg)}
           />
-        </div>
-        <div className="ingredient-form__nutrition-grid">
-          <Input
-            id="ing-calories"
-            label={t('recipes.nutrients.calories')}
-            type="number"
-            min="0"
-            value={calories}
-            onChange={(e) => setCalories(e.target.value)}
-            placeholder="kcal"
-          />
-          <Input
-            id="ing-protein"
-            label={`${t('recipes.nutrients.protein')} (g)`}
-            type="number"
-            min="0"
-            value={protein}
-            onChange={(e) => setProtein(e.target.value)}
-          />
-          <Input
-            id="ing-carbs"
-            label={`${t('recipes.nutrients.carbs')} (g)`}
-            type="number"
-            min="0"
-            value={carbs}
-            onChange={(e) => setCarbs(e.target.value)}
-          />
-          <Input
-            id="ing-fat"
-            label={`${t('recipes.nutrients.fat')} (g)`}
-            type="number"
-            min="0"
-            value={fat}
-            onChange={(e) => setFat(e.target.value)}
-          />
-          <Input
-            id="ing-fiber"
-            label={`${t('recipes.nutrients.fiber')} (g)`}
-            type="number"
-            min="0"
-            value={fiber}
-            onChange={(e) => setFiber(e.target.value)}
-          />
-        </div>
-
-        <div className="ingredient-form__density-row">
-          <Input
-            id="ing-density"
-            label={t('ingredients.density')}
-            type="number"
-            min="0"
-            step="0.01"
-            value={density}
-            onChange={(e) => setDensity(e.target.value)}
-            placeholder="e.g. 1.0"
-          />
-          <span className="ingredient-form__density-hint">{t('ingredients.densityHint')}</span>
-        </div>
-      </div>
-
-      {/* Products are managed separately via the IngredientDetail panel */}
-
-      <label className="ingredient-form__private-label">
-        <input
-          type="checkbox"
-          checked={isPrivate}
-          onChange={(e) => setIsPrivate(e.target.checked)}
+        </View>
+        <View className="flex-row flex-wrap gap-2">
+          {([
+            { key: 'calories', label: t('recipes.nutrients.calories'), value: calories, setter: setCalories, placeholder: 'kcal' },
+            { key: 'protein', label: `${t('recipes.nutrients.protein')} (g)`, value: protein, setter: setProtein },
+            { key: 'carbs', label: `${t('recipes.nutrients.carbs')} (g)`, value: carbs, setter: setCarbs },
+            { key: 'fat', label: `${t('recipes.nutrients.fat')} (g)`, value: fat, setter: setFat },
+            { key: 'fiber', label: `${t('recipes.nutrients.fiber')} (g)`, value: fiber, setter: setFiber },
+          ] as const).map(({ key, label, value, setter, placeholder }) => (
+            <View key={key} className="min-w-28 flex-1">
+              <Input
+                label={label}
+                value={value}
+                onChangeText={setter as (v: string) => void}
+                keyboardType="numeric"
+                placeholder={placeholder}
+              />
+            </View>
+          ))}
+        </View>
+        <Input
+          label={t('ingredients.density')}
+          value={density}
+          onChangeText={setDensity}
+          keyboardType="numeric"
+          placeholder="e.g. 1.0"
         />
-        {t('common.makePrivate')}
-      </label>
+        <Text className="text-xs text-text-muted dark:text-text-muted-dark">{t('ingredients.densityHint')}</Text>
+      </View>
 
-      <div className="ingredient-form__actions">
-        <Button type="button" variant="secondary" onClick={onDone}>
-          {t('common.cancel')}
-        </Button>
-        <Button type="submit">{t('common.save')}</Button>
-      </div>
-    </form>
+      {/* Private toggle */}
+      <View className="flex-row items-center justify-between">
+        <Text className="text-base text-app-text dark:text-text-dark">{t('common.makePrivate')}</Text>
+        <Switch value={isPrivate} onValueChange={setIsPrivate} />
+      </View>
+
+      {/* Actions */}
+      <View className="flex-row gap-2">
+        <Button variant="secondary" onPress={onDone}>{t('common.cancel')}</Button>
+        <Button onPress={handleSubmit}>{t('common.save')}</Button>
+      </View>
+    </View>
   )
 }

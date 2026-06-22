@@ -2,7 +2,7 @@ import { supabase } from '../../lib/supabaseClient'
 import { apiLog } from '../../lib/logger'
 import type { CreateRecipePayload, Recipe, RecipeIngredient, UpdateRecipePayload } from './types'
 
-const useMock = import.meta.env.VITE_USE_MOCK_DATA === 'true'
+const useMock = process.env.EXPO_PUBLIC_USE_MOCK_DATA === 'true'
 
 apiLog('recipes', `module loaded · mode=${useMock ? 'MOCK' : 'Supabase'}`)
 

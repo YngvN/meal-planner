@@ -1,7 +1,6 @@
-import type { KeyboardEvent } from 'react'
+import { View, Text, TextInput, Pressable, ScrollView } from 'react-native'
 import { useState } from 'react'
-import { X } from 'lucide-react'
-import './TagInput.scss'
+import { X } from 'lucide-react-native'
 
 interface TagInputProps {
   label?: string
@@ -13,7 +12,7 @@ interface TagInputProps {
 
 /**
  * Multi-value freeform tag input.
- * Press Enter or comma to add a tag; click × on a tag to remove it.
+ * Press the return key or type a comma to add a tag; tap × on a tag to remove it.
  */
 export function TagInput({ label, tags, onChange, placeholder = 'Add tag…', className }: TagInputProps) {
   const [inputValue, setInputValue] = useState('')
@@ -26,12 +25,16 @@ export function TagInput({ label, tags, onChange, placeholder = 'Add tag…', cl
     setInputValue('')
   }
 
-  function handleKeyDown(e: KeyboardEvent<HTMLInputElement>) {
-    if (e.key === 'Enter' || e.key === ',') {
-      e.preventDefault()
-      addTag(inputValue)
-    } else if (e.key === 'Backspace' && inputValue === '' && tags.length > 0) {
-      onChange(tags.slice(0, -1))
+  function handleSubmitEditing() {
+    addTag(inputValue)
+  }
+
+  function handleChangeText(text: string) {
+    // Add tag on comma.
+    if (text.endsWith(',')) {
+      addTag(text.slice(0, -1))
+    } else {
+      setInputValue(text)
     }
   }
 
@@ -40,32 +43,31 @@ export function TagInput({ label, tags, onChange, placeholder = 'Add tag…', cl
   }
 
   return (
-    <div className={['tag-input-field', className].filter(Boolean).join(' ')}>
-      {label && <span className="tag-input-field__label">{label}</span>}
-      <div className="tag-input">
+    <View className={`gap-1 ${className ?? ''}`}>
+      {label && (
+        <Text className="text-sm font-medium text-app-text dark:text-text-dark">{label}</Text>
+      )}
+      <View className="flex-row flex-wrap gap-1.5 border border-border dark:border-border-dark rounded-lg p-2 bg-bg dark:bg-bg-dark min-h-[44px]">
         {tags.map((tag) => (
-          <span key={tag} className="tag-input__tag">
-            {tag}
-            <button
-              type="button"
-              className="tag-input__remove"
-              onClick={() => removeTag(tag)}
-              aria-label={`Remove ${tag}`}
-            >
-              <X size={14} aria-hidden />
-            </button>
-          </span>
+          <View key={tag} className="flex-row items-center gap-1 bg-surface dark:bg-surface-dark rounded-full px-2 py-0.5">
+            <Text className="text-sm text-app-text dark:text-text-dark">{tag}</Text>
+            <Pressable onPress={() => removeTag(tag)} accessibilityLabel={`Remove ${tag}`} className="active:opacity-70">
+              <X size={12} className="text-text-muted dark:text-text-muted-dark" />
+            </Pressable>
+          </View>
         ))}
-        <input
-          type="text"
-          className="tag-input__input"
+        <TextInput
+          className="flex-1 min-w-[80px] text-sm text-app-text dark:text-text-dark py-0.5"
           value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          onKeyDown={handleKeyDown}
+          onChangeText={handleChangeText}
+          onSubmitEditing={handleSubmitEditing}
           onBlur={() => addTag(inputValue)}
           placeholder={tags.length === 0 ? placeholder : ''}
+          placeholderTextColor="#6b6375"
+          returnKeyType="done"
+          blurOnSubmit={false}
         />
-      </div>
-    </div>
+      </View>
+    </View>
   )
 }

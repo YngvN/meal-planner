@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
+import { View, Text, ScrollView, Pressable, Switch } from 'react-native'
 import { useDraftPersistence } from '../../../hooks/useDraftPersistence'
-import { useNavigate } from 'react-router-dom'
-import { Alert, Button, IngredientCombobox, InlineEdit, Input, NumberInput, Select, TagInput, TranslatedText } from '../../../components'
-import { useAppDispatch, useAppSelector } from '../../../app/hooks'
+import { useRouter } from 'expo-router'
+import { Alert, Button, Checkbox, IngredientCombobox, InlineEdit, Input, NumberInput, Select, TagInput, TranslatedText } from '../../../components'
+import { useAppDispatch, useAppSelector } from '../../../store/hooks'
 import { useLanguage } from '../../../i18n'
-import { Info, Plus, Trash2, X } from 'lucide-react'
+import { Info, Plus, Trash2, X } from 'lucide-react-native'
 import { createIngredient } from '../../ingredients/ingredientsSlice'
 import { RecipeScanButton } from '../../ai/components/RecipeScanButton'
 import { createRecipe, updateRecipe } from '../recipesSlice'
@@ -21,7 +22,6 @@ import type {
   SkillLevel,
 } from '../types'
 import type { RecipeDraft } from '../../ai/types'
-import './RecipeForm.scss'
 
 const DIETARY_TAGS: DietaryTag[] = ['vegetarian', 'vegan', 'gluten-free', 'dairy-free', 'nut-free']
 const MEAL_TAGS: MealTag[] = ['breakfast', 'lunch', 'dinner', 'snack', 'dessert']
@@ -114,7 +114,7 @@ interface RecipeFormProps {
  */
 export function RecipeForm({ initialValues, initialDraft, onDone }: RecipeFormProps) {
   const dispatch = useAppDispatch()
-  const navigate = useNavigate()
+  const router = useRouter()
   const { t } = useLanguage()
   const isEdit = !!initialValues
 
@@ -159,11 +159,8 @@ export function RecipeForm({ initialValues, initialDraft, onDone }: RecipeFormPr
   }
 
   function removeIngredientRow(idx: number) {
-    // Also remove any alternatives that reference this row by its position-based temp key.
     const tempKey = `draft-${idx}`
-    const primaryId = form.ingredients[idx]?.alternativeFor === undefined
-      ? tempKey
-      : undefined
+    const primaryId = form.ingredients[idx]?.alternativeFor === undefined ? tempKey : undefined
     patch(
       'ingredients',
       form.ingredients.filter(
@@ -174,8 +171,12 @@ export function RecipeForm({ initialValues, initialDraft, onDone }: RecipeFormPr
 
   function addAlternativeRow(primaryIdx: number) {
     const tempKey = `draft-${primaryIdx}`
-    const newAlt: RecipeIngredient = { ingredientId: '', quantity: form.ingredients[primaryIdx].quantity, unit: form.ingredients[primaryIdx].unit, alternativeFor: tempKey }
-    // Insert the alternative immediately after the primary (and after any existing alternatives for it).
+    const newAlt: RecipeIngredient = {
+      ingredientId: '',
+      quantity: form.ingredients[primaryIdx].quantity,
+      unit: form.ingredients[primaryIdx].unit,
+      alternativeFor: tempKey,
+    }
     const updated = [...form.ingredients]
     let insertAt = primaryIdx + 1
     while (insertAt < updated.length && updated[insertAt].alternativeFor === tempKey) insertAt++
@@ -237,8 +238,6 @@ export function RecipeForm({ initialValues, initialDraft, onDone }: RecipeFormPr
   async function applyRecipeDraft(draft: import('../../ai/types').RecipeDraft) {
     const resolved: RecipeIngredient[] = []
     for (const di of draft.ingredients) {
-      // Use a temporary position-based key so alternatives can reference their primary.
-      // The real DB id is filled in after the first upsert pass in recipesApi.
       const tempKey = `draft-${resolved.length}`
       const ingredientId = await resolveIngredientId(di.name)
       resolved.push({ ingredientId, quantity: di.quantity, unit: di.unit })
@@ -254,7 +253,6 @@ export function RecipeForm({ initialValues, initialDraft, onDone }: RecipeFormPr
       }
     }
 
-    // Filter AI-supplied tags to only accepted enum values.
     const validDietaryTags = ['vegetarian', 'vegan', 'gluten-free', 'dairy-free', 'nut-free'] as const
     const validMealTags = ['breakfast', 'lunch', 'dinner', 'snack', 'dessert'] as const
     const validSkillLevels = ['beginner', 'intermediate', 'advanced'] as const
@@ -308,14 +306,13 @@ export function RecipeForm({ initialValues, initialDraft, onDone }: RecipeFormPr
     if (onDone) {
       onDone()
     } else {
-      navigate(isEdit ? `/recipes/${initialValues!.id}` : '/recipes')
+      router.push(isEdit ? (`/recipes/${initialValues!.id}` as any) : '/recipes' as any)
     }
   }
 
   // ─── Submit ───────────────────────────────────────────────────────────────
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
+  async function handleSubmit() {
     setSubmitError(null)
 
     const payload: CreateRecipePayload = {
@@ -344,15 +341,15 @@ export function RecipeForm({ initialValues, initialDraft, onDone }: RecipeFormPr
       if (isEdit) {
         await dispatch(updateRecipe({ id: initialValues.id, payload })).unwrap()
         clearDraft()
-        navigate(`/recipes/${initialValues.id}`)
+        router.push(`/recipes/${initialValues.id}` as any)
       } else {
         const result = await dispatch(createRecipe(payload)).unwrap()
         clearDraft()
         if (onDone) {
           onDone()
-          navigate(`/recipes/${result.id}`)
+          router.push(`/recipes/${result.id}` as any)
         } else {
-          navigate(`/recipes/${result.id}`)
+          router.push(`/recipes/${result.id}` as any)
         }
       }
     } catch (err) {
@@ -360,136 +357,112 @@ export function RecipeForm({ initialValues, initialDraft, onDone }: RecipeFormPr
     }
   }
 
+  const unitOptions = COMMON_UNITS.map((u) => ({ value: u, label: localizeUnit(u, t) }))
+
   return (
-    <form className="recipe-form" onSubmit={handleSubmit}>
-      {!onDone && (
-        <div className="recipe-form__header">
-          <h1>{isEdit ? t('recipes.editRecipe') : t('recipes.addRecipe')}</h1>
-          <div className="recipe-form__header-actions">
-            <Button type="button" variant="secondary" onClick={handleCancel}>
-              {t('common.cancel')}
+    <ScrollView className="flex-1 bg-bg dark:bg-bg-dark" keyboardShouldPersistTaps="handled">
+      <View className="p-4 gap-4">
+
+        {/* Header (page mode only) */}
+        {!onDone && (
+          <View className="flex-row items-center justify-between">
+            <Text className="text-xl font-bold text-app-text dark:text-text-dark">
+              {isEdit ? t('recipes.editRecipe') : t('recipes.addRecipe')}
+            </Text>
+            <View className="flex-row gap-2">
+              <Button variant="secondary" onPress={handleCancel}>{t('common.cancel')}</Button>
+              <Button onPress={handleSubmit}>{t('common.save')}</Button>
+            </View>
+          </View>
+        )}
+
+        {/* Draft restore banner */}
+        {draftBannerVisible && (
+          <Alert variant="info">
+            {t('common.draftRestored')}
+            {'  '}
+            <Button variant="secondary" onPress={() => { clearDraft(); setForm(DEFAULT_FORM); setDraftBannerVisible(false) }}>
+              {t('common.discardDraft')}
             </Button>
-            <Button type="submit">{t('common.save')}</Button>
-          </div>
-        </div>
-      )}
+          </Alert>
+        )}
 
-      {/* Draft restore banner */}
-      {draftBannerVisible && (
-        <Alert variant="info">
-          {t('common.draftRestored')}
-          {' '}
-          <button
-            type="button"
-            className="recipe-form__draft-discard"
-            onClick={() => {
-              clearDraft()
-              setForm(DEFAULT_FORM)
-              setDraftBannerVisible(false)
-            }}
-          >
-            {t('common.discardDraft')}
-          </button>
-        </Alert>
-      )}
+        {/* AI disclaimer */}
+        {aiNoticeVisible && (
+          <View className="flex-row items-center gap-2 bg-info-bg dark:bg-info-bg-dark rounded-lg p-3 border border-info-border dark:border-info-border-dark">
+            <Info size={15} color="#3b82f6" />
+            <Text className="flex-1 text-sm text-app-text dark:text-text-dark">
+              <TranslatedText id="recipes.aiScanNotice" />
+            </Text>
+            <Pressable onPress={() => setAiNoticeVisible(false)} className="active:opacity-70">
+              <X size={14} color="#6b7280" />
+            </Pressable>
+          </View>
+        )}
 
-      {/* AI disclaimer — shown when the form was pre-filled by a scan */}
-      {aiNoticeVisible && (
-        <div className="recipe-form__ai-notice">
-          <Info size={15} aria-hidden />
-          <span><TranslatedText id="recipes.aiScanNotice" /></span>
-          <button
-            type="button"
-            className="recipe-form__ai-notice-dismiss"
-            onClick={() => setAiNoticeVisible(false)}
-            aria-label={t('common.delete')}
-          >
-            <X size={14} aria-hidden />
-          </button>
-        </div>
-      )}
+        {submitError && <Alert variant="error">{submitError}</Alert>}
 
-      {submitError && <Alert variant="error">{submitError}</Alert>}
-
-      {/* ─── Basic info ─────────────────────────────────────────────── */}
-      <section className="recipe-form__section">
-        <div className="recipe-form__section-header">
-          <h2>{t('recipes.form.basics')}</h2>
-          <RecipeScanButton onResult={applyRecipeDraft} onError={setSubmitError} />
-        </div>
-        <div className="recipe-form__row">
+        {/* ─── Basic info ─────────────────────────────────────────────── */}
+        <View className="gap-3">
+          <View className="flex-row items-center justify-between">
+            <Text className="text-lg font-semibold text-app-text dark:text-text-dark">{t('recipes.form.basics')}</Text>
+            <RecipeScanButton onResult={applyRecipeDraft} onError={setSubmitError} />
+          </View>
           <Input
-            id="title"
             label={t('recipes.form.title')}
             value={form.title}
-            onChange={(e) => patch('title', e.target.value)}
-            required
+            onChangeText={(v) => patch('title', v)}
           />
-        </div>
-        <div className="recipe-form__row">
-          <div className="input-field">
-            <label htmlFor="description">{t('recipes.form.description')}</label>
-            <textarea
-              id="description"
-              className="recipe-form__textarea"
-              value={form.description}
-              onChange={(e) => patch('description', e.target.value)}
-              rows={3}
-            />
-          </div>
-        </div>
-        <div className="recipe-form__row recipe-form__row--image">
-          <div className="input-field">
-            <label htmlFor="imageUrl">{t('recipes.imageUrl')}</label>
-            <input
-              id="imageUrl"
-              type="url"
-              className="input"
-              value={form.imageUrl}
-              onChange={(e) => patch('imageUrl', e.target.value)}
-              placeholder="https://…"
-            />
-          </div>
-          {form.imageUrl.trim() && (
-            <img
-              src={form.imageUrl}
-              alt={t('common.imagePreview')}
-              className="recipe-form__image-preview"
-            />
-          )}
-        </div>
-        <div className="recipe-form__row recipe-form__row--3col">
-          <NumberInput
-            id="portions"
-            label={t('recipes.portions')}
-            value={form.portions}
-            onChange={(v) => patch('portions', v)}
-            min={1}
-            max={100}
+          <Input
+            label={t('recipes.form.description')}
+            value={form.description}
+            onChangeText={(v) => patch('description', v)}
+            multiline
           />
-          <NumberInput
-            id="prepTime"
-            label={`${t('recipes.prepTime')} (min)`}
-            value={form.prepTimeMinutes}
-            onChange={(v) => patch('prepTimeMinutes', v)}
-            min={0}
-            step={5}
+          <Input
+            label={t('recipes.imageUrl')}
+            value={form.imageUrl}
+            onChangeText={(v) => patch('imageUrl', v)}
+            placeholder="https://…"
+            keyboardType="url"
+            autoCapitalize="none"
           />
-          <NumberInput
-            id="cookTime"
-            label={`${t('recipes.cookTime')} (min)`}
-            value={form.cookTimeMinutes}
-            onChange={(v) => patch('cookTimeMinutes', v)}
-            min={0}
-            step={5}
-          />
-        </div>
-        <div className="recipe-form__row recipe-form__row--2col">
+          <View className="flex-row gap-3">
+            <View className="flex-1">
+              <NumberInput
+                id="portions"
+                label={t('recipes.portions')}
+                value={form.portions}
+                onChange={(v) => patch('portions', v)}
+                min={1}
+                max={100}
+              />
+            </View>
+            <View className="flex-1">
+              <NumberInput
+                id="prepTime"
+                label={`${t('recipes.prepTime')} (min)`}
+                value={form.prepTimeMinutes}
+                onChange={(v) => patch('prepTimeMinutes', v)}
+                min={0}
+                step={5}
+              />
+            </View>
+            <View className="flex-1">
+              <NumberInput
+                id="cookTime"
+                label={`${t('recipes.cookTime')} (min)`}
+                value={form.cookTimeMinutes}
+                onChange={(v) => patch('cookTimeMinutes', v)}
+                min={0}
+                step={5}
+              />
+            </View>
+          </View>
           <Select
-            id="skillLevel"
             label={t('recipes.skillLevel')}
             value={form.skillLevel}
-            onChange={(e) => patch('skillLevel', e.target.value as SkillLevel)}
+            onChange={(v) => patch('skillLevel', v as SkillLevel)}
             options={SKILL_LEVELS.map((s) => ({ value: s, label: t(`recipes.skill.${s}`) }))}
           />
           <TagInput
@@ -498,90 +471,79 @@ export function RecipeForm({ initialValues, initialDraft, onDone }: RecipeFormPr
             onChange={(v) => patch('cuisineTypes', v)}
             placeholder={t('recipes.form.addCuisine')}
           />
-        </div>
-      </section>
+        </View>
 
-      {/* ─── Source ─────────────────────────────────────────────────── */}
-      <section className="recipe-form__section">
-        <div className="recipe-form__source-header">
-          <h2>{t('recipes.source.source')}</h2>
-          <label className="recipe-form__chip-label">
-            <input
-              type="checkbox"
+        {/* ─── Source ─────────────────────────────────────────────────── */}
+        <View className="gap-3">
+          <View className="flex-row items-center justify-between">
+            <Text className="text-lg font-semibold text-app-text dark:text-text-dark">{t('recipes.source.source')}</Text>
+            <Checkbox
+              label={t('recipes.form.addSource')}
               checked={form.sourceEnabled}
-              onChange={(e) => patch('sourceEnabled', e.target.checked)}
+              onChange={(v) => patch('sourceEnabled', v)}
             />
-            {t('recipes.form.addSource')}
-          </label>
-        </div>
-        {form.sourceEnabled && (
-          <div className="recipe-form__row recipe-form__row--3col">
-            <Select
-              id="sourceType"
-              label={t('recipes.source.type')}
-              value={form.sourceType}
-              onChange={(e) => patch('sourceType', e.target.value as RecipeSourceType)}
-              options={SOURCE_TYPES.map((s) => ({ value: s, label: t(`recipes.sourceType.${s}`) }))}
-            />
-            <Input
-              id="sourceName"
-              label={t('recipes.source.name')}
-              value={form.sourceName}
-              onChange={(e) => patch('sourceName', e.target.value)}
-              placeholder={
-                form.sourceType === 'website' ? 'e.g. Serious Eats'
-                  : form.sourceType === 'book' ? 'e.g. The Silver Spoon'
-                    : 'e.g. Grandma Maria'
-              }
-            />
-            {form.sourceType === 'website' && (
-              <Input
-                id="sourceUrl"
-                label={t('recipes.source.url')}
-                type="url"
-                value={form.sourceUrl}
-                onChange={(e) => patch('sourceUrl', e.target.value)}
-                placeholder="https://..."
+          </View>
+          {form.sourceEnabled && (
+            <View className="gap-3">
+              <Select
+                label={t('recipes.source.type')}
+                value={form.sourceType}
+                onChange={(v) => patch('sourceType', v as RecipeSourceType)}
+                options={SOURCE_TYPES.map((s) => ({ value: s, label: t(`recipes.sourceType.${s}`) }))}
               />
-            )}
-          </div>
-        )}
-      </section>
+              <Input
+                label={t('recipes.source.name')}
+                value={form.sourceName}
+                onChangeText={(v) => patch('sourceName', v)}
+                placeholder={
+                  form.sourceType === 'website' ? 'e.g. Serious Eats'
+                    : form.sourceType === 'book' ? 'e.g. The Silver Spoon'
+                      : 'e.g. Grandma Maria'
+                }
+              />
+              {form.sourceType === 'website' && (
+                <Input
+                  label={t('recipes.source.url')}
+                  value={form.sourceUrl}
+                  onChangeText={(v) => patch('sourceUrl', v)}
+                  placeholder="https://..."
+                  keyboardType="url"
+                  autoCapitalize="none"
+                />
+              )}
+            </View>
+          )}
+        </View>
 
-      {/* ─── Tags ───────────────────────────────────────────────────── */}
-      <section className="recipe-form__section">
-        <h2>{t('recipes.form.tags')}</h2>
-        <div className="recipe-form__row">
-          <span className="recipe-form__sublabel">{t('recipes.filters.dietary')}</span>
-          <div className="recipe-form__chips">
-            {DIETARY_TAGS.map((tag) => (
-              <label key={tag} className="recipe-form__chip-label">
-                <input
-                  type="checkbox"
+        {/* ─── Tags ───────────────────────────────────────────────────── */}
+        <View className="gap-3">
+          <Text className="text-lg font-semibold text-app-text dark:text-text-dark">{t('recipes.form.tags')}</Text>
+          <View className="gap-1">
+            <Text className="text-sm font-medium text-app-text dark:text-text-dark">{t('recipes.filters.dietary')}</Text>
+            <View className="flex-row flex-wrap gap-2 mt-1">
+              {DIETARY_TAGS.map((tag) => (
+                <Checkbox
+                  key={tag}
+                  label={tag}
                   checked={form.dietaryTags.includes(tag)}
                   onChange={() => toggleDietary(tag)}
                 />
-                {tag}
-              </label>
-            ))}
-          </div>
-        </div>
-        <div className="recipe-form__row">
-          <span className="recipe-form__sublabel">{t('recipes.filters.mealType')}</span>
-          <div className="recipe-form__chips">
-            {MEAL_TAGS.map((tag) => (
-              <label key={tag} className="recipe-form__chip-label">
-                <input
-                  type="checkbox"
+              ))}
+            </View>
+          </View>
+          <View className="gap-1">
+            <Text className="text-sm font-medium text-app-text dark:text-text-dark">{t('recipes.filters.mealType')}</Text>
+            <View className="flex-row flex-wrap gap-2 mt-1">
+              {MEAL_TAGS.map((tag) => (
+                <Checkbox
+                  key={tag}
+                  label={t(`recipes.mealTag.${tag}`)}
                   checked={form.mealTags.includes(tag)}
                   onChange={() => toggleMeal(tag)}
                 />
-                {t(`recipes.mealTag.${tag}`)}
-              </label>
-            ))}
-          </div>
-        </div>
-        <div className="recipe-form__row recipe-form__row--2col">
+              ))}
+            </View>
+          </View>
           <TagInput
             label={t('recipes.tags')}
             tags={form.tags}
@@ -594,162 +556,141 @@ export function RecipeForm({ initialValues, initialDraft, onDone }: RecipeFormPr
             onChange={(v) => patch('equipment', v)}
             placeholder={t('recipes.form.addEquipment')}
           />
-        </div>
-      </section>
+        </View>
 
-      {/* ─── Ingredients ────────────────────────────────────────────── */}
-      <section className="recipe-form__section">
-        <h2>{t('recipes.ingredients')}</h2>
-        {form.ingredients.map((row, idx) => {
-          const isAlternative = Boolean(row.alternativeFor)
-          const selectedIngredient = ingredientLibrary.find((i) => i.id === row.ingredientId)
-          const products = selectedIngredient?.products ?? []
-          return (
-            <div
-              key={idx}
-              className={[
-                'recipe-form__ingredient-row',
-                isAlternative && 'recipe-form__ingredient-row--alternative',
-              ].filter(Boolean).join(' ')}
-            >
-              {/* Top line: or-badge + combobox + delete */}
-              <div className="recipe-form__ing-top">
+        {/* ─── Ingredients ────────────────────────────────────────────── */}
+        <View className="gap-3">
+          <Text className="text-lg font-semibold text-app-text dark:text-text-dark">{t('recipes.ingredients')}</Text>
+          {form.ingredients.map((row, idx) => {
+            const isAlternative = Boolean(row.alternativeFor)
+            const selectedIngredient = ingredientLibrary.find((i) => i.id === row.ingredientId)
+            const products = selectedIngredient?.products ?? []
+            const productOptions = [
+              { value: '', label: t('recipes.form.defaultVariant') },
+              ...products.map((p) => ({ value: p.id, label: `${p.name}${p.brand ? ` — ${p.brand}` : ''}` })),
+            ]
+            return (
+              <View
+                key={idx}
+                className={`gap-2 p-3 rounded-xl border ${isAlternative ? 'border-dashed border-border dark:border-border-dark ml-4' : 'border-border dark:border-border-dark'} bg-surface dark:bg-surface-dark`}
+              >
                 {isAlternative && (
-                  <span className="recipe-form__or-badge" aria-label="or">or</span>
+                  <Text className="text-xs font-bold text-accent dark:text-accent-dark">or</Text>
                 )}
-                <IngredientCombobox
-                  value={row.ingredientId || undefined}
-                  onChange={(id) => updateIngredientRow(idx, { ingredientId: id, productId: undefined })}
-                  options={ingredientLibrary}
-                  onCreateNew={handleCreateIngredient}
-                  placeholder={t('recipes.form.selectIngredient')}
-                  className="recipe-form__ingredient-combobox"
-                />
-                <button
-                  type="button"
-                  className="recipe-form__ing-delete"
-                  onClick={() => removeIngredientRow(idx)}
-                  aria-label={t('common.delete')}
-                >
-                  <Trash2 size={16} aria-hidden />
-                </button>
-              </div>
-              {/* Bottom line: quantity + unit + or button (primary only) */}
-              <div className="recipe-form__ing-bottom">
-                <NumberInput
-                  value={row.quantity}
-                  onChange={(v) => updateIngredientRow(idx, { quantity: v })}
-                  min={0.01}
-                  step="any"
-                />
-                <select
-                  className="recipe-form__unit-select"
-                  value={row.unit}
-                  onChange={(e) => updateIngredientRow(idx, { unit: e.target.value })}
-                >
-                  {COMMON_UNITS.map((u) => (
-                    <option key={u} value={u}>{localizeUnit(u, t)}</option>
-                  ))}
-                </select>
+                <View className="flex-row items-center gap-2">
+                  <View className="flex-1">
+                    <IngredientCombobox
+                      value={row.ingredientId || undefined}
+                      onChange={(id) => updateIngredientRow(idx, { ingredientId: id, productId: undefined })}
+                      options={ingredientLibrary}
+                      onCreateNew={handleCreateIngredient}
+                      placeholder={t('recipes.form.selectIngredient')}
+                    />
+                  </View>
+                  <Pressable onPress={() => removeIngredientRow(idx)} className="p-2 active:opacity-70">
+                    <Trash2 size={16} color="#ef4444" />
+                  </Pressable>
+                </View>
+                <View className="flex-row gap-2 items-center">
+                  <View className="w-24">
+                    <NumberInput
+                      value={row.quantity}
+                      onChange={(v) => updateIngredientRow(idx, { quantity: v })}
+                      min={0.01}
+                      step="any"
+                    />
+                  </View>
+                  <View className="flex-1">
+                    <Select
+                      value={row.unit}
+                      onChange={(v) => updateIngredientRow(idx, { unit: v })}
+                      options={unitOptions}
+                    />
+                  </View>
+                </View>
                 {products.length > 0 && (
-                  <select
-                    className="recipe-form__product-select"
+                  <Select
                     value={row.productId ?? ''}
-                    onChange={(e) => updateIngredientRow(idx, { productId: e.target.value || undefined })}
-                  >
-                    <option value="">{t('recipes.form.defaultVariant')}</option>
-                    {products.map((p) => (
-                      <option key={p.id} value={p.id}>{p.name}{p.brand ? ` — ${p.brand}` : ''}</option>
-                    ))}
-                  </select>
+                    onChange={(v) => updateIngredientRow(idx, { productId: v || undefined })}
+                    options={productOptions}
+                  />
                 )}
                 {!isAlternative && (
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={() => addAlternativeRow(idx)}
-                    aria-label={t('recipes.form.addAlternative')}
-                    title={t('recipes.form.addAlternative')}
-                  >
-                    <span className="recipe-form__or-btn-label">or</span>
+                  <Button variant="secondary" onPress={() => addAlternativeRow(idx)}>
+                    <Text className="text-app-text dark:text-text-dark text-sm">or</Text>
                   </Button>
                 )}
-              </div>
-            </div>
-          )
-        })}
-        <Button type="button" variant="secondary" onClick={addIngredientRow}>
-          <Plus size={16} aria-hidden /> {t('recipes.form.addIngredient')}
-        </Button>
-      </section>
+              </View>
+            )
+          })}
+          <Button variant="secondary" onPress={addIngredientRow}>
+            <Plus size={16} color="#6b7280" />
+            <Text className="text-app-text dark:text-text-dark">{t('recipes.form.addIngredient')}</Text>
+          </Button>
+        </View>
 
-      {/* ─── Instructions ───────────────────────────────────────────── */}
-      <section className="recipe-form__section">
-        <h2>{t('recipes.instructions')}</h2>
-        {form.steps.map((step, idx) => (
-          <div key={idx} className="recipe-form__step-row">
-            <div className="recipe-form__step-header">
-              <span className="recipe-form__step-num">{idx + 1}</span>
-              {form.steps.length > 1 && (
-                <Button type="button" variant="secondary" onClick={() => removeStep(idx)} aria-label={t('common.delete')}>
-                  <X size={16} aria-hidden />
-                </Button>
-              )}
-            </div>
-            <InlineEdit
-              multiline
-              value={step.description}
-              onChange={(v) => updateStep(idx, { description: v })}
-              placeholder={t('recipes.form.stepDescription')}
-            />
-            <NumberInput
-              value={step.timerMinutes ?? 0}
-              onChange={(v) => updateStep(idx, { timerMinutes: v || undefined })}
-              min={0}
-              step={1}
-              label={`${t('recipes.form.timer')} (min, 0 = none)`}
-            />
-          </div>
-        ))}
-        <Button type="button" variant="secondary" onClick={addStep}>
-          <Plus size={16} aria-hidden /> {t('recipes.form.addStep')}
-        </Button>
-      </section>
+        {/* ─── Instructions ───────────────────────────────────────────── */}
+        <View className="gap-3">
+          <Text className="text-lg font-semibold text-app-text dark:text-text-dark">{t('recipes.instructions')}</Text>
+          {form.steps.map((step, idx) => (
+            <View key={idx} className="gap-2 bg-surface dark:bg-surface-dark rounded-xl p-3 border border-border dark:border-border-dark">
+              <View className="flex-row items-center justify-between">
+                <View className="w-6 h-6 rounded-full bg-accent dark:bg-accent-dark items-center justify-center">
+                  <Text className="text-xs font-bold text-accent-contrast">{idx + 1}</Text>
+                </View>
+                {form.steps.length > 1 && (
+                  <Pressable onPress={() => removeStep(idx)} className="p-1 active:opacity-70">
+                    <X size={16} color="#6b7280" />
+                  </Pressable>
+                )}
+              </View>
+              <InlineEdit
+                multiline
+                value={step.description}
+                onChange={(v) => updateStep(idx, { description: v })}
+                placeholder={t('recipes.form.stepDescription')}
+              />
+              <NumberInput
+                value={step.timerMinutes ?? 0}
+                onChange={(v) => updateStep(idx, { timerMinutes: v || undefined })}
+                min={0}
+                step={1}
+                label={`${t('recipes.form.timer')} (min, 0 = none)`}
+              />
+            </View>
+          ))}
+          <Button variant="secondary" onPress={addStep}>
+            <Plus size={16} color="#6b7280" />
+            <Text className="text-app-text dark:text-text-dark">{t('recipes.form.addStep')}</Text>
+          </Button>
+        </View>
 
-      {/* ─── Notes ──────────────────────────────────────────────────── */}
-      <section className="recipe-form__section">
-        <h2>{t('recipes.notes')}</h2>
-        <div className="input-field">
-          <textarea
-            id="notes"
-            className="recipe-form__textarea"
+        {/* ─── Notes ──────────────────────────────────────────────────── */}
+        <View className="gap-1">
+          <Text className="text-lg font-semibold text-app-text dark:text-text-dark">{t('recipes.notes')}</Text>
+          <Input
             value={form.notes}
-            onChange={(e) => patch('notes', e.target.value)}
-            rows={3}
+            onChangeText={(v) => patch('notes', v)}
+            multiline
             placeholder={t('recipes.form.notesPlaceholder')}
           />
-        </div>
-      </section>
+        </View>
 
-      {/* ─── Private toggle ─────────────────────────────────────────── */}
-      <label className="recipe-form__private-label">
-        <input
-          type="checkbox"
-          checked={isPrivate}
-          onChange={(e) => setIsPrivate(e.target.checked)}
-        />
-        {t('common.makePrivate')}
-      </label>
+        {/* ─── Private toggle ─────────────────────────────────────────── */}
+        <View className="flex-row items-center justify-between">
+          <Text className="text-base text-app-text dark:text-text-dark">{t('common.makePrivate')}</Text>
+          <Switch value={isPrivate} onValueChange={setIsPrivate} />
+        </View>
 
-      {/* ─── Modal-mode footer ───────────────────────────────────────── */}
-      {onDone && (
-        <div className="recipe-form__modal-footer">
-          <Button type="button" variant="secondary" onClick={handleCancel}>
-            {t('common.cancel')}
-          </Button>
-          <Button type="submit">{t('common.save')}</Button>
-        </div>
-      )}
-    </form>
+        {/* ─── Modal-mode footer ───────────────────────────────────────── */}
+        {onDone && (
+          <View className="flex-row gap-2 pt-2">
+            <Button variant="secondary" onPress={handleCancel}>{t('common.cancel')}</Button>
+            <Button onPress={handleSubmit}>{t('common.save')}</Button>
+          </View>
+        )}
+
+      </View>
+    </ScrollView>
   )
 }

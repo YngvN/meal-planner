@@ -1,6 +1,6 @@
 import { useEffect, type ReactNode } from 'react'
 import { supabase } from '../../lib/supabaseClient'
-import { useAppDispatch } from '../../app/hooks'
+import { useAppDispatch } from '../../store/hooks'
 import { fetchCurrentUser, loggedOut } from './authSlice'
 
 interface Props {

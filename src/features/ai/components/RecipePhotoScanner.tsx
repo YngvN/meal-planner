@@ -1,11 +1,13 @@
-import { useRef, useState } from 'react'
-import { Camera, LoaderCircle, Upload, X } from 'lucide-react'
+import { useState } from 'react'
+import { View, Text, Pressable } from 'react-native'
+import { Image } from 'expo-image'
+import * as ImagePicker from 'expo-image-picker'
+import { Camera, LoaderCircle, Upload, X } from 'lucide-react-native'
 import { Button, Modal, TranslatedText } from '../../../components'
 import { useLanguage } from '../../../i18n'
 import { transcribeRecipePhotos } from '../aiApi'
 import type { RecipeDraft } from '../types'
 import { useNameFeasibility } from '../../pantry/useRecipeFeasibility'
-import './RecipePhotoScanner.scss'
 
 interface Props {
   onResult: (draft: RecipeDraft) => void
@@ -19,84 +21,88 @@ function PantrySummary({ draft, onContinue, onClose }: { draft: RecipeDraft; onC
   const { inStockCount, total, missingNames } = useNameFeasibility(names)
 
   return (
-    <div className="recipe-photo-scanner__pantry-summary">
-      <p className="recipe-photo-scanner__pantry-ratio">
+    <View className="gap-4">
+      <Text className="text-base text-app-text dark:text-text-dark">
         {t('pantry.feasibility.missing', { count: String(total - inStockCount) })}
         {' · '}
-        <strong>{inStockCount}/{total}</strong> {t('pantry.inStock').toLowerCase()}
-      </p>
+        <Text className="font-semibold">{inStockCount}/{total}</Text>
+        {' '}{t('pantry.inStock').toLowerCase()}
+      </Text>
       {missingNames.length > 0 && (
-        <ul className="recipe-photo-scanner__missing-list">
-          {missingNames.map((n) => <li key={n}>{n}</li>)}
-        </ul>
+        <View className="gap-1">
+          {missingNames.map((n) => (
+            <Text key={n} className="text-sm text-text-muted dark:text-text-muted-dark">• {n}</Text>
+          ))}
+        </View>
       )}
-      <div className="recipe-photo-scanner__pantry-actions">
-        <Button variant="secondary" onClick={onClose}>
+      <View className="flex-row gap-2">
+        <Button variant="secondary" onPress={onClose}>
           <TranslatedText id="common.cancel" />
         </Button>
-        <Button onClick={onContinue}>
+        <Button onPress={onContinue}>
           <TranslatedText id="recipes.form.continueToRecipe" />
         </Button>
-      </div>
-    </div>
+      </View>
+    </View>
   )
 }
 
 const MAX_PHOTOS = 6
 
-/** Reads a File as a raw base64 string (no `data:` prefix). */
-function fileToBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => resolve((reader.result as string).split(',')[1] ?? '')
-    reader.onerror = () => reject(reader.error)
-    reader.readAsDataURL(file)
-  })
-}
-
 /**
- * Multi-photo recipe scanner. The user captures or uploads 1–6 photos
- * (one per page of a cookbook, recipe card, etc.), then clicks "Scan all
+ * Multi-photo recipe scanner. The user captures or selects 1–6 photos
+ * (one per page of a cookbook, recipe card, etc.), then taps "Scan all
  * pages". All images are sent to Claude in one request so it can combine
  * information across pages into a single recipe draft.
  */
 export function RecipePhotoScanner({ onResult, onClose }: Props) {
   const { t } = useLanguage()
-  const cameraInputRef = useRef<HTMLInputElement>(null)
-  const uploadInputRef = useRef<HTMLInputElement>(null)
-
-  const [photos, setPhotos] = useState<File[]>([])
-  const [previews, setPreviews] = useState<string[]>([])
+  const [photoUris, setPhotoUris] = useState<string[]>([])
+  const [photoData, setPhotoData] = useState<Array<{ imageBase64: string; mediaType: string }>>([])
   const [scanning, setScanning] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [pendingDraft, setPendingDraft] = useState<RecipeDraft | null>(null)
 
-  function addFiles(files: FileList | null) {
-    if (!files) return
-    const toAdd = Array.from(files).slice(0, MAX_PHOTOS - photos.length)
-    if (!toAdd.length) return
+  async function addFromCamera() {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync()
+    if (status !== 'granted') return
+    const result = await ImagePicker.launchCameraAsync({
+      base64: true,
+      quality: 0.8,
+      allowsEditing: false,
+    })
+    if (!result.canceled && result.assets[0].base64) {
+      const asset = result.assets[0]
+      setPhotoUris((prev) => [...prev, asset.uri])
+      setPhotoData((prev) => [...prev, { imageBase64: asset.base64!, mediaType: 'image/jpeg' }])
+    }
+  }
 
-    const newPreviews = toAdd.map((f) => URL.createObjectURL(f))
-    setPhotos((prev) => [...prev, ...toAdd])
-    setPreviews((prev) => [...prev, ...newPreviews])
-    setError(null)
+  async function addFromGallery() {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      base64: true,
+      quality: 0.8,
+      allowsMultipleSelection: false,
+      mediaTypes: 'images',
+    })
+    if (!result.canceled && result.assets[0].base64) {
+      const asset = result.assets[0]
+      setPhotoUris((prev) => [...prev, asset.uri])
+      setPhotoData((prev) => [...prev, { imageBase64: asset.base64!, mediaType: 'image/jpeg' }])
+    }
   }
 
   function removePhoto(idx: number) {
-    URL.revokeObjectURL(previews[idx])
-    setPhotos((prev) => prev.filter((_, i) => i !== idx))
-    setPreviews((prev) => prev.filter((_, i) => i !== idx))
+    setPhotoUris((prev) => prev.filter((_, i) => i !== idx))
+    setPhotoData((prev) => prev.filter((_, i) => i !== idx))
   }
 
   async function handleScan() {
-    if (!photos.length) return
+    if (!photoData.length) return
     setScanning(true)
     setError(null)
     try {
-      const images = await Promise.all(
-        photos.map(async (f) => ({ imageBase64: await fileToBase64(f), mediaType: f.type })),
-      )
-      const draft = await transcribeRecipePhotos(images)
+      const draft = await transcribeRecipePhotos(photoData)
       setPendingDraft(draft)
     } catch (err) {
       setError(err instanceof Error ? err.message : t('ai.recipeScanMultiError'))
@@ -105,7 +111,7 @@ export function RecipePhotoScanner({ onResult, onClose }: Props) {
     }
   }
 
-  const canAddMore = photos.length < MAX_PHOTOS && !scanning
+  const canAddMore = photoUris.length < MAX_PHOTOS && !scanning
 
   if (pendingDraft) {
     return (
@@ -125,92 +131,72 @@ export function RecipePhotoScanner({ onResult, onClose }: Props) {
       title={t('recipes.scanRecipe')}
       onClose={onClose}
       footer={
-        <div className="recipe-photo-scanner__footer">
-          <Button variant="secondary" onClick={onClose} disabled={scanning}>
+        <View className="flex-row gap-2">
+          <Button variant="secondary" onPress={onClose} disabled={scanning}>
             <TranslatedText id="common.cancel" />
           </Button>
-          <Button onClick={handleScan} disabled={photos.length === 0 || scanning}>
+          <Button onPress={handleScan} disabled={photoUris.length === 0 || scanning}>
             {scanning ? (
-              <>
-                <LoaderCircle size={16} className="icon-spin" aria-hidden />
-                <TranslatedText id="recipes.scanningPages" vars={{ n: photos.length }} />
-              </>
+              <View className="flex-row items-center gap-2">
+                <LoaderCircle size={16} color="#ffffff" />
+                <TranslatedText id="recipes.scanningPages" vars={{ n: photoUris.length }} />
+              </View>
             ) : (
               <TranslatedText id="recipes.scanPages" />
             )}
           </Button>
-        </div>
+        </View>
       }
     >
-      <div className="recipe-photo-scanner">
-        {/* Hidden file inputs — one for camera, one for file picker */}
-        <input
-          ref={cameraInputRef}
-          type="file"
-          accept="image/*"
-          capture="environment"
-          className="recipe-photo-scanner__hidden-input"
-          onChange={(e) => { addFiles(e.target.files); e.target.value = '' }}
-        />
-        <input
-          ref={uploadInputRef}
-          type="file"
-          accept="image/*"
-          multiple
-          className="recipe-photo-scanner__hidden-input"
-          onChange={(e) => { addFiles(e.target.files); e.target.value = '' }}
-        />
-
-        {/* Add buttons */}
+      <View className="gap-4">
         {canAddMore && (
-          <div className="recipe-photo-scanner__add-buttons">
-            <Button variant="secondary" onClick={() => cameraInputRef.current?.click()}>
-              <Camera size={16} aria-hidden />
+          <View className="flex-row gap-2">
+            <Button variant="secondary" onPress={addFromCamera}>
+              <Camera size={16} color="#6b7280" />
               <TranslatedText id="recipes.addPage" />
             </Button>
-            <Button variant="secondary" onClick={() => uploadInputRef.current?.click()}>
-              <Upload size={16} aria-hidden />
+            <Button variant="secondary" onPress={addFromGallery}>
+              <Upload size={16} color="#6b7280" />
               <TranslatedText id="common.imageUrl" />
             </Button>
-          </div>
+          </View>
         )}
 
-        {/* Thumbnail grid */}
-        {photos.length > 0 && (
-          <>
-            <div className="recipe-photo-scanner__grid">
-              {previews.map((src, idx) => (
-                <div key={idx} className="recipe-photo-scanner__thumb">
-                  <img src={src} alt={`Page ${idx + 1}`} className="recipe-photo-scanner__thumb-img" />
-                  {!scanning && (
-                    <button
-                      type="button"
-                      className="recipe-photo-scanner__thumb-remove"
-                      onClick={() => removePhoto(idx)}
-                      aria-label={t('common.delete')}
-                    >
-                      <X size={12} aria-hidden />
-                    </button>
-                  )}
-                  <span className="recipe-photo-scanner__thumb-label">{idx + 1}</span>
-                </div>
-              ))}
-            </div>
-
-            <p className="recipe-photo-scanner__count">
-              <TranslatedText id="recipes.pageCount" vars={{ n: photos.length, max: MAX_PHOTOS }} />
-            </p>
-          </>
+        {photoUris.length > 0 && (
+          <View className="flex-row flex-wrap gap-2">
+            {photoUris.map((uri, idx) => (
+              <View key={idx} className="relative">
+                <Image source={{ uri }} style={{ width: 80, height: 80, borderRadius: 8 }} contentFit="cover" />
+                {!scanning && (
+                  <Pressable
+                    onPress={() => removePhoto(idx)}
+                    className="absolute top-1 right-1 w-5 h-5 bg-black/60 rounded-full items-center justify-center active:opacity-70"
+                  >
+                    <X size={10} color="#ffffff" />
+                  </Pressable>
+                )}
+                <View className="absolute bottom-1 left-1 bg-black/60 rounded px-1">
+                  <Text className="text-white text-xs">{idx + 1}</Text>
+                </View>
+              </View>
+            ))}
+          </View>
         )}
 
-        {photos.length === 0 && !scanning && (
-          <p className="recipe-photo-scanner__empty">
+        {photoUris.length > 0 && (
+          <Text className="text-xs text-text-muted dark:text-text-muted-dark">
+            <TranslatedText id="recipes.pageCount" vars={{ n: photoUris.length, max: MAX_PHOTOS }} />
+          </Text>
+        )}
+
+        {photoUris.length === 0 && !scanning && (
+          <Text className="text-sm text-text-muted dark:text-text-muted-dark">
             <TranslatedText id="recipes.scanHint" />
-          </p>
+          </Text>
         )}
 
-        {error && <p className="recipe-photo-scanner__error">{error}</p>}
-      </div>
+        {error && <Text className="text-sm text-error dark:text-error-dark">{error}</Text>}
+      </View>
     </Modal>
   )
 }

@@ -1,6 +1,8 @@
 import { useState } from 'react'
+import { View, Text, FlatList } from 'react-native'
+import { Image } from 'expo-image'
 import { Button, Modal, SearchBar } from '../../../components'
-import { useAppSelector } from '../../../app/hooks'
+import { useAppSelector } from '../../../store/hooks'
 import { useLanguage } from '../../../i18n'
 import type { MealSlot } from '../types'
 
@@ -41,34 +43,38 @@ export function RecipePicker({ date, slot, onPick, onClose }: RecipePickerProps)
       onClose={onClose}
       title={`${t(`mealPlan.slot.${slot}`)} — ${dateLabel}`}
     >
-      <div className="recipe-picker">
+      <View className="gap-3">
         <SearchBar value={search} onChange={setSearch} placeholder={t('recipes.search')} />
 
-        <ul className="recipe-picker__list">
-          {filtered.map((recipe) => (
-            <li key={recipe.id} className="recipe-picker__item">
-              {recipe.imageUrl && (
-                <img
-                  src={recipe.imageUrl}
-                  alt=""
-                  className="recipe-picker__thumb"
-                  loading="lazy"
-                />
-              )}
-              <div className="recipe-picker__info">
-                <span className="recipe-picker__title">{recipe.titleI18n?.[language] || recipe.title}</span>
-                <span className="recipe-picker__meta">
-                  {recipe.portions} {t('recipes.portions').toLowerCase()} · {recipe.prepTimeMinutes + recipe.cookTimeMinutes} {t('recipes.minutes')}
-                </span>
-              </div>
-              <Button onClick={() => onPick(recipe.id)}>{t('common.add')}</Button>
-            </li>
-          ))}
-          {filtered.length === 0 && (
-            <li className="recipe-picker__empty">{t('recipes.noResults')}</li>
-          )}
-        </ul>
-      </div>
+        {filtered.length === 0 ? (
+          <Text className="text-sm text-text-muted dark:text-text-muted-dark text-center py-4">
+            {t('recipes.noResults')}
+          </Text>
+        ) : (
+          <View className="gap-2">
+            {filtered.map((recipe) => (
+              <View key={recipe.id} className="flex-row items-center gap-3 bg-surface dark:bg-surface-dark rounded-xl p-3 border border-border dark:border-border-dark">
+                {recipe.imageUrl && (
+                  <Image
+                    source={{ uri: recipe.imageUrl }}
+                    style={{ width: 48, height: 48, borderRadius: 8 }}
+                    contentFit="cover"
+                  />
+                )}
+                <View className="flex-1">
+                  <Text className="text-sm font-medium text-app-text dark:text-text-dark" numberOfLines={2}>
+                    {recipe.titleI18n?.[language] || recipe.title}
+                  </Text>
+                  <Text className="text-xs text-text-muted dark:text-text-muted-dark">
+                    {recipe.portions} {t('recipes.portions').toLowerCase()} · {recipe.prepTimeMinutes + recipe.cookTimeMinutes} {t('recipes.minutes')}
+                  </Text>
+                </View>
+                <Button onPress={() => onPick(recipe.id)}>{t('common.add')}</Button>
+              </View>
+            ))}
+          </View>
+        )}
+      </View>
     </Modal>
   )
 }

@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react'
+import { View, Text, Pressable } from 'react-native'
+import { Image } from 'expo-image'
 import { useDraftPersistence } from '../../../hooks/useDraftPersistence'
-import { LoaderCircle } from 'lucide-react'
-import { BarcodeScanner, Button, InlineEdit, Input, Modal, TranslatedText } from '../../../components'
-import { useAppDispatch, useAppSelector } from '../../../app/hooks'
+import { LoaderCircle } from 'lucide-react-native'
+import { BarcodeScanner, Button, InlineEdit, Input, Modal, Select, TranslatedText } from '../../../components'
+import { useAppDispatch, useAppSelector } from '../../../store/hooks'
 import { useLanguage } from '../../../i18n'
 import { createIngredient, createProduct } from '../ingredientsSlice'
 import { lookupBarcode } from '../productsApi'
 import type { NutritionalValues } from '../../shared/types'
-import './QuickScanAdd.scss'
 
 interface Props {
   onClose: () => void
@@ -49,11 +50,9 @@ export function QuickScanAdd({ onClose, onDone }: Props) {
   const [fiber, setFiber] = useState('')
   const [nutritionOpen, setNutritionOpen] = useState(false)
 
-  // Draft persistence for the details step (not the scan step — no File objects).
   const detailsSnapshot = { name, brand, selectedIngredientId, newCategoryName, calories, protein, carbs, fat, fiber }
   const { savedDraft: savedDetailsDraft, clearDraft } = useDraftPersistence('product-scan', detailsSnapshot, step === 'details')
 
-  // Restore draft when entering the details step for the first time.
   useEffect(() => {
     if (step === 'details' && savedDetailsDraft && !name) {
       const d = savedDetailsDraft
@@ -67,7 +66,6 @@ export function QuickScanAdd({ onClose, onDone }: Props) {
       if (d.fat) setFat(d.fat)
       if (d.fiber) setFiber(d.fiber)
     }
-  // Only on first details step entry
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step])
 
@@ -93,7 +91,6 @@ export function QuickScanAdd({ onClose, onDone }: Props) {
         if (result.nutrition.fiber != null) setFiber(String(result.nutrition.fiber))
         setNutritionOpen(true)
       }
-      // Prefer OFF category suggestion for pre-selecting the ingredient; fall back to name match.
       const nameLower = result.name?.toLowerCase() ?? ''
       const categoryMatch = result.suggestedCategory
         ? ingredients.find((i) => i.category === result.suggestedCategory)
@@ -125,7 +122,6 @@ export function QuickScanAdd({ onClose, onDone }: Props) {
     try {
       let ingredientId = selectedIngredientId
 
-      // Create a new ingredient category if needed
       if (!ingredientId) {
         const created = await dispatch(
           createIngredient({ name: newCategoryName.trim(), category: 'other' }),
@@ -164,6 +160,17 @@ export function QuickScanAdd({ onClose, onDone }: Props) {
     }
   }
 
+  const categoryOptions = [
+    { value: '', label: t('ingredients.newCategory') },
+    ...ingredients.map((i) => ({ value: i.id, label: i.name })),
+  ]
+
+  const nutritionFields = ['calories', 'protein', 'carbs', 'fat', 'fiber'] as const
+  const nutritionValues = { calories, protein, carbs, fat, fiber }
+  const nutritionSetters = {
+    calories: setCalories, protein: setProtein, carbs: setCarbs, fat: setFat, fiber: setFiber,
+  }
+
   return (
     <Modal
       open
@@ -171,106 +178,104 @@ export function QuickScanAdd({ onClose, onDone }: Props) {
       onClose={onClose}
       footer={
         step === 'details' ? (
-          <div className="quick-scan-add__footer">
-            <Button variant="secondary" onClick={() => { clearDraft(); onClose() }}>
+          <View className="flex-row gap-2">
+            <Button variant="secondary" onPress={() => { clearDraft(); onClose() }}>
               <TranslatedText id="common.cancel" />
             </Button>
-            <Button onClick={handleSave} disabled={saving}>
+            <Button onPress={handleSave} disabled={saving}>
               {saving
-                ? <LoaderCircle size={16} className="icon-spin" aria-hidden />
+                ? <LoaderCircle size={16} color="#6b7280" />
                 : <TranslatedText id="common.save" />}
             </Button>
-          </div>
+          </View>
         ) : undefined
       }
     >
       {step === 'scan' && (
-        <div className="quick-scan-add__scan-step">
+        <View>
           <BarcodeScanner onDetected={handleBarcodeDetected} onCancel={onClose} />
-        </div>
+        </View>
       )}
 
       {step === 'details' && (
-        <div className="quick-scan-add__details-step">
+        <View className="gap-3">
           {/* Lookup status + confirmation image */}
           {lookupState === 'loading' && (
-            <p className="quick-scan-add__status">
-              <LoaderCircle size={14} className="icon-spin" aria-hidden />
-              {' '}<TranslatedText id="ingredients.lookingUpBarcode" />
-            </p>
+            <View className="flex-row items-center gap-2">
+              <LoaderCircle size={14} color="#6b7280" />
+              <Text className="text-sm text-text-muted dark:text-text-muted-dark">
+                <TranslatedText id="ingredients.lookingUpBarcode" />
+              </Text>
+            </View>
           )}
           {lookupState === 'found' && (
-            <div className="quick-scan-add__confirmation">
+            <View className="gap-2">
               {confirmationImageUrl && (
-                <img src={confirmationImageUrl} alt={name} className="quick-scan-add__confirmation-img" />
+                <Image source={{ uri: confirmationImageUrl }} style={{ width: 80, height: 80, borderRadius: 8 }} contentFit="contain" />
               )}
-              <p className="quick-scan-add__status quick-scan-add__status--success">
+              <Text className="text-sm text-success dark:text-success-dark">
                 <TranslatedText id="ingredients.barcodeFound" />
-              </p>
-            </div>
+              </Text>
+            </View>
           )}
           {lookupState === 'not-found' && (
-            <p className="quick-scan-add__status quick-scan-add__status--muted">
+            <Text className="text-sm text-text-muted dark:text-text-muted-dark">
               <TranslatedText id="ingredients.barcodeNotFound" />
-            </p>
+            </Text>
           )}
 
-          {/* Product name + brand — InlineEdit so the scan result is readable before editing */}
-          <div className="quick-scan-add__field">
-            <label className="quick-scan-add__label"><TranslatedText id="common.name" /></label>
+          <View className="gap-1">
+            <Text className="text-sm font-medium text-app-text dark:text-text-dark"><TranslatedText id="common.name" /></Text>
             <InlineEdit value={name} onChange={setName} placeholder={t('common.name')} />
-          </div>
-          <div className="quick-scan-add__field">
-            <label className="quick-scan-add__label"><TranslatedText id="ingredients.brand" /></label>
+          </View>
+          <View className="gap-1">
+            <Text className="text-sm font-medium text-app-text dark:text-text-dark"><TranslatedText id="ingredients.brand" /></Text>
             <InlineEdit value={brand} onChange={setBrand} placeholder={t('ingredients.brand')} />
-          </div>
+          </View>
 
-          {/* Ingredient category */}
-          <div className="quick-scan-add__field">
-            <label className="quick-scan-add__label" htmlFor="qsa-category">
-              <TranslatedText id="ingredients.category" />
-            </label>
-            <select
-              id="qsa-category"
-              className="quick-scan-add__select"
-              value={selectedIngredientId}
-              onChange={(e) => { setSelectedIngredientId(e.target.value); setNewCategoryName('') }}
-            >
-              <option value="">{t('ingredients.newCategory')}</option>
-              {ingredients.map((i) => (
-                <option key={i.id} value={i.id}>{i.name}</option>
-              ))}
-            </select>
-          </div>
+          <Select
+            label={t('ingredients.category')}
+            value={selectedIngredientId}
+            onChange={(v) => { setSelectedIngredientId(v); setNewCategoryName('') }}
+            options={categoryOptions}
+          />
 
           {!selectedIngredientId && (
-            <Input id="qsa-new-cat" label={<TranslatedText id="ingredients.newCategoryName" />}
-              value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)} />
+            <Input
+              label={t('ingredients.newCategoryName')}
+              value={newCategoryName}
+              onChangeText={setNewCategoryName}
+            />
           )}
 
-          {/* Nutrition (auto-expands when scan or barcode lookup fills values) */}
-          <details
-            className="quick-scan-add__nutrition"
-            open={nutritionOpen}
-            onToggle={(e) => setNutritionOpen(e.currentTarget.open)}
+          {/* Nutrition section */}
+          <Pressable
+            onPress={() => setNutritionOpen((v) => !v)}
+            className="flex-row items-center justify-between py-2 active:opacity-70"
           >
-            <summary><TranslatedText id="ingredients.nutrition" /></summary>
-            <div className="quick-scan-add__nutrition-grid">
-              {(['calories', 'protein', 'carbs', 'fat', 'fiber'] as const).map((field) => {
-                const vals = { calories, protein, carbs, fat, fiber }
-                const sets = { calories: setCalories, protein: setProtein, carbs: setCarbs, fat: setFat, fiber: setFiber }
-                return (
-                  <Input key={field} id={`qsa-${field}`}
-                    label={<TranslatedText id={`ingredients.nutrition.${field}`} />}
-                    type="number" min={0} step={0.1}
-                    value={vals[field]} onChange={(e) => sets[field](e.target.value)} />
-                )
-              })}
-            </div>
-          </details>
+            <Text className="text-sm font-semibold text-app-text dark:text-text-dark">
+              <TranslatedText id="ingredients.nutrition" />
+            </Text>
+            <Text className="text-xs text-accent dark:text-accent-dark">
+              {nutritionOpen ? '▲' : '▼'}
+            </Text>
+          </Pressable>
+          {nutritionOpen && (
+            <View className="gap-2">
+              {nutritionFields.map((field) => (
+                <Input
+                  key={field}
+                  label={t(`ingredients.nutrition.${field}`)}
+                  value={nutritionValues[field]}
+                  onChangeText={nutritionSetters[field]}
+                  keyboardType="numeric"
+                />
+              ))}
+            </View>
+          )}
 
-          {error && <p className="quick-scan-add__error">{error}</p>}
-        </div>
+          {error && <Text className="text-sm text-error dark:text-error-dark">{error}</Text>}
+        </View>
       )}
     </Modal>
   )

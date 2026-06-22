@@ -1,12 +1,13 @@
-import { useNavigate } from 'react-router-dom'
-import { Clock, Gauge, Star, Users } from 'lucide-react'
+import { View, Text, Pressable } from 'react-native'
+import { Image } from 'expo-image'
+import { useRouter } from 'expo-router'
+import { Clock, Gauge, Star, Users } from 'lucide-react-native'
 import { Badge, Button } from '../../../components'
-import { useAppDispatch } from '../../../app/hooks'
+import { useAppDispatch } from '../../../store/hooks'
 import { useLanguage } from '../../../i18n'
 import { localizeRecipe } from '../../shared/localize'
 import { toggleFavorite } from '../recipesSlice'
 import type { Recipe } from '../types'
-import './RecipeCard.scss'
 
 interface RecipeCardProps {
   recipe: Recipe
@@ -18,85 +19,103 @@ interface RecipeCardProps {
  */
 export function RecipeCard({ recipe: rawRecipe }: RecipeCardProps) {
   const dispatch = useAppDispatch()
-  const navigate = useNavigate()
+  const router = useRouter()
   const { t, language } = useLanguage()
   const recipe = localizeRecipe(rawRecipe, language)
   const totalMinutes = recipe.prepTimeMinutes + recipe.cookTimeMinutes
 
-  function handleFavorite(e: React.MouseEvent) {
-    e.stopPropagation()
+  function handleFavorite() {
     dispatch(toggleFavorite(recipe.id))
   }
 
   return (
-    <article className="recipe-card" onClick={() => navigate(`/recipes/${recipe.id}`)}>
+    <Pressable
+      className="bg-surface dark:bg-surface-dark rounded-xl border border-border dark:border-border-dark overflow-hidden active:opacity-80"
+      onPress={() => router.push(`/recipes/${recipe.id}` as any)}
+      accessibilityRole="button"
+    >
       {recipe.imageUrl && (
-        <img
-          src={recipe.imageUrl}
-          alt={recipe.title}
-          className="recipe-card__image"
-          loading="lazy"
+        <Image
+          source={{ uri: recipe.imageUrl }}
+          style={{ width: '100%', height: 160 }}
+          contentFit="cover"
         />
       )}
 
-      <div className="recipe-card__body">
-        <div className="recipe-card__header">
-          <h3 className="recipe-card__title">{recipe.title}</h3>
-          <button
-            type="button"
-            className={['recipe-card__favorite', recipe.isFavorite && 'recipe-card__favorite--active'].filter(Boolean).join(' ')}
-            onClick={handleFavorite}
-            aria-label={recipe.isFavorite ? t('recipes.unfavorite') : t('recipes.favorite')}
-            title={recipe.isFavorite ? t('recipes.unfavorite') : t('recipes.favorite')}
+      <View className="p-3 gap-2">
+        <View className="flex-row items-start justify-between gap-2">
+          <Text className="flex-1 text-base font-semibold text-app-text dark:text-text-dark">
+            {recipe.title}
+          </Text>
+          <Pressable
+            onPress={handleFavorite}
+            className="p-1 active:opacity-70"
+            accessibilityLabel={recipe.isFavorite ? t('recipes.unfavorite') : t('recipes.favorite')}
           >
-            <Star size={18} fill={recipe.isFavorite ? 'currentColor' : 'none'} aria-hidden />
-          </button>
-        </div>
+            <Star
+              size={18}
+              fill={recipe.isFavorite ? 'currentColor' : 'none'}
+              color={recipe.isFavorite ? '#f59e0b' : '#6b7280'}
+            />
+          </Pressable>
+        </View>
 
         {recipe.createdByUsername && (
-          <span className="recipe-card__author">by {recipe.createdByUsername}</span>
+          <Text className="text-xs text-text-muted dark:text-text-muted-dark">
+            by {recipe.createdByUsername}
+          </Text>
         )}
 
         {recipe.description && (
-          <p className="recipe-card__description">{recipe.description}</p>
+          <Text className="text-sm text-text-muted dark:text-text-muted-dark" numberOfLines={2}>
+            {recipe.description}
+          </Text>
         )}
 
-        <div className="recipe-card__meta">
-          <span className="recipe-card__meta-item" title={t('recipes.totalTime')}>
-            <Clock size={15} aria-hidden /> {totalMinutes} {t('recipes.minutes')}
-          </span>
-          <span className="recipe-card__meta-item" title={t('recipes.portions')}>
-            <Users size={15} aria-hidden /> {recipe.portions}
-          </span>
-          <span className="recipe-card__meta-item" title={t('recipes.skillLevel')}>
-            <Gauge size={15} aria-hidden /> {t(`recipes.skill.${recipe.skillLevel}`)}
-          </span>
-        </div>
+        <View className="flex-row flex-wrap gap-3">
+          <View className="flex-row items-center gap-1">
+            <Clock size={13} color="#6b7280" />
+            <Text className="text-xs text-text-muted dark:text-text-muted-dark">
+              {totalMinutes} {t('recipes.minutes')}
+            </Text>
+          </View>
+          <View className="flex-row items-center gap-1">
+            <Users size={13} color="#6b7280" />
+            <Text className="text-xs text-text-muted dark:text-text-muted-dark">
+              {recipe.portions}
+            </Text>
+          </View>
+          <View className="flex-row items-center gap-1">
+            <Gauge size={13} color="#6b7280" />
+            <Text className="text-xs text-text-muted dark:text-text-muted-dark">
+              {t(`recipes.skill.${recipe.skillLevel}`)}
+            </Text>
+          </View>
+        </View>
 
         {recipe.dietaryTags.length > 0 && (
-          <div className="recipe-card__tags">
+          <View className="flex-row flex-wrap gap-1">
             {recipe.dietaryTags.map((tag) => (
               <Badge key={tag} variant="success">{tag}</Badge>
             ))}
-          </div>
+          </View>
         )}
 
         {recipe.mealTags.length > 0 && (
-          <div className="recipe-card__tags">
+          <View className="flex-row flex-wrap gap-1">
             {recipe.mealTags.map((tag) => (
               <Badge key={tag} variant="info">{tag}</Badge>
             ))}
-          </div>
+          </View>
         )}
 
         <Button
           variant="secondary"
-          className="recipe-card__cta"
-          onClick={(e) => { e.stopPropagation(); navigate(`/recipes/${recipe.id}`) }}
+          onPress={() => router.push(`/recipes/${recipe.id}` as any)}
         >
           {t('recipes.viewRecipe')}
         </Button>
-      </div>
-    </article>
+      </View>
+    </Pressable>
   )
 }

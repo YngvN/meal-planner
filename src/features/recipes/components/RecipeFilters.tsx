@@ -1,8 +1,8 @@
-import { Star } from 'lucide-react'
+import { View, Text } from 'react-native'
+import { Star } from 'lucide-react-native'
 import { FilterChip, Select } from '../../../components'
 import { useLanguage } from '../../../i18n'
 import type { DietaryTag, MealTag, RecipeFilters as Filters, SkillLevel } from '../types'
-import './RecipeFilters.scss'
 
 const DIETARY_TAGS: DietaryTag[] = ['vegetarian', 'vegan', 'gluten-free', 'dairy-free', 'nut-free']
 const MEAL_TAGS: MealTag[] = ['breakfast', 'lunch', 'dinner', 'snack', 'dessert']
@@ -41,52 +41,52 @@ export function RecipeFilters({ filters, onChange }: RecipeFiltersProps) {
   }
 
   return (
-    <aside className="recipe-filters">
-      <div className="recipe-filters__group">
-        <h4 className="recipe-filters__label">{t('recipes.filters.dietary')}</h4>
-        <div className="recipe-filters__chips">
+    <View className="gap-3 p-3 bg-surface dark:bg-surface-dark rounded-xl border border-border dark:border-border-dark">
+      <View className="gap-2">
+        <Text className="text-sm font-semibold text-app-text dark:text-text-dark">
+          {t('recipes.filters.dietary')}
+        </Text>
+        <View className="flex-row flex-wrap gap-2">
           {DIETARY_TAGS.map((tag) => (
             <FilterChip
               key={tag}
               active={filters.dietaryTags?.includes(tag)}
-              onClick={() => toggleDietary(tag)}
+              onPress={() => toggleDietary(tag)}
             >
               {tag}
             </FilterChip>
           ))}
-        </div>
-      </div>
+        </View>
+      </View>
 
-      <div className="recipe-filters__group">
-        <h4 className="recipe-filters__label">{t('recipes.filters.mealType')}</h4>
-        <div className="recipe-filters__chips">
+      <View className="gap-2">
+        <Text className="text-sm font-semibold text-app-text dark:text-text-dark">
+          {t('recipes.filters.mealType')}
+        </Text>
+        <View className="flex-row flex-wrap gap-2">
           {MEAL_TAGS.map((tag) => (
             <FilterChip
               key={tag}
               active={filters.mealTags?.includes(tag)}
-              onClick={() => toggleMeal(tag)}
+              onPress={() => toggleMeal(tag)}
             >
               {t(`recipes.mealTag.${tag}`)}
             </FilterChip>
           ))}
-        </div>
-      </div>
+        </View>
+      </View>
 
-      <div className="recipe-filters__group">
-        <Select
-          label={t('recipes.filters.skill')}
-          value={filters.skillLevel ?? ''}
-          onChange={(e) => setSkillLevel(e.target.value)}
-          options={SKILL_LEVELS.map((s) => ({ value: s, label: t(`recipes.skill.${s}`) }))}
-          placeholder={t('recipes.filters.anySkill')}
-        />
-      </div>
+      <Select
+        label={t('recipes.filters.skill')}
+        value={filters.skillLevel ?? ''}
+        onChange={setSkillLevel}
+        options={SKILL_LEVELS.map((s) => ({ value: s, label: t(`recipes.skill.${s}`) }))}
+        placeholder={t('recipes.filters.anySkill')}
+      />
 
-      <div className="recipe-filters__group">
-        <FilterChip active={filters.favoritesOnly} onClick={toggleFavorites}>
-          <Star size={14} fill={filters.favoritesOnly ? 'currentColor' : 'none'} aria-hidden /> {t('recipes.filters.favoritesOnly')}
-        </FilterChip>
-      </div>
-    </aside>
+      <FilterChip active={filters.favoritesOnly} onPress={toggleFavorites}>
+        {t('recipes.filters.favoritesOnly')}
+      </FilterChip>
+    </View>
   )
 }

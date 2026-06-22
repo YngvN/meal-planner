@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { Minus, Plus } from 'lucide-react'
-import { Button, Modal } from '../../../components'
-import { useAppDispatch, useAppSelector } from '../../../app/hooks'
+import { View, Text, TextInput, Pressable } from 'react-native'
+import { Image } from 'expo-image'
+import { Minus, Plus } from 'lucide-react-native'
+import { Button, Checkbox, Modal, Select } from '../../../components'
+import { useAppDispatch, useAppSelector } from '../../../store/hooks'
 import { useLanguage } from '../../../i18n'
 import { localizedIngredientName } from '../../shared/localize'
 import { updatePantryItem } from '../pantrySlice'
-import './PantryDetailModal.scss'
 
 const COUNT_UNITS = new Set(['pcs', 'bunch', 'can', 'bottle', 'bag', 'box', 'pack', 'slice', 'clove', 'head'])
 
@@ -40,6 +41,9 @@ export function PantryDetailModal({ ingredientId, onClose }: PantryDetailModalPr
 
   const [quantity, setQuantity] = useState(pantryItem?.quantity?.toString() ?? '')
   const [unit, setUnit] = useState(pantryItem?.unit ?? '')
+  const [expiresAt, setExpiresAt] = useState(pantryItem?.expiresAt?.slice(0, 10) ?? '')
+  const [inStock, setInStock] = useState(pantryItem?.inStock ?? false)
+  const [isLow, setIsLow] = useState(pantryItem?.isLow ?? false)
 
   function qtyStep() { return COUNT_UNITS.has(unit) ? 1 : 10 }
 
@@ -48,9 +52,6 @@ export function PantryDetailModal({ ingredientId, onClose }: PantryDetailModalPr
     const next = Math.max(0, current + delta)
     setQuantity(COUNT_UNITS.has(unit) ? String(next) : next.toFixed(1).replace(/\.0$/, ''))
   }
-  const [expiresAt, setExpiresAt] = useState(pantryItem?.expiresAt?.slice(0, 10) ?? '')
-  const [inStock, setInStock] = useState(pantryItem?.inStock ?? false)
-  const [isLow, setIsLow] = useState(pantryItem?.isLow ?? false)
 
   async function handleSave() {
     await dispatch(
@@ -70,117 +71,98 @@ export function PantryDetailModal({ ingredientId, onClose }: PantryDetailModalPr
 
   const title = ingredient ? localizedIngredientName(ingredient, language) : ingredientId
 
+  // Build flat unit options for Select
+  const unitOptions = [
+    { value: '', label: '—' },
+    ...UNIT_GROUPS.flatMap((group) =>
+      group.units.map((u) => ({ value: u, label: t(`pantry.unitLabels.${u}`) })),
+    ),
+  ]
+
   return (
     <Modal
       open
       onClose={onClose}
       title={t('pantry.editItem')}
       footer={
-        <>
-          <Button variant="secondary" onClick={onClose}>{t('common.cancel')}</Button>
-          <Button onClick={handleSave}>{t('common.save')}</Button>
-        </>
+        <View className="flex-row gap-2">
+          <Button variant="secondary" onPress={onClose}>{t('common.cancel')}</Button>
+          <Button onPress={handleSave}>{t('common.save')}</Button>
+        </View>
       }
     >
-      <div className="pantry-detail-modal">
+      <View className="gap-4">
         {ingredient?.imageUrl && (
-          <img
-            src={ingredient.imageUrl}
-            alt={ingredient.name}
-            className="pantry-detail-modal__img"
+          <Image
+            source={{ uri: ingredient.imageUrl }}
+            style={{ width: 80, height: 80, borderRadius: 8, alignSelf: 'center' }}
+            contentFit="contain"
           />
         )}
 
-        <div className="pantry-detail-modal__name">{title}</div>
+        <Text className="text-base font-semibold text-app-text dark:text-text-dark text-center">{title}</Text>
 
-        <div className="pantry-detail-modal__fields">
-          {/* Quantity + unit on one row */}
-          <div className="pantry-detail-modal__row">
-            <label className="pantry-detail-modal__label" htmlFor="pdi-quantity">
-              {t('pantry.quantity')}
-            </label>
-            <div className="pantry-detail-modal__qty-row">
-              <button
-                type="button"
-                className="pantry-detail-modal__qty-btn"
-                onClick={() => adjustQty(-qtyStep())}
-                aria-label="Decrease"
-              >
-                <Minus size={16} aria-hidden />
-              </button>
-              <input
-                id="pdi-quantity"
-                type="number"
-                className="pantry-detail-modal__qty-input pantry-detail-modal__num-input"
-                value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
-                min={0}
-                step={qtyStep()}
-                placeholder="0"
-              />
-              <button
-                type="button"
-                className="pantry-detail-modal__qty-btn"
-                onClick={() => adjustQty(qtyStep())}
-                aria-label="Increase"
-              >
-                <Plus size={16} aria-hidden />
-              </button>
-              <select
-                className="pantry-detail-modal__unit-select"
-                value={unit}
-                onChange={(e) => setUnit(e.target.value)}
-                aria-label={t('pantry.unit')}
-              >
-                <option value="">—</option>
-                {UNIT_GROUPS.map((group) => (
-                  <optgroup key={group.groupKey} label={t(`pantry.unitGroups.${group.groupKey}`)}>
-                    {group.units.map((u) => (
-                      <option key={u} value={u}>{t(`pantry.unitLabels.${u}`)}</option>
-                    ))}
-                  </optgroup>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {/* Expiry date */}
-          <div className="pantry-detail-modal__row">
-            <label className="pantry-detail-modal__label" htmlFor="pdi-expiry">
-              {t('pantry.expiryDate')}
-            </label>
-            <input
-              id="pdi-expiry"
-              type="date"
-              className="pantry-detail-modal__date-input"
-              value={expiresAt}
-              onChange={(e) => setExpiresAt(e.target.value)}
+        {/* Quantity row */}
+        <View className="gap-1">
+          <Text className="text-sm font-medium text-app-text dark:text-text-dark">{t('pantry.quantity')}</Text>
+          <View className="flex-row items-center gap-2">
+            <Pressable
+              onPress={() => adjustQty(-qtyStep())}
+              className="w-10 h-10 items-center justify-center bg-surface dark:bg-surface-dark rounded-lg border border-border dark:border-border-dark active:opacity-70"
+            >
+              <Minus size={16} color="#6b7280" />
+            </Pressable>
+            <TextInput
+              className="flex-1 border border-border dark:border-border-dark rounded-lg px-3 py-2 text-base text-app-text dark:text-text-dark bg-bg dark:bg-bg-dark text-center"
+              value={quantity}
+              onChangeText={setQuantity}
+              keyboardType="numeric"
+              placeholder="0"
+              placeholderTextColor="#6b6375"
             />
-          </div>
+            <Pressable
+              onPress={() => adjustQty(qtyStep())}
+              className="w-10 h-10 items-center justify-center bg-surface dark:bg-surface-dark rounded-lg border border-border dark:border-border-dark active:opacity-70"
+            >
+              <Plus size={16} color="#6b7280" />
+            </Pressable>
+          </View>
+        </View>
 
-          {/* Toggles */}
-          <div className="pantry-detail-modal__toggles">
-            <label className="pantry-detail-modal__toggle-label">
-              <input
-                type="checkbox"
-                checked={inStock}
-                onChange={(e) => setInStock(e.target.checked)}
-                className="pantry-detail-modal__checkbox"
-              />
-              {t('pantry.inStock')}
-            </label>
-            <label className="pantry-detail-modal__toggle-label">
-              <input
-                type="checkbox"
-                checked={isLow}
-                onChange={(e) => setIsLow(e.target.checked)}
-                className="pantry-detail-modal__checkbox"
-              />
-              {t('pantry.low')}
-            </label>
-          </div>
-        </div>
-      </div>
+        {/* Unit select */}
+        <Select
+          label={t('pantry.unit')}
+          value={unit}
+          onChange={setUnit}
+          options={unitOptions}
+        />
+
+        {/* Expiry date */}
+        <View className="gap-1">
+          <Text className="text-sm font-medium text-app-text dark:text-text-dark">{t('pantry.expiryDate')}</Text>
+          <TextInput
+            className="border border-border dark:border-border-dark rounded-lg px-3 py-2 text-base text-app-text dark:text-text-dark bg-bg dark:bg-bg-dark"
+            value={expiresAt}
+            onChangeText={setExpiresAt}
+            placeholder="YYYY-MM-DD"
+            placeholderTextColor="#6b6375"
+          />
+        </View>
+
+        {/* Toggles */}
+        <View className="gap-3">
+          <Checkbox
+            label={t('pantry.inStock')}
+            checked={inStock}
+            onChange={setInStock}
+          />
+          <Checkbox
+            label={t('pantry.low')}
+            checked={isLow}
+            onChange={setIsLow}
+          />
+        </View>
+      </View>
     </Modal>
   )
 }

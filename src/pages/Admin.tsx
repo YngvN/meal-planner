@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
-import { Copy, LoaderCircle, TriangleAlert, X } from 'lucide-react'
-import { Button, TranslatedText } from '../components'
-import { useAppDispatch, useAppSelector } from '../app/hooks'
+import { View, Text, ScrollView, Switch, Pressable } from 'react-native'
+import { Copy, LoaderCircle, TriangleAlert, X } from 'lucide-react-native'
+import { Alert, Button, Checkbox, Input, TranslatedText } from '../components'
+import { useAppDispatch, useAppSelector } from '../store/hooks'
 import { useLanguage } from '../i18n'
 import {
   createInviteCode,
@@ -17,9 +18,8 @@ import { updateIngredient } from '../features/ingredients/ingredientsSlice'
 import { aiReviewPrice, standardizeProducts, type ProductSuggestion } from '../features/ai/aiApi'
 import { fetchAllPriceReports, updatePriceReportStatus } from '../features/ingredients/productsApi'
 import type { PriceReport } from '../features/ingredients/types'
-import { Input } from '../components'
 import type { IngredientCategory } from '../features/ingredients/types'
-import './Admin.scss'
+import { Select } from '../components'
 
 /**
  * Admin-only page for managing app settings, invite codes, users,
@@ -113,7 +113,6 @@ export function Admin() {
     try {
       const toApply = suggestions.filter((s) => !excluded.has(s.productId))
       for (const s of toApply) {
-        // Find which ingredient owns this product
         const ing = ingredients.find((i) => i.products?.some((p) => p.id === s.productId))
         if (!ing) continue
         await dispatch(updateProduct({ id: s.productId, payload: { tags: s.tags } })).unwrap()
@@ -129,250 +128,212 @@ export function Admin() {
     }
   }
 
+  const roleOptions = [
+    { value: 'user', label: t('admin.roleUser') },
+    { value: 'admin', label: t('admin.roleAdmin') },
+  ]
+
   return (
-    <div className="admin-page">
-      <h1><TranslatedText id="admin.title" /></h1>
+    <ScrollView className="flex-1 bg-bg dark:bg-bg-dark">
+      <View className="p-4 gap-6">
+        <Text className="text-2xl font-bold text-app-text dark:text-text-dark">
+          <TranslatedText id="admin.title" />
+        </Text>
 
-      {/* ── App settings ──────────────────────────────────────────────────── */}
-      <section className="admin-page__section">
-        <h2 className="admin-page__section-title"><TranslatedText id="admin.appSettings" /></h2>
+        {/* ── App settings ──────────────────────────────────────────────────── */}
+        <View className="gap-3">
+          <Text className="text-lg font-semibold text-app-text dark:text-text-dark">
+            <TranslatedText id="admin.appSettings" />
+          </Text>
 
-        <div className="admin-page__field">
-          <label className="admin-page__label" htmlFor="admin-max-users">
-            <TranslatedText id="admin.maxUsers" />
-          </label>
           <Input
-            id="admin-max-users"
-            label={null}
-            type="number"
-            value={appSettings.maxUsers ?? ''}
-            onChange={(e) => {
-              const val = e.target.value === '' ? null : Number(e.target.value)
+            label={t('admin.maxUsers')}
+            value={appSettings.maxUsers != null ? String(appSettings.maxUsers) : ''}
+            onChangeText={(v) => {
+              const val = v === '' ? null : Number(v)
               dispatch(updateAppSettings({ maxUsers: val }))
             }}
+            keyboardType="numeric"
             placeholder={t('admin.unlimitedUsers')}
           />
-        </div>
 
-        <div className="admin-page__field">
-          <label className="admin-page__label" htmlFor="admin-ai-quota">
-            <TranslatedText id="admin.aiImageRequestsPerUser" />
-          </label>
           <Input
-            id="admin-ai-quota"
-            label={null}
-            type="number"
-            value={appSettings.aiImageRequestsPerUser}
-            onChange={(e) =>
-              dispatch(updateAppSettings({ aiImageRequestsPerUser: Number(e.target.value) }))
-            }
+            label={t('admin.aiImageRequestsPerUser')}
+            value={String(appSettings.aiImageRequestsPerUser)}
+            onChangeText={(v) => dispatch(updateAppSettings({ aiImageRequestsPerUser: Number(v) }))}
+            keyboardType="numeric"
           />
-        </div>
 
-        <label className="admin-page__toggle-row" htmlFor="admin-require-invite">
-          <span><TranslatedText id="admin.requireInviteCode" /></span>
-          <button
-            id="admin-require-invite"
-            type="button"
-            role="switch"
-            aria-checked={appSettings.requireInviteCode}
-            className={`admin-page__toggle${appSettings.requireInviteCode ? ' admin-page__toggle--on' : ''}`}
-            onClick={() =>
-              dispatch(updateAppSettings({ requireInviteCode: !appSettings.requireInviteCode }))
-            }
-          >
-            <span className="admin-page__toggle-knob" />
-          </button>
-        </label>
-      </section>
+          <View className="flex-row items-center justify-between">
+            <Text className="text-base text-app-text dark:text-text-dark">
+              <TranslatedText id="admin.requireInviteCode" />
+            </Text>
+            <Switch
+              value={appSettings.requireInviteCode}
+              onValueChange={(v) => dispatch(updateAppSettings({ requireInviteCode: v }))}
+            />
+          </View>
+        </View>
 
-      {/* ── Invite codes ──────────────────────────────────────────────────── */}
-      <section className="admin-page__section">
-        <div className="admin-page__section-header">
-          <h2 className="admin-page__section-title"><TranslatedText id="admin.inviteCodes" /></h2>
-          <Button variant="secondary" onClick={() => dispatch(createInviteCode())}>
-            <TranslatedText id="admin.generateCode" />
-          </Button>
-        </div>
+        {/* ── Invite codes ──────────────────────────────────────────────────── */}
+        <View className="gap-3">
+          <View className="flex-row items-center justify-between">
+            <Text className="text-lg font-semibold text-app-text dark:text-text-dark">
+              <TranslatedText id="admin.inviteCodes" />
+            </Text>
+            <Button variant="secondary" onPress={() => dispatch(createInviteCode())}>
+              <TranslatedText id="admin.generateCode" />
+            </Button>
+          </View>
 
-        {inviteCodes.length > 0 && (
-          <ul className="admin-page__code-list">
-            {inviteCodes.map((c) => (
-              <li key={c.id} className={`admin-page__code-item${c.usedBy ? ' admin-page__code-item--used' : ''}`}>
-                <code className="admin-page__code">{c.code}</code>
-                {c.usedBy && <span className="admin-page__code-used"><TranslatedText id="admin.codeUsed" /></span>}
-                <button
-                  type="button"
-                  className="admin-page__icon-btn"
-                  title="Copy"
-                  onClick={() => navigator.clipboard.writeText(c.code)}
-                >
-                  <Copy size={14} aria-hidden />
-                </button>
-                {!c.usedBy && (
-                  <button
-                    type="button"
-                    className="admin-page__icon-btn"
-                    title={t('admin.revokeCode')}
-                    onClick={() => dispatch(revokeInviteCode(c.id))}
-                  >
-                    <X size={14} aria-hidden />
-                  </button>
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+          {inviteCodes.map((c) => (
+            <View key={c.id} className={`flex-row items-center gap-2 bg-surface dark:bg-surface-dark rounded-lg p-3 ${c.usedBy ? 'opacity-50' : ''}`}>
+              <Text className="flex-1 font-mono text-sm text-app-text dark:text-text-dark">{c.code}</Text>
+              {c.usedBy && (
+                <Text className="text-xs text-text-muted dark:text-text-muted-dark">
+                  <TranslatedText id="admin.codeUsed" />
+                </Text>
+              )}
+              <Pressable onPress={() => {}} className="p-1 active:opacity-70">
+                <Copy size={14} />
+              </Pressable>
+              {!c.usedBy && (
+                <Pressable onPress={() => dispatch(revokeInviteCode(c.id))} className="p-1 active:opacity-70">
+                  <X size={14} />
+                </Pressable>
+              )}
+            </View>
+          ))}
+        </View>
 
-      {/* ── AI usage statistics ───────────────────────────────────────────── */}
-      <section className="admin-page__section">
-        <h2 className="admin-page__section-title"><TranslatedText id="admin.aiUsage" /></h2>
+        {/* ── AI usage statistics ───────────────────────────────────────────── */}
+        <View className="gap-3">
+          <Text className="text-lg font-semibold text-app-text dark:text-text-dark">
+            <TranslatedText id="admin.aiUsage" />
+          </Text>
 
-        {users.length > 0 && (
-          <div className="admin-page__ai-table">
-            <div className="admin-page__ai-row admin-page__ai-row--header">
-              <span><TranslatedText id="admin.users" /></span>
-              <span><TranslatedText id="admin.role" /></span>
-              <span><TranslatedText id="admin.scansUsed" /></span>
-              <span><TranslatedText id="admin.aiUsageBar" /></span>
-            </div>
-
-            {users.map((u) => {
-              const pct = quota > 0 ? Math.round((u.aiImageRequestsUsed / quota) * 100) : 0
-              const over = pct > 100
-              return (
-                <div key={u.id} className="admin-page__ai-row">
-                  <span className="admin-page__ai-username">
+          {users.map((u) => {
+            const pct = quota > 0 ? Math.round((u.aiImageRequestsUsed / quota) * 100) : 0
+            const over = pct > 100
+            return (
+              <View key={u.id} className="bg-surface dark:bg-surface-dark rounded-lg p-3 gap-2">
+                <View className="flex-row items-center justify-between">
+                  <Text className="font-medium text-app-text dark:text-text-dark">
                     {u.username}
                     {u.id === currentUser?.id && (
-                      <span className="admin-page__ai-you"> (you)</span>
+                      <Text className="text-text-muted dark:text-text-muted-dark"> (you)</Text>
                     )}
-                  </span>
-                  <select
-                    className="admin-page__role-select"
-                    value={u.role}
-                    disabled={u.id === currentUser?.id}
-                    onChange={(e) =>
-                      dispatch(updateUserRole({ userId: u.id, role: e.target.value as 'admin' | 'user' }))
-                    }
-                  >
-                    <option value="user">{t('admin.roleUser')}</option>
-                    <option value="admin">{t('admin.roleAdmin')}</option>
-                  </select>
-                  <span className={`admin-page__ai-count${over ? ' admin-page__ai-count--over' : ''}`}>
+                  </Text>
+                  <Text className={`text-sm ${over ? 'text-error dark:text-error-dark' : 'text-text-muted dark:text-text-muted-dark'}`}>
                     {u.aiImageRequestsUsed} / {quota}
-                    {over && <TriangleAlert size={13} aria-hidden />}
-                  </span>
-                  <div className="admin-page__ai-bar-wrap">
-                    <div
-                      className={`admin-page__ai-bar${over ? ' admin-page__ai-bar--over' : ''}`}
-                      style={{ width: `${Math.min(pct, 100)}%` }}
-                    />
-                    <span className="admin-page__ai-pct">{pct}%</span>
-                  </div>
-                </div>
-              )
-            })}
+                  </Text>
+                </View>
+                <Select
+                  value={u.role}
+                  options={roleOptions}
+                  onChange={(v) => dispatch(updateUserRole({ userId: u.id, role: v as 'admin' | 'user' }))}
+                  disabled={u.id === currentUser?.id}
+                />
+                {/* Progress bar */}
+                <View className="h-2 bg-border dark:bg-border-dark rounded-full overflow-hidden">
+                  <View
+                    className={`h-full rounded-full ${over ? 'bg-error' : 'bg-accent dark:bg-accent-dark'}`}
+                    style={{ width: `${Math.min(pct, 100)}%` }}
+                  />
+                </View>
+              </View>
+            )
+          })}
 
-            <div className="admin-page__ai-row admin-page__ai-row--total">
-              <span><TranslatedText id="admin.totalUsers" vars={{ n: users.length }} /></span>
-              <span />
-              <span>{totalScans} total</span>
-              <span />
-            </div>
-          </div>
-        )}
-      </section>
+          {users.length > 0 && (
+            <Text className="text-sm text-text-muted dark:text-text-muted-dark">
+              <TranslatedText id="admin.totalUsers" vars={{ n: users.length }} /> · {totalScans} total scans
+            </Text>
+          )}
+        </View>
 
-      {/* ─── Price Report Moderation ─────────────────────────────────────── */}
-      <section className="admin-page__section">
-        <div className="admin-page__section-header">
-          <h2 className="admin-page__section-title"><TranslatedText id="admin.priceReports.title" /></h2>
-          <Button variant="secondary" onClick={loadPriceReports} disabled={!priceReportsLoaded && priceReports.length === 0}>
-            <TranslatedText id="admin.priceReports.load" />
-          </Button>
-        </div>
-        <p className="admin-page__hint"><TranslatedText id="admin.priceReports.hint" /></p>
+        {/* ─── Price Report Moderation ─────────────────────────────────────── */}
+        <View className="gap-3">
+          <View className="flex-row items-center justify-between">
+            <Text className="text-lg font-semibold text-app-text dark:text-text-dark">
+              <TranslatedText id="admin.priceReports.title" />
+            </Text>
+            <Button variant="secondary" onPress={loadPriceReports}>
+              <TranslatedText id="admin.priceReports.load" />
+            </Button>
+          </View>
+          <Text className="text-sm text-text-muted dark:text-text-muted-dark">
+            <TranslatedText id="admin.priceReports.hint" />
+          </Text>
 
-        {priceReportsLoaded && priceReports.length === 0 && (
-          <p className="admin-page__hint"><TranslatedText id="admin.priceReports.empty" /></p>
-        )}
+          {priceReportsLoaded && priceReports.length === 0 && (
+            <Text className="text-sm text-text-muted dark:text-text-muted-dark">
+              <TranslatedText id="admin.priceReports.empty" />
+            </Text>
+          )}
 
-        {priceReports.map((report) => (
-          <div key={report.id} className="admin-page__price-report">
-            <div className="admin-page__price-report-info">
-              <strong>{report.storeName}</strong>
-              <span>{report.price} {report.currency}</span>
-              <code>{report.productId}</code>
-              <span className="admin-page__price-report-by">{t('admin.priceReports.by')} {report.reportedBy}</span>
-            </div>
-            {priceReviewMsg[report.id] && (
-              <p className="admin-page__price-report-verdict">{priceReviewMsg[report.id]}</p>
-            )}
-            <div className="admin-page__price-report-actions">
-              <Button
-                variant="secondary"
-                disabled={priceReviewLoading.has(report.id)}
-                onClick={() => handlePriceAction(report.id, 'approve')}
-              >
-                <TranslatedText id="admin.priceReports.approve" />
-              </Button>
-              <Button
-                variant="secondary"
-                disabled={priceReviewLoading.has(report.id)}
-                onClick={() => handlePriceAction(report.id, 'reject')}
-              >
-                <TranslatedText id="admin.priceReports.reject" />
-              </Button>
-              <Button
-                disabled={priceReviewLoading.has(report.id)}
-                onClick={() => handlePriceAction(report.id, 'ai')}
-              >
-                {priceReviewLoading.has(report.id)
-                  ? <><LoaderCircle size={15} className="icon-spin" aria-hidden /> <TranslatedText id="admin.priceReports.aiReviewing" /></>
-                  : <TranslatedText id="admin.priceReports.aiReview" />}
-              </Button>
-            </div>
-          </div>
-        ))}
-      </section>
+          {priceReports.map((report) => (
+            <View key={report.id} className="bg-surface dark:bg-surface-dark rounded-lg p-3 gap-2">
+              <View className="flex-row flex-wrap gap-x-3 gap-y-1">
+                <Text className="font-semibold text-app-text dark:text-text-dark">{report.storeName}</Text>
+                <Text className="text-app-text dark:text-text-dark">{report.price} {report.currency}</Text>
+                <Text className="font-mono text-xs text-text-muted dark:text-text-muted-dark">{report.productId}</Text>
+              </View>
+              {priceReviewMsg[report.id] && (
+                <Text className="text-xs text-info dark:text-info-dark">{priceReviewMsg[report.id]}</Text>
+              )}
+              <View className="flex-row gap-2">
+                <Button variant="secondary" disabled={priceReviewLoading.has(report.id)} onPress={() => handlePriceAction(report.id, 'approve')}>
+                  <TranslatedText id="admin.priceReports.approve" />
+                </Button>
+                <Button variant="secondary" disabled={priceReviewLoading.has(report.id)} onPress={() => handlePriceAction(report.id, 'reject')}>
+                  <TranslatedText id="admin.priceReports.reject" />
+                </Button>
+                <Button disabled={priceReviewLoading.has(report.id)} onPress={() => handlePriceAction(report.id, 'ai')}>
+                  <TranslatedText id="admin.priceReports.aiReview" />
+                </Button>
+              </View>
+            </View>
+          ))}
+        </View>
 
-      {/* ─── Product Standardization ─────────────────────────────────────── */}
-      <section className="admin-page__section">
-        <div className="admin-page__section-header">
-          <h2 className="admin-page__section-title"><TranslatedText id="admin.standardize.title" /></h2>
-          <Button onClick={handleStandardize} disabled={standardizing || applying}>
-            {standardizing
-              ? <><LoaderCircle size={15} className="icon-spin" aria-hidden /> <TranslatedText id="admin.standardize.running" /></>
-              : <TranslatedText id="admin.standardize.run" />}
-          </Button>
-        </div>
-        <p className="admin-page__hint"><TranslatedText id="admin.standardize.hint" /></p>
+        {/* ─── Product Standardization ─────────────────────────────────────── */}
+        <View className="gap-3">
+          <View className="flex-row items-center justify-between">
+            <Text className="text-lg font-semibold text-app-text dark:text-text-dark">
+              <TranslatedText id="admin.standardize.title" />
+            </Text>
+            <Button onPress={handleStandardize} disabled={standardizing || applying}>
+              {standardizing
+                ? <TranslatedText id="admin.standardize.running" />
+                : <TranslatedText id="admin.standardize.run" />}
+            </Button>
+          </View>
+          <Text className="text-sm text-text-muted dark:text-text-muted-dark">
+            <TranslatedText id="admin.standardize.hint" />
+          </Text>
 
-        {standardizeError && (
-          <p className="admin-page__error">{standardizeError}</p>
-        )}
+          {standardizeError && (
+            <Alert variant="error">{standardizeError}</Alert>
+          )}
 
-        {suggestions.length > 0 && (
-          <>
-            <div className="admin-page__standardize-table">
-              <div className="admin-page__standardize-header">
-                <span><TranslatedText id="admin.standardize.product" /></span>
-                <span><TranslatedText id="admin.standardize.tags" /></span>
-                <span><TranslatedText id="admin.standardize.category" /></span>
-                <span><TranslatedText id="admin.standardize.include" /></span>
-              </div>
+          {suggestions.length > 0 && (
+            <View className="gap-3">
               {suggestions.map((s) => {
                 const ing = ingredients.find((i) => i.products?.some((p) => p.id === s.productId))
                 const product = ing?.products?.find((p) => p.id === s.productId)
                 return (
-                  <div key={s.productId} className="admin-page__standardize-row">
-                    <span>{product?.name ?? s.productId}{product?.brand && <em> — {product.brand}</em>}</span>
-                    <span>{s.tags.join(', ')}</span>
-                    <span>{s.suggestedCategory ? `${ing?.category} → ${s.suggestedCategory}` : '—'}</span>
-                    <input
-                      type="checkbox"
+                  <View key={s.productId} className="bg-surface dark:bg-surface-dark rounded-lg p-3 gap-2">
+                    <Text className="font-medium text-app-text dark:text-text-dark">
+                      {product?.name ?? s.productId}
+                      {product?.brand ? ` — ${product.brand}` : ''}
+                    </Text>
+                    <Text className="text-sm text-text-muted dark:text-text-muted-dark">{s.tags.join(', ')}</Text>
+                    {s.suggestedCategory && (
+                      <Text className="text-sm text-text-muted dark:text-text-muted-dark">{ing?.category} → {s.suggestedCategory}</Text>
+                    )}
+                    <Checkbox
+                      label={t('admin.standardize.include')}
                       checked={!excluded.has(s.productId)}
                       onChange={() => setExcluded((prev) => {
                         const next = new Set(prev)
@@ -380,23 +341,22 @@ export function Admin() {
                         return next
                       })}
                     />
-                  </div>
+                  </View>
                 )
               })}
-            </div>
-            <div className="admin-page__standardize-actions">
-              <Button variant="secondary" onClick={() => setSuggestions([])}>
-                <TranslatedText id="common.cancel" />
-              </Button>
-              <Button onClick={handleApply} disabled={applying || excluded.size === suggestions.length}>
-                {applying
-                  ? <><LoaderCircle size={15} className="icon-spin" aria-hidden /> <TranslatedText id="common.save" /></>
-                  : <TranslatedText id="admin.standardize.apply" vars={{ n: suggestions.length - excluded.size }} />}
-              </Button>
-            </div>
-          </>
-        )}
-      </section>
-    </div>
+              <View className="flex-row gap-2">
+                <Button variant="secondary" onPress={() => setSuggestions([])}>
+                  <TranslatedText id="common.cancel" />
+                </Button>
+                <Button onPress={handleApply} disabled={applying || excluded.size === suggestions.length}>
+                  <TranslatedText id="admin.standardize.apply" vars={{ n: suggestions.length - excluded.size }} />
+                </Button>
+              </View>
+            </View>
+          )}
+        </View>
+
+      </View>
+    </ScrollView>
   )
 }

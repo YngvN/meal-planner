@@ -1,6 +1,5 @@
-import type { ChangeEvent } from 'react'
-import { Search, X } from 'lucide-react'
-import './SearchBar.scss'
+import { View, TextInput, Pressable } from 'react-native'
+import { Search, X } from 'lucide-react-native'
 
 interface SearchBarProps {
   /** Current search value. */
@@ -15,30 +14,22 @@ interface SearchBarProps {
  * Calls onChange with the new string value on every keystroke.
  */
 export function SearchBar({ value, onChange, placeholder, className }: SearchBarProps) {
-  function handleChange(e: ChangeEvent<HTMLInputElement>) {
-    onChange(e.target.value)
-  }
-
   return (
-    <div className={['search-bar', className].filter(Boolean).join(' ')}>
-      <span className="search-bar__icon" aria-hidden><Search size={16} /></span>
-      <input
-        type="search"
-        className="search-bar__input"
+    <View className={`flex-row items-center bg-surface dark:bg-surface-dark border border-border dark:border-border-dark rounded-lg px-3 gap-2 ${className ?? ''}`}>
+      <Search size={16} className="text-text-muted dark:text-text-muted-dark" />
+      <TextInput
+        className="flex-1 py-2.5 text-base text-app-text dark:text-text-dark"
         value={value}
-        onChange={handleChange}
+        onChangeText={onChange}
         placeholder={placeholder}
+        placeholderTextColor="#6b6375"
+        returnKeyType="search"
       />
-      {value && (
-        <button
-          type="button"
-          className="search-bar__clear"
-          onClick={() => onChange('')}
-          aria-label="Clear search"
-        >
-          <X size={16} aria-hidden />
-        </button>
+      {!!value && (
+        <Pressable onPress={() => onChange('')} accessibilityLabel="Clear search" className="active:opacity-70">
+          <X size={16} className="text-text-muted dark:text-text-muted-dark" />
+        </Pressable>
       )}
-    </div>
+    </View>
   )
 }

@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { ArrowRight, X } from 'lucide-react'
-import { Badge, Button } from '../../../components'
-import { useAppDispatch, useAppSelector } from '../../../app/hooks'
+import { View, Text, TextInput, Pressable, SectionList, Alert as RNAlert } from 'react-native'
+import { useRouter } from 'expo-router'
+import { ArrowRight, X } from 'lucide-react-native'
+import { Badge, Button, Checkbox } from '../../../components'
+import { useAppDispatch, useAppSelector } from '../../../store/hooks'
 import type { IngredientCategory } from '../../ingredients/types'
 import type { PantryItem } from '../../pantry/types'
 import { updatePantryItem } from '../../pantry/pantrySlice'
@@ -19,7 +20,6 @@ import {
   uncheckAll,
 } from '../shoppingListSlice'
 import type { DerivedShoppingItem } from '../types'
-import './ShoppingListView.scss'
 
 /** Category display order for grouping. */
 const CATEGORY_ORDER: IngredientCategory[] = [
@@ -71,7 +71,7 @@ function buildDerivedItems(
  */
 export function ShoppingListView() {
   const dispatch = useAppDispatch()
-  const navigate = useNavigate()
+  const router = useRouter()
   const { t, language } = useLanguage()
 
   const plannedMeals = useAppSelector((s) => s.mealPlan.items)
@@ -93,7 +93,7 @@ export function ShoppingListView() {
   )
 
   // Group derived items by ingredient category
-  const grouped = useMemo(() => {
+  const sections = useMemo(() => {
     const map = new Map<IngredientCategory, DerivedShoppingItem[]>()
     for (const item of derived) {
       const ing = ingredientMap.get(item.ingredientId)
@@ -101,11 +101,15 @@ export function ShoppingListView() {
       if (!map.has(cat)) map.set(cat, [])
       map.get(cat)!.push(item)
     }
-    // Return in display order
-    return CATEGORY_ORDER.flatMap((cat) => {
+    const grouped = CATEGORY_ORDER.flatMap((cat) => {
       const items = map.get(cat)
-      return items ? [{ cat, items }] : []
+      return items ? [{ title: cat, data: items }] : []
     })
+    // Add manual items as a final section
+    return [
+      ...grouped,
+      { title: '__manual__', data: [] as DerivedShoppingItem[] },
+    ]
   }, [derived, ingredientMap])
 
   const checkedCount = checkedIds.length + manualItems.filter((m) => m.checked).length
@@ -115,7 +119,6 @@ export function ShoppingListView() {
     dispatch(toggleIngredientChecked(ingredientId))
   }
 
-  /** Mark all checked derived ingredients as in-stock in the pantry. */
   function handleMarkPurchased() {
     for (const id of checkedIds) {
       dispatch(updatePantryItem({ ingredientId: id, payload: { inStock: true } }))
@@ -132,150 +135,147 @@ export function ShoppingListView() {
   }
 
   function handleClearAll() {
-    if (!window.confirm(t('shoppingList.confirmClear'))) return
-    dispatch(clearAll())
+    RNAlert.alert(
+      t('shoppingList.confirmClear'),
+      undefined,
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('common.delete'), style: 'destructive', onPress: () => dispatch(clearAll()) },
+      ],
+    )
   }
 
   if (plannedMeals.length === 0) {
     return (
-      <div className="shopping-list-view__empty">
-        <p>{t('shoppingList.empty')}</p>
-        <Button onClick={() => navigate('/meal-plan')}>{t('nav.mealPlan')} <ArrowRight size={16} aria-hidden /></Button>
-      </div>
+      <View className="flex-1 items-center justify-center gap-4 p-8">
+        <Text className="text-text-muted dark:text-text-muted-dark text-center">{t('shoppingList.empty')}</Text>
+        <Button onPress={() => router.push('/meal-plan' as any)}>
+          {t('nav.mealPlan')}
+          <ArrowRight size={16} color="#ffffff" />
+        </Button>
+      </View>
     )
   }
 
   return (
-    <div className="shopping-list-view">
+    <View className="flex-1 bg-bg dark:bg-bg-dark">
       {/* Summary bar */}
-      <div className="shopping-list-view__summary">
-        <span className="shopping-list-view__count">
+      <View className="px-4 py-3 flex-row items-center justify-between gap-2 border-b border-border dark:border-border-dark">
+        <Text className="text-sm text-text-muted dark:text-text-muted-dark">
           {t('shoppingList.generated', { count: String(derived.length) })}
-        </span>
-        <div className="shopping-list-view__actions">
+        </Text>
+        <View className="flex-row gap-2">
           {checkedIds.length > 0 && (
-            <Button onClick={handleMarkPurchased}>
+            <Button onPress={handleMarkPurchased}>
               {t('shoppingList.updatePantry')} ({checkedIds.length})
             </Button>
           )}
           {totalCount > 0 && (
-            <Button variant="secondary" onClick={handleClearAll}>
+            <Button variant="secondary" onPress={handleClearAll}>
               {t('shoppingList.clearAll')}
             </Button>
           )}
-        </div>
-      </div>
+        </View>
+      </View>
 
       {checkedCount === totalCount && totalCount > 0 && (
-        <p className="shopping-list-view__all-checked">
+        <View className="px-4 py-2">
           <Badge variant="success">{t('shoppingList.allChecked')}</Badge>
-        </p>
+        </View>
       )}
 
-      {/* Grouped ingredient list */}
-      {grouped.map(({ cat, items }) => (
-        <section key={cat} className="shopping-list-view__group">
-          <h3 className="shopping-list-view__group-title">
-            {t(`ingredients.categories.${cat}`)}
-          </h3>
-          <ul className="shopping-list-view__items">
-            {items.map((item) => {
-              const ing = ingredientMap.get(item.ingredientId)
-              const checked = checkedIds.includes(item.ingredientId)
-              const recipeNames = item.recipeIds
-                .map((id) => {
-                  const r = recipeMap.get(id)
-                  return r ? r.titleI18n?.[language] || r.title : undefined
-                })
-                .filter(Boolean)
-                .join(', ')
-
-              return (
-                <li
-                  key={`${item.ingredientId}::${item.unit}`}
-                  className={`shopping-list-view__item${checked ? ' shopping-list-view__item--checked' : ''}`}
-                >
-                  <label className="shopping-list-view__check-label">
-                    <input
-                      type="checkbox"
-                      checked={checked}
-                      onChange={() => handleCheck(item.ingredientId)}
-                      className="shopping-list-view__checkbox"
-                    />
-                    <span className="shopping-list-view__name">{ing ? localizedIngredientName(ing, language) : item.ingredientId}</span>
-                  </label>
-                  <span className="shopping-list-view__qty">
-                    {Math.round(item.quantity * 10) / 10} {item.unit}
-                  </span>
-                  {recipeNames && (
-                    <span className="shopping-list-view__for">{recipeNames}</span>
-                  )}
-                </li>
-              )
-            })}
-          </ul>
-        </section>
-      ))}
-
-      {/* Manual items */}
-      <section className="shopping-list-view__group">
-        <h3 className="shopping-list-view__group-title">{t('shoppingList.manualSection')}</h3>
-
-        {manualItems.length > 0 && (
-          <ul className="shopping-list-view__items">
-            {manualItems.map((item) => (
-              <li
-                key={item.id}
-                className={`shopping-list-view__item${item.checked ? ' shopping-list-view__item--checked' : ''}`}
-              >
-                <label className="shopping-list-view__check-label">
-                  <input
-                    type="checkbox"
-                    checked={item.checked}
-                    onChange={() => dispatch(toggleManualItemChecked(item.id))}
-                    className="shopping-list-view__checkbox"
-                  />
-                  <span className="shopping-list-view__name">{item.name}</span>
-                </label>
-                {item.quantity && (
-                  <span className="shopping-list-view__qty">{item.quantity}</span>
-                )}
-                <button
-                  type="button"
-                  className="shopping-list-view__remove"
-                  onClick={() => dispatch(removeManualItem(item.id))}
-                  aria-label={t('common.delete')}
-                >
-                  <X size={16} aria-hidden />
-                </button>
-              </li>
-            ))}
-          </ul>
+      <SectionList
+        sections={sections}
+        keyExtractor={(item, index) => `${item.ingredientId}::${item.unit}::${index}`}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16 }}
+        renderSectionHeader={({ section }) => (
+          <Text className="text-sm font-semibold text-text-muted dark:text-text-muted-dark py-2 mt-3 uppercase tracking-wide">
+            {section.title === '__manual__'
+              ? t('shoppingList.manualSection')
+              : t(`ingredients.categories.${section.title}`)}
+          </Text>
         )}
+        renderItem={({ item }) => {
+          const ing = ingredientMap.get(item.ingredientId)
+          const checked = checkedIds.includes(item.ingredientId)
+          const recipeNames = item.recipeIds
+            .map((id) => {
+              const r = recipeMap.get(id)
+              return r ? r.titleI18n?.[language] || r.title : undefined
+            })
+            .filter(Boolean)
+            .join(', ')
 
-        {/* Add manual item form */}
-        <div className="shopping-list-view__add-manual">
-          <input
-            type="text"
-            className="shopping-list-view__text-input"
-            value={newItemName}
-            onChange={(e) => setNewItemName(e.target.value)}
-            placeholder={t('shoppingList.addItemPlaceholder')}
-            onKeyDown={(e) => { if (e.key === 'Enter') handleAddManual() }}
-          />
-          <input
-            type="text"
-            className="shopping-list-view__text-input shopping-list-view__text-input--qty"
-            value={newItemQty}
-            onChange={(e) => setNewItemQty(e.target.value)}
-            placeholder={t('shoppingList.qtyPlaceholder')}
-            onKeyDown={(e) => { if (e.key === 'Enter') handleAddManual() }}
-          />
-          <Button onClick={handleAddManual} disabled={!newItemName.trim()}>
-            {t('shoppingList.addItem')}
-          </Button>
-        </div>
-      </section>
-    </div>
+          return (
+            <View className={`flex-row items-center gap-3 py-3 border-b border-border dark:border-border-dark ${checked ? 'opacity-50' : ''}`}>
+              <Checkbox
+                label=""
+                checked={checked}
+                onChange={() => handleCheck(item.ingredientId)}
+              />
+              <View className="flex-1">
+                <Text className={`text-base text-app-text dark:text-text-dark ${checked ? 'line-through' : ''}`}>
+                  {ing ? localizedIngredientName(ing, language) : item.ingredientId}
+                </Text>
+                {recipeNames ? (
+                  <Text className="text-xs text-text-muted dark:text-text-muted-dark">{recipeNames}</Text>
+                ) : null}
+              </View>
+              <Text className="text-sm text-text-muted dark:text-text-muted-dark">
+                {Math.round(item.quantity * 10) / 10} {item.unit}
+              </Text>
+            </View>
+          )
+        }}
+        ListFooterComponent={
+          <View className="gap-3 mt-2">
+            {/* Manual items */}
+            {manualItems.map((item) => (
+              <View key={item.id} className={`flex-row items-center gap-3 py-3 border-b border-border dark:border-border-dark ${item.checked ? 'opacity-50' : ''}`}>
+                <Checkbox
+                  label=""
+                  checked={item.checked}
+                  onChange={() => dispatch(toggleManualItemChecked(item.id))}
+                />
+                <Text className={`flex-1 text-base text-app-text dark:text-text-dark ${item.checked ? 'line-through' : ''}`}>
+                  {item.name}
+                </Text>
+                {item.quantity ? (
+                  <Text className="text-sm text-text-muted dark:text-text-muted-dark">{item.quantity}</Text>
+                ) : null}
+                <Pressable onPress={() => dispatch(removeManualItem(item.id))} className="p-1 active:opacity-70">
+                  <X size={16} color="#6b7280" />
+                </Pressable>
+              </View>
+            ))}
+
+            {/* Add manual item form */}
+            <View className="flex-row gap-2 items-center mt-2">
+              <TextInput
+                className="flex-1 border border-border dark:border-border-dark rounded-lg px-3 py-2 text-base text-app-text dark:text-text-dark bg-bg dark:bg-bg-dark"
+                value={newItemName}
+                onChangeText={setNewItemName}
+                placeholder={t('shoppingList.addItemPlaceholder')}
+                placeholderTextColor="#6b6375"
+                onSubmitEditing={handleAddManual}
+                returnKeyType="done"
+              />
+              <TextInput
+                className="w-20 border border-border dark:border-border-dark rounded-lg px-3 py-2 text-base text-app-text dark:text-text-dark bg-bg dark:bg-bg-dark"
+                value={newItemQty}
+                onChangeText={setNewItemQty}
+                placeholder={t('shoppingList.qtyPlaceholder')}
+                placeholderTextColor="#6b6375"
+                onSubmitEditing={handleAddManual}
+                returnKeyType="done"
+              />
+              <Button onPress={handleAddManual} disabled={!newItemName.trim()}>
+                {t('shoppingList.addItem')}
+              </Button>
+            </View>
+          </View>
+        }
+      />
+    </View>
   )
 }

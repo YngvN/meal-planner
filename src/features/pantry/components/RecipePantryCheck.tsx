@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { CheckCircle2, LoaderCircle, Search, ShoppingCart } from 'lucide-react'
+import { View, Text, Pressable } from 'react-native'
+import { Image } from 'expo-image'
+import { CheckCircle2, LoaderCircle, Search, ShoppingCart } from 'lucide-react-native'
 import { useLanguage } from '../../../i18n'
-import { useAppSelector } from '../../../app/hooks'
+import { useAppSelector } from '../../../store/hooks'
 import { useRecipeFeasibility, type IngredientGroup } from '../useRecipeFeasibility'
 import { searchOFFProducts, type OFFSearchResult } from '../../ingredients/productsApi'
 import type { RecipeIngredient } from '../../recipes/types'
-import './RecipePantryCheck.scss'
 
 interface Props {
   ingredients: RecipeIngredient[]
@@ -33,45 +34,48 @@ function OFFSuggestions({ group, country }: { group: IngredientGroup; country: s
   }
 
   return (
-    <div className="recipe-pantry-check__off-suggestions">
-      <button
-        type="button"
-        className="recipe-pantry-check__find-btn"
-        onClick={handleSearch}
-        aria-expanded={open}
+    <View className="gap-2 mt-1">
+      <Pressable
+        onPress={handleSearch}
+        className="flex-row items-center gap-1 active:opacity-70"
+        accessibilityRole="button"
       >
-        <Search size={12} aria-hidden />
-        {t('pantry.feasibility.findProducts')}
-      </button>
+        <Search size={12} color="#7c3aed" />
+        <Text className="text-xs text-accent dark:text-accent-dark">
+          {t('pantry.feasibility.findProducts')}
+        </Text>
+      </Pressable>
 
       {open && (
-        <div className="recipe-pantry-check__off-results">
+        <View className="gap-2 pl-2">
           {loading && (
-            <span className="recipe-pantry-check__off-loading">
-              <LoaderCircle size={14} className="icon-spin" aria-hidden />
-              {t('common.loading')}
-            </span>
+            <View className="flex-row items-center gap-1">
+              <LoaderCircle size={12} color="#6b7280" />
+              <Text className="text-xs text-text-muted dark:text-text-muted-dark">{t('common.loading')}</Text>
+            </View>
           )}
           {!loading && results.length === 0 && searched && (
-            <span className="recipe-pantry-check__off-empty">{t('pantry.feasibility.noProductsFound')}</span>
+            <Text className="text-xs text-text-muted dark:text-text-muted-dark">
+              {t('pantry.feasibility.noProductsFound')}
+            </Text>
           )}
           {results.map((r) => (
-            <div key={r.barcode} className="recipe-pantry-check__off-card">
+            <View key={r.barcode} className="flex-row gap-2 bg-surface dark:bg-surface-dark rounded-lg p-2">
               {r.imageUrl && (
-                <img src={r.imageUrl} alt={r.name} className="recipe-pantry-check__off-img" loading="lazy" />
+                <Image source={{ uri: r.imageUrl }} style={{ width: 40, height: 40, borderRadius: 6 }} contentFit="contain" />
               )}
-              <div className="recipe-pantry-check__off-info">
-                <span className="recipe-pantry-check__off-name">{r.name}</span>
-                {r.brand && <span className="recipe-pantry-check__off-brand">{r.brand}</span>}
+              <View className="flex-1">
+                <Text className="text-xs font-medium text-app-text dark:text-text-dark">{r.name}</Text>
+                {r.brand && <Text className="text-xs text-text-muted dark:text-text-muted-dark">{r.brand}</Text>}
                 {r.stores && r.stores.length > 0 && (
-                  <span className="recipe-pantry-check__off-stores">{r.stores.slice(0, 2).join(', ')}</span>
+                  <Text className="text-xs text-text-muted dark:text-text-muted-dark">{r.stores.slice(0, 2).join(', ')}</Text>
                 )}
-              </div>
-            </div>
+              </View>
+            </View>
           ))}
-        </div>
+        </View>
       )}
-    </div>
+    </View>
   )
 }
 
@@ -89,40 +93,39 @@ export function RecipePantryCheck({ ingredients }: Props) {
   if (ingredients.length === 0) return null
 
   return (
-    <div className={`recipe-pantry-check ${canMake ? 'recipe-pantry-check--ok' : 'recipe-pantry-check--missing'}`}>
-      <div className="recipe-pantry-check__header">
-        {canMake ? (
-          <CheckCircle2 size={18} aria-hidden className="recipe-pantry-check__icon" />
-        ) : (
-          <ShoppingCart size={18} aria-hidden className="recipe-pantry-check__icon" />
-        )}
-        <span className="recipe-pantry-check__title">
+    <View className={`rounded-xl p-3 border gap-2 ${canMake ? 'bg-success-bg dark:bg-success-bg-dark border-success-border dark:border-success-border-dark' : 'bg-warning-bg dark:bg-warning-bg-dark border-warning-border dark:border-warning-border-dark'}`}>
+      <View className="flex-row items-center gap-2">
+        {canMake
+          ? <CheckCircle2 size={18} color="#22c55e" />
+          : <ShoppingCart size={18} color="#f59e0b" />
+        }
+        <Text className="flex-1 text-sm font-semibold text-app-text dark:text-text-dark">
           {canMake
             ? t('pantry.feasibility.canMake')
             : t('pantry.feasibility.missing', { count: String(missingCount) })}
-        </span>
-        <span className="recipe-pantry-check__ratio">
+        </Text>
+        <Text className="text-sm font-semibold text-text-muted dark:text-text-muted-dark">
           {Math.round(matchRatio * 100)}%
-        </span>
-      </div>
+        </Text>
+      </View>
 
       {!canMake && missingGroups.length > 0 && (
-        <ul className="recipe-pantry-check__missing-list">
+        <View className="gap-2 pl-2">
           {missingGroups.map((g) => (
-            <li key={g.ids[0]} className="recipe-pantry-check__missing-item">
-              <span className="recipe-pantry-check__missing-name">
+            <View key={g.ids[0]}>
+              <Text className="text-sm text-app-text dark:text-text-dark">
                 {g.name}
                 {g.ids.length > 1 && (
-                  <span className="recipe-pantry-check__missing-alternatives">
+                  <Text className="text-text-muted dark:text-text-muted-dark">
                     {' '}({t('pantry.feasibility.orAlternatives', { alts: g.ids.slice(1).join(', ') })})
-                  </span>
+                  </Text>
                 )}
-              </span>
+              </Text>
               <OFFSuggestions group={g} country={country} />
-            </li>
+            </View>
           ))}
-        </ul>
+        </View>
       )}
-    </div>
+    </View>
   )
 }

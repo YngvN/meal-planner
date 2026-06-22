@@ -12,7 +12,6 @@ import {
   ThemeToggle,
   TranslatedText,
 } from '../components'
-import './Components.scss'
 
 export function Components() {
   const [modalOpen, setModalOpen] = useState(false)

@@ -3,7 +3,7 @@ import { apiLog } from '../../lib/logger'
 import type { CreateIngredientPayload, Ingredient, Product, UpdateIngredientPayload } from './types'
 import type { NutritionalValues } from '../shared/types'
 
-const useMock = import.meta.env.VITE_USE_MOCK_DATA === 'true'
+const useMock = process.env.EXPO_PUBLIC_USE_MOCK_DATA === 'true'
 
 apiLog('ingredients', `module loaded · mode=${useMock ? 'MOCK' : 'Supabase'}`)
 

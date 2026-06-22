@@ -1,15 +1,15 @@
-import { type FormEvent, useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { View, Text, KeyboardAvoidingView, ScrollView, Platform } from 'react-native'
+import { Link, useRouter } from 'expo-router'
 import { Button, Input, TranslatedText } from '../../components'
-import { useAppDispatch, useAppSelector } from '../../app/hooks'
+import { useAppDispatch, useAppSelector } from '../../store/hooks'
 import { signUpUser, clearError } from '../../features/auth/authSlice'
 import { supabase } from '../../lib/supabaseClient'
-import './auth.scss'
 
 /** Standalone sign-up page — rendered outside the sidebar shell. */
 export function Signup() {
   const dispatch = useAppDispatch()
-  const navigate = useNavigate()
+  const router = useRouter()
   const { status, error } = useAppSelector((s) => s.auth)
 
   const [username, setUsername] = useState('')
@@ -20,7 +20,6 @@ export function Signup() {
   const [requireInviteCode, setRequireInviteCode] = useState(false)
   const [localError, setLocalError] = useState<string | null>(null)
 
-  // Load the invite-code setting (publicly readable) to decide whether to show the field.
   useEffect(() => {
     supabase
       .from('app_settings')
@@ -31,8 +30,7 @@ export function Signup() {
       })
   }, [])
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault()
+  async function handleSubmit() {
     setLocalError(null)
     dispatch(clearError())
 
@@ -49,86 +47,59 @@ export function Signup() {
       signUpUser({ email, password, username, inviteCode: inviteCode || undefined }),
     )
     if (signUpUser.fulfilled.match(result)) {
-      navigate('/', { replace: true })
+      router.replace('/')
     }
   }
 
   const displayError = localError ?? error
 
   return (
-    <div className="auth-page">
-      <div className="auth-page__card">
-        <h1 className="auth-page__brand">
-          <TranslatedText id="nav.appName" />
-        </h1>
-        <h2 className="auth-page__title">
-          <TranslatedText id="auth.signUp" />
-        </h2>
+    <KeyboardAvoidingView
+      className="flex-1 bg-bg dark:bg-bg-dark"
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <ScrollView
+        contentContainerClassName="flex-grow items-center justify-center p-6"
+        keyboardShouldPersistTaps="handled"
+      >
+        <View className="w-full max-w-sm gap-6">
+          <View className="items-center gap-2">
+            <Text className="text-3xl font-extrabold text-accent dark:text-accent-dark">
+              <TranslatedText id="nav.appName" />
+            </Text>
+            <Text className="text-xl font-semibold text-app-text dark:text-text-dark">
+              <TranslatedText id="auth.signUp" />
+            </Text>
+          </View>
 
-        <form className="auth-page__form" onSubmit={handleSubmit}>
-          <Input
-            id="signup-username"
-            label={<TranslatedText id="auth.username" />}
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-            autoComplete="username"
-          />
-          <Input
-            id="signup-email"
-            label={<TranslatedText id="auth.emailLabel" />}
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            autoComplete="email"
-          />
-          <Input
-            id="signup-password"
-            label={<TranslatedText id="auth.passwordLabel" />}
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            autoComplete="new-password"
-          />
-          <Input
-            id="signup-confirm-password"
-            label={<TranslatedText id="auth.confirmPassword" />}
-            type="password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            required
-            autoComplete="new-password"
-          />
-          {requireInviteCode && (
-            <Input
-              id="signup-invite-code"
-              label={<TranslatedText id="auth.inviteCode" />}
-              type="text"
-              value={inviteCode}
-              onChange={(e) => setInviteCode(e.target.value)}
-              required
-            />
-          )}
+          <View className="gap-4">
+            <Input id="signup-username" label={<TranslatedText id="auth.username" />} value={username} onChangeText={setUsername} autoCapitalize="none" autoComplete="username" />
+            <Input id="signup-email" label={<TranslatedText id="auth.emailLabel" />} value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" autoComplete="email" />
+            <Input id="signup-password" label={<TranslatedText id="auth.passwordLabel" />} value={password} onChangeText={setPassword} secureTextEntry autoComplete="password" />
+            <Input id="signup-confirm" label={<TranslatedText id="auth.confirmPassword" />} value={confirmPassword} onChangeText={setConfirmPassword} secureTextEntry autoComplete="password" returnKeyType="done" onSubmitEditing={handleSubmit} />
+            {requireInviteCode && (
+              <Input id="signup-invite" label={<TranslatedText id="auth.inviteCode" />} value={inviteCode} onChangeText={setInviteCode} />
+            )}
 
-          {displayError && <p className="auth-page__error">{displayError}</p>}
+            {!!displayError && (
+              <Text className="text-sm text-error dark:text-error-dark">{displayError}</Text>
+            )}
 
-          <Button type="submit" disabled={status === 'loading'}>
-            <TranslatedText id={status === 'loading' ? 'auth.signingUp' : 'auth.signUp'} />
-          </Button>
-        </form>
+            <Button onPress={handleSubmit} loading={status === 'loading'}>
+              <TranslatedText id={status === 'loading' ? 'auth.signingUp' : 'auth.signUp'} />
+            </Button>
+          </View>
 
-        <div className="auth-page__footer">
-          <span>
-            <TranslatedText id="auth.alreadyHaveAccount" />{' '}
-            <Link to="/login">
-              <TranslatedText id="auth.signIn" />
-            </Link>
-          </span>
-        </div>
-      </div>
-    </div>
+          <View className="items-center">
+            <Text className="text-sm text-text-muted dark:text-text-muted-dark">
+              <TranslatedText id="auth.alreadyHaveAccount" />{' '}
+              <Link href="/login" className="text-accent dark:text-accent-dark font-medium">
+                <TranslatedText id="auth.signIn" />
+              </Link>
+            </Text>
+          </View>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   )
 }

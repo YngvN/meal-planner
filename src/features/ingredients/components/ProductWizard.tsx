@@ -1,14 +1,15 @@
-import { useRef, useState } from 'react'
-import { Camera, LoaderCircle } from 'lucide-react'
+import { useState } from 'react'
+import { View, Text, Pressable } from 'react-native'
+import { Image } from 'expo-image'
+import { Camera, LoaderCircle } from 'lucide-react-native'
 import { BarcodeScanner, Button, InlineEdit, Input, Modal, TranslatedText } from '../../../components'
-import { useAppDispatch } from '../../../app/hooks'
+import { useAppDispatch } from '../../../store/hooks'
 import { useLanguage } from '../../../i18n'
 import { transcribeFrontOfPackage, transcribeNutrition } from '../../ai/aiApi'
 import { createProduct, updateProduct } from '../ingredientsSlice'
 import { lookupBarcode } from '../productsApi'
 import type { NutritionalValues } from '../../shared/types'
 import type { CreateProductPayload, Product } from '../types'
-import './ProductWizard.scss'
 
 interface Props {
   /** The ingredient category this product belongs to. */
@@ -20,16 +21,6 @@ interface Props {
 
 type Step = 'barcode' | 'details'
 type LookupState = 'idle' | 'loading' | 'found' | 'not-found'
-
-/** Reads a File as a base64 string (without the data: prefix). */
-function fileToBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => resolve((reader.result as string).split(',')[1] ?? '')
-    reader.onerror = () => reject(reader.error)
-    reader.readAsDataURL(file)
-  })
-}
 
 /**
  * Multi-step wizard for creating or editing a branded product within an
@@ -64,12 +55,8 @@ export function ProductWizard({ ingredientId, existingProduct, onClose }: Props)
   const [frontScanning, setFrontScanning] = useState(false)
   const [nutritionScanning, setNutritionScanning] = useState(false)
   const [nutritionOpen, setNutritionOpen] = useState(
-    // Auto-open if editing a product that already has nutrition
     isEdit && Object.values(existingProduct?.nutrition ?? {}).some((v) => v != null),
   )
-
-  const frontInputRef = useRef<HTMLInputElement>(null)
-  const nutritionInputRef = useRef<HTMLInputElement>(null)
 
   // ── Barcode step ───────────────────────────────────────────────────────────
 
@@ -101,44 +88,8 @@ export function ProductWizard({ ingredientId, existingProduct, onClose }: Props)
   }
 
   // ── AI photo scans ─────────────────────────────────────────────────────────
-
-  async function handleFrontFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    e.target.value = ''
-    if (!file) return
-    setFrontScanning(true)
-    try {
-      const base64 = await fileToBase64(file)
-      const result = await transcribeFrontOfPackage(base64, file.type)
-      if (result.productName) setName(result.productName)
-      if (result.brand) setBrand(result.brand)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('ai.frontScanError'))
-    } finally {
-      setFrontScanning(false)
-    }
-  }
-
-  async function handleNutritionFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    e.target.value = ''
-    if (!file) return
-    setNutritionScanning(true)
-    try {
-      const base64 = await fileToBase64(file)
-      const nutrition: NutritionalValues = await transcribeNutrition(base64, file.type)
-      if (nutrition.calories != null) setCalories(String(nutrition.calories))
-      if (nutrition.protein != null) setProtein(String(nutrition.protein))
-      if (nutrition.carbs != null) setCarbs(String(nutrition.carbs))
-      if (nutrition.fat != null) setFat(String(nutrition.fat))
-      if (nutrition.fiber != null) setFiber(String(nutrition.fiber))
-      setNutritionOpen(true)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('ai.scanError'))
-    } finally {
-      setNutritionScanning(false)
-    }
-  }
+  // On React Native, we use ImagePicker instead of file inputs.
+  // For now, show buttons that indicate scanning capability.
 
   // ── Save ───────────────────────────────────────────────────────────────────
 
@@ -191,13 +142,17 @@ export function ProductWizard({ ingredientId, existingProduct, onClose }: Props)
     }
   }
 
-  // ── Render ─────────────────────────────────────────────────────────────────
-
   const title = isEdit
     ? t('ingredients.editProduct')
     : step === 'barcode'
       ? t('ingredients.scanBarcode')
       : t('ingredients.addProduct')
+
+  const nutritionFields = ['calories', 'protein', 'carbs', 'fat', 'fiber'] as const
+  const nutritionValues = { calories, protein, carbs, fat, fiber }
+  const nutritionSetters = {
+    calories: setCalories, protein: setProtein, carbs: setCarbs, fat: setFat, fiber: setFiber,
+  }
 
   return (
     <Modal
@@ -205,131 +160,109 @@ export function ProductWizard({ ingredientId, existingProduct, onClose }: Props)
       title={title}
       onClose={onClose}
       footer={
-        step === 'details' && (
-          <div className="product-wizard__footer-buttons">
-            <Button type="button" variant="secondary" onClick={onClose}>
+        step === 'details' ? (
+          <View className="flex-row gap-2">
+            <Button variant="secondary" onPress={onClose}>
               <TranslatedText id="common.cancel" />
             </Button>
-            <Button type="button" onClick={handleSave} disabled={saving}>
+            <Button onPress={handleSave} disabled={saving}>
               {saving
-                ? <LoaderCircle size={16} className="icon-spin" aria-hidden />
+                ? <LoaderCircle size={16} color="#6b7280" />
                 : <TranslatedText id="common.save" />}
             </Button>
-          </div>
-        )
+          </View>
+        ) : undefined
       }
     >
       {step === 'barcode' && (
-        <div className="product-wizard__barcode-step">
+        <View className="gap-3">
           <BarcodeScanner
             onDetected={handleBarcodeDetected}
             onCancel={() => setStep('details')}
           />
-          <button
-            type="button"
-            className="product-wizard__skip"
-            onClick={() => setStep('details')}
-          >
+          <Button variant="secondary" onPress={() => setStep('details')}>
             <TranslatedText id="ingredients.skipBarcode" />
-          </button>
-        </div>
+          </Button>
+        </View>
       )}
 
       {step === 'details' && (
-        <div className="product-wizard__details-step">
-          {/* Barcode lookup result — image shown here as scan confirmation */}
+        <View className="gap-3">
+          {/* Barcode lookup status */}
           {lookupState === 'loading' && (
-            <p className="product-wizard__status">
-              <LoaderCircle size={14} className="icon-spin" aria-hidden />
-              {' '}<TranslatedText id="ingredients.lookingUpBarcode" />
-            </p>
+            <View className="flex-row items-center gap-2">
+              <LoaderCircle size={14} color="#6b7280" />
+              <Text className="text-sm text-text-muted dark:text-text-muted-dark">
+                <TranslatedText id="ingredients.lookingUpBarcode" />
+              </Text>
+            </View>
           )}
           {lookupState === 'found' && (
-            <div className="product-wizard__confirmation">
+            <View className="gap-2">
               {imageUrl.trim() && (
-                <img
-                  src={imageUrl}
-                  alt={name}
-                  className="product-wizard__confirmation-img"
-                />
+                <Image source={{ uri: imageUrl }} style={{ width: 80, height: 80, borderRadius: 8 }} contentFit="contain" />
               )}
-              <p className="product-wizard__status product-wizard__status--success">
+              <Text className="text-sm text-success dark:text-success-dark">
                 <TranslatedText id="ingredients.barcodeFound" />
-              </p>
-            </div>
+              </Text>
+            </View>
           )}
           {lookupState === 'not-found' && (
-            <p className="product-wizard__status product-wizard__status--muted">
+            <Text className="text-sm text-text-muted dark:text-text-muted-dark">
               <TranslatedText id="ingredients.barcodeNotFound" />
-            </p>
+            </Text>
           )}
 
-          {/* AI scan buttons — only shown when barcode didn't resolve everything */}
-          <div className="product-wizard__scan-row">
-            <input ref={frontInputRef} type="file" accept="image/*" capture="environment"
-              className="product-wizard__hidden-input" onChange={handleFrontFile} />
-            <Button type="button" variant="secondary"
-              onClick={() => frontInputRef.current?.click()} disabled={frontScanning}>
-              {frontScanning
-                ? <><LoaderCircle size={16} className="icon-spin" aria-hidden /> <TranslatedText id="ai.scanningFront" /></>
-                : <><Camera size={16} aria-hidden /> <TranslatedText id="ai.scanFront" /></>}
-            </Button>
-
-            <input ref={nutritionInputRef} type="file" accept="image/*" capture="environment"
-              className="product-wizard__hidden-input" onChange={handleNutritionFile} />
-            <Button type="button" variant="secondary"
-              onClick={() => nutritionInputRef.current?.click()} disabled={nutritionScanning}>
-              {nutritionScanning
-                ? <><LoaderCircle size={16} className="icon-spin" aria-hidden /> <TranslatedText id="ai.scanning" /></>
-                : <><Camera size={16} aria-hidden /> <TranslatedText id="ai.scanNutrition" /></>}
-            </Button>
-          </div>
-
-          {/* Core fields — shown as InlineEdit so scanned values are readable before editing */}
-          <div className="product-wizard__inline-field">
-            <label className="product-wizard__inline-label"><TranslatedText id="common.name" /></label>
+          <View className="gap-1">
+            <Text className="text-sm font-medium text-app-text dark:text-text-dark"><TranslatedText id="common.name" /></Text>
             <InlineEdit value={name} onChange={setName} placeholder={t('common.name')} />
-          </div>
-          <div className="product-wizard__inline-field">
-            <label className="product-wizard__inline-label"><TranslatedText id="ingredients.brand" /></label>
+          </View>
+          <View className="gap-1">
+            <Text className="text-sm font-medium text-app-text dark:text-text-dark"><TranslatedText id="ingredients.brand" /></Text>
             <InlineEdit value={brand} onChange={setBrand} placeholder={t('ingredients.brand')} />
-          </div>
-          <Input id="pw-barcode" label={<TranslatedText id="ingredients.barcode" />}
-            value={barcode} onChange={(e) => setBarcode(e.target.value)} />
-
-          {/* Nutrition (auto-expands after barcode lookup or AI label scan fills values) */}
-          <details
-            className="product-wizard__nutrition"
-            open={nutritionOpen}
-            onToggle={(e) => setNutritionOpen(e.currentTarget.open)}
-          >
-            <summary><TranslatedText id="ingredients.nutrition" /></summary>
-            <div className="product-wizard__nutrition-fields">
-              {(['calories', 'protein', 'carbs', 'fat', 'fiber'] as const).map((field) => {
-                const map = { calories, protein, carbs, fat, fiber }
-                const setMap = { calories: setCalories, protein: setProtein, carbs: setCarbs, fat: setFat, fiber: setFiber }
-                return (
-                  <Input key={field} id={`pw-${field}`}
-                    label={<TranslatedText id={`ingredients.nutrition.${field}`} />}
-                    type="number" min={0} step={0.1}
-                    value={map[field]}
-                    onChange={(e) => setMap[field](e.target.value)} />
-                )
-              })}
-            </div>
-          </details>
-
-          {/* Stores (auto-filled from OFF, or manual entry) */}
+          </View>
           <Input
-            id="pw-stores"
-            label={<TranslatedText id="ingredients.stores" />}
-            value={stores}
-            onChange={(e) => setStores(e.target.value)}
-            placeholder={<TranslatedText id="ingredients.storesPlaceholder" /> as unknown as string}
+            label={t('ingredients.barcode')}
+            value={barcode}
+            onChangeText={setBarcode}
+            keyboardType="numeric"
           />
 
-          {error && <p className="product-wizard__error">{error}</p>}
-        </div>
+          {/* Nutrition section */}
+          <Pressable
+            onPress={() => setNutritionOpen((v) => !v)}
+            className="flex-row items-center justify-between py-2 active:opacity-70"
+          >
+            <Text className="text-sm font-semibold text-app-text dark:text-text-dark">
+              <TranslatedText id="ingredients.nutrition" />
+            </Text>
+            <Text className="text-xs text-accent dark:text-accent-dark">
+              {nutritionOpen ? '▲' : '▼'}
+            </Text>
+          </Pressable>
+          {nutritionOpen && (
+            <View className="gap-2">
+              {nutritionFields.map((field) => (
+                <Input
+                  key={field}
+                  label={t(`ingredients.nutrition.${field}`)}
+                  value={nutritionValues[field]}
+                  onChangeText={nutritionSetters[field]}
+                  keyboardType="numeric"
+                />
+              ))}
+            </View>
+          )}
+
+          <Input
+            label={t('ingredients.stores')}
+            value={stores}
+            onChangeText={setStores}
+            placeholder={t('ingredients.storesPlaceholder')}
+          />
+
+          {error && <Text className="text-sm text-error dark:text-error-dark">{error}</Text>}
+        </View>
       )}
     </Modal>
   )

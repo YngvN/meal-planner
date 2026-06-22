@@ -1,5 +1,5 @@
+import { View, Text } from 'react-native'
 import type { ReactNode } from 'react'
-import './Card.scss'
 
 interface CardProps {
   title?: string
@@ -8,12 +8,12 @@ interface CardProps {
 }
 
 export function Card({ title, children, className }: CardProps) {
-  const classes = ['card', className].filter(Boolean).join(' ')
-
   return (
-    <div className={classes}>
-      {title && <h3 className="card__title">{title}</h3>}
-      <div className="card__body">{children}</div>
-    </div>
+    <View className={`bg-surface dark:bg-surface-dark rounded-xl border border-border dark:border-border-dark p-4 gap-3 ${className ?? ''}`}>
+      {title && (
+        <Text className="text-base font-semibold text-app-text dark:text-text-dark">{title}</Text>
+      )}
+      <View>{children}</View>
+    </View>
   )
 }

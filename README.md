@@ -2,7 +2,7 @@
 
 # Meal Planner
 
-A personal meal planning application built with Vite + React + TypeScript. Plan your week, browse recipes, track your pantry, and generate shopping lists automatically.
+A personal meal planning application built with Expo + React Native + TypeScript. Runs on iOS, Android, and web. Plan your week, browse recipes, track your pantry, and generate shopping lists automatically.
 
 Live: **[hungri.netlify.app](https://hungri.netlify.app)**
 
@@ -59,20 +59,24 @@ Live: **[hungri.netlify.app](https://hungri.netlify.app)**
 - Responsive left sidebar nav — persistent on desktop, hamburger-toggled on mobile.
 - Light / dark theme — follows OS preference, toggleable in Settings.
 - Internationalization (i18n) — English and Norwegian included; easy to extend by adding a new entry to `languages.json`.
-- Mock data layer — set `VITE_USE_MOCK_DATA=true` to run fully without a backend (uses in-memory seed data).
+- Mock data layer — set `EXPO_PUBLIC_USE_MOCK_DATA=true` to run fully without a backend (uses in-memory seed data).
 
 ---
 
 ## Tech stack
 
-- **[Vite](https://vitejs.dev/)** — dev server and build tooling.
-- **[React](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/)** — UI and type safety.
-- **[react-router-dom](https://reactrouter.com/)** — client-side routing.
+- **[Expo SDK](https://expo.dev/)** — build tooling, native modules, and cross-platform runtime (iOS, Android, Web).
+- **[Expo Router](https://docs.expo.dev/router/introduction/)** — file-based routing; replaces react-router-dom.
+- **[React Native](https://reactnative.dev/) + [TypeScript](https://www.typescriptlang.org/)** — cross-platform UI and type safety.
+- **[NativeWind](https://www.nativewind.dev/) v4** — Tailwind CSS syntax for React Native styling with light/dark theme support.
 - **[Redux Toolkit](https://redux-toolkit.js.org/) + [react-redux](https://react-redux.js.org/)** — global state (`recipes`, `ingredients`, `pantry`, `mealPlan`, `shoppingList`, `auth`, `admin`, `settings` slices).
 - **[@supabase/supabase-js](https://supabase.com/docs/reference/javascript)** — database client (PostgREST queries, Supabase Auth, RLS-enforced multi-user isolation).
-- **[Sass](https://sass-lang.com/)** — component styling with light/dark theme variables.
-- **[lucide-react](https://lucide.dev/)** — SVG icon set (tree-shaken, inherits theme colour via `currentColor`).
-- **[@zxing/browser](https://github.com/zxing-js/library) + [@zxing/library](https://github.com/zxing-js/library)** — cross-browser barcode detection (EAN-13, UPC-A, QR, etc.) via live camera feed.
+- **[lucide-react-native](https://lucide.dev/)** — SVG icon set via react-native-svg.
+- **[expo-camera](https://docs.expo.dev/versions/latest/sdk/camera/)** — live barcode scanning (EAN-13, UPC-A, QR, etc.) and AI photo capture.
+- **[expo-haptics](https://docs.expo.dev/versions/latest/sdk/haptics/)** — haptic feedback on barcode detection.
+- **[expo-image](https://docs.expo.dev/versions/latest/sdk/image/)** — optimised image component.
+- **[@react-native-async-storage/async-storage](https://react-native-async-storage.github.io/async-storage/)** — persistent key-value storage (replaces localStorage).
+- **[react-native-reanimated](https://docs.swmansion.com/react-native-reanimated/)** — animations.
 - **[@anthropic-ai/sdk](https://github.com/anthropics/anthropic-sdk-typescript)** — Claude API client, used **server-side only** inside Netlify Functions (`netlify/functions/ai-*`). The API key is never exposed to the client.
 - **[@netlify/functions](https://docs.netlify.com/functions/overview/)** — serverless function types.
 - **[ESLint](https://eslint.org/)** — linting.
@@ -83,19 +87,21 @@ Live: **[hungri.netlify.app](https://hungri.netlify.app)**
 
 ```sh
 npm install
-npm run dev      # start the dev server
-npm run build    # type-check and build for production
-npm run preview  # preview the production build
+npm run start    # start Expo dev server (scan QR to open on device)
+npm run web      # start web dev server
+npm run ios      # run on iOS simulator
+npm run android  # run on Android emulator
+npm run build    # export static web build for Netlify
 npm run lint     # run eslint
 ```
 
 Copy `.env.example` to `.env.development` and fill in the values:
 
 ```
-VITE_USE_MOCK_DATA=false
-VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_ANON_KEY=<anon key from Supabase Dashboard>
-VITE_USE_MOCK_AI=false
+EXPO_PUBLIC_USE_MOCK_DATA=false
+EXPO_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+EXPO_PUBLIC_SUPABASE_ANON_KEY=<anon key from Supabase Dashboard>
+EXPO_PUBLIC_USE_MOCK_AI=false
 ```
 
 For the AI features to work in production, set `ANTHROPIC_API_KEY`, `SUPABASE_URL`, and `SUPABASE_SERVICE_KEY` in Netlify → Site configuration → Environment variables (never in committed files).
@@ -105,6 +111,12 @@ For the AI features to work in production, set `ANTHROPIC_API_KEY`, `SUPABASE_UR
 ## Project structure
 
 ```
+app/                    # Expo Router routes
+  _layout.tsx           # Root layout — Redux, i18n, AuthProvider
+  (auth)/               # Auth screens (login, signup, forgot-password) — no sidebar
+  (app)/                # Protected app screens — drawer navigation shell
+    _layout.tsx         # Drawer layout (sidebar on web, swipeable drawer on native)
+    recipes/[id]/       # Dynamic recipe routes
 netlify/functions/      # Serverless AI endpoints (recipe scan, nutrition scan, translation, …)
 supabase/migrations/    # SQL migrations (schema, RLS policies, auth trigger)
 src/
@@ -122,10 +134,10 @@ src/
     shoppingList/
   i18n/                 # Language setup — languages.json (en, no), useLanguage hook
   lib/                  # Clients: supabaseClient, axiosClient, logger
-  mocks/                # In-memory mock API and seed data (active when VITE_USE_MOCK_DATA=true)
+  mocks/                # In-memory mock API and seed data (active when EXPO_PUBLIC_USE_MOCK_DATA=true)
   pages/                # Route-level views (Home, Recipes, Pantry, Admin, Settings, …)
     auth/               # Login, Signup, ForgotPassword (outside sidebar shell)
-  styles/               # Global SCSS, theme tokens, variables
-  App.tsx               # App shell — left sidebar nav, sign-out, admin nav item
-  main.tsx              # Entry point — providers, route definitions, AuthProvider
+global.css              # NativeWind / Tailwind CSS entry point
+tailwind.config.js      # Design tokens (colours, spacing, breakpoints)
+app.json                # Expo config (icons, splash, bundle IDs, plugins)
 ```

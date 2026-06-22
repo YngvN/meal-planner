@@ -17,16 +17,16 @@ import type { NutritionalValues } from '../shared/types'
  *
  * The AI mock flag is independent of the data mock flag so the deployed site
  * can run on mock DATA (no data backend) while still calling the real AI
- * functions. `VITE_USE_MOCK_AI` takes precedence; if unset it falls back to
- * `VITE_USE_MOCK_DATA`. When mocked, returns stubbed responses so the UI works
+ * functions. `EXPO_PUBLIC_USE_MOCK_AI` takes precedence; if unset it falls back to
+ * `EXPO_PUBLIC_USE_MOCK_DATA`. When mocked, returns stubbed responses so the UI works
  * without a key.
  */
 
 const useMock =
-  (import.meta.env.VITE_USE_MOCK_AI ?? import.meta.env.VITE_USE_MOCK_DATA) === 'true'
+  (process.env.EXPO_PUBLIC_USE_MOCK_AI ?? process.env.EXPO_PUBLIC_USE_MOCK_DATA) === 'true'
 
 /** Base path for the serverless AI endpoints (same-origin on Netlify). */
-const AI_BASE = import.meta.env.VITE_AI_API_BASE_URL ?? '/api/ai'
+const AI_BASE = process.env.EXPO_PUBLIC_AI_API_BASE_URL ?? '/api/ai'
 
 apiLog('ai', `config → base="${AI_BASE}" · mode=${useMock ? 'MOCK' : 'real functions'}`)
 

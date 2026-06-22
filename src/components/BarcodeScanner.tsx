@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState } from 'react'
-import { BrowserMultiFormatReader, type IScannerControls } from '@zxing/browser'
-import { type Exception, type Result } from '@zxing/library'
-import { X } from 'lucide-react'
+import { View, Text, TextInput, Pressable, StyleSheet } from 'react-native'
+import { useState } from 'react'
+import { CameraView, useCameraPermissions } from 'expo-camera'
+import * as Haptics from 'expo-haptics'
+import { X } from 'lucide-react-native'
 import { Button, TranslatedText } from '.'
-import './BarcodeScanner.scss'
 
 interface Props {
   /** Called when a barcode is successfully decoded. */
@@ -12,119 +12,110 @@ interface Props {
   onCancel: () => void
 }
 
-type ScannerState = 'starting' | 'scanning' | 'manual'
+type ScannerState = 'requesting' | 'scanning' | 'manual' | 'denied'
 
 /**
- * Live-camera barcode scanner that auto-detects EAN-13, UPC-A, QR, and other
- * common formats using @zxing/browser. No button press required — the scanner
- * fires as soon as a barcode is in frame.
- *
+ * Live-camera barcode scanner using expo-camera.
+ * Auto-detects EAN-13, UPC-A, QR, and other common formats.
  * Falls back to a manual text input if the camera is unavailable.
  */
 export function BarcodeScanner({ onDetected, onCancel }: Props) {
-  const videoRef = useRef<HTMLVideoElement>(null)
-  const controlsRef = useRef<IScannerControls | null>(null)
-  const [state, setState] = useState<ScannerState>('starting')
+  const [permission, requestPermission] = useCameraPermissions()
+  const [state, setState] = useState<ScannerState>('requesting')
   const [manualCode, setManualCode] = useState('')
+  const [scanned, setScanned] = useState(false)
 
-  useEffect(() => {
-    let active = true
+  // Request camera permission on first render.
+  if (!permission) {
+    return (
+      <View className="items-center justify-center p-6 gap-4">
+        <TranslatedText id="common.loading" className="text-text-muted dark:text-text-muted-dark" />
+      </View>
+    )
+  }
 
-    async function startScanning() {
-      try {
-        await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-        if (!active || !videoRef.current) return
+  if (!permission.granted) {
+    return (
+      <View className="items-center p-6 gap-4">
+        <Text className="text-center text-base text-app-text dark:text-text-dark">
+          Camera access is required to scan barcodes.
+        </Text>
+        <Button onPress={requestPermission}>Grant camera access</Button>
+        <Pressable onPress={() => setState('manual')} className="active:opacity-70">
+          <Text className="text-accent dark:text-accent-dark text-sm">Enter barcode manually instead</Text>
+        </Pressable>
+      </View>
+    )
+  }
 
-        const reader = new BrowserMultiFormatReader()
-        setState('scanning')
-
-        const controls = await reader.decodeFromVideoDevice(
-          undefined,
-          videoRef.current,
-          (result: Result | undefined, _err: Exception | undefined, ctrl: IScannerControls) => {
-            if (!active || !result) return
-            ctrl.stop()
-            if (navigator.vibrate) navigator.vibrate(200)
-            onDetected(result.getText(), result.getBarcodeFormat().toString())
-          },
-        )
-
-        controlsRef.current = controls
-      } catch {
-        if (!active) return
-        setState('manual')
-      }
-    }
-
-    startScanning()
-
-    return () => {
-      active = false
-      controlsRef.current?.stop()
-    }
-  }, [onDetected])
+  function handleBarcodeScanned({ data, type }: { data: string; type: string }) {
+    if (scanned) return
+    setScanned(true)
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => { /* ignore */ })
+    onDetected(data, type)
+  }
 
   function handleManualSubmit() {
     const code = manualCode.trim()
     if (code) onDetected(code, 'MANUAL')
   }
 
-  function switchToManual() {
-    controlsRef.current?.stop()
-    setState('manual')
-  }
-
   return (
-    <div className="barcode-scanner">
-      <div className="barcode-scanner__header">
-        <span className="barcode-scanner__title">
-          <TranslatedText id="ingredients.scanBarcode" />
-        </span>
-        <button type="button" className="barcode-scanner__close" onClick={onCancel} aria-label="Close">
-          <X size={18} aria-hidden />
-        </button>
-      </div>
+    <View className="gap-4">
+      {/* Header */}
+      <View className="flex-row items-center justify-between">
+        <TranslatedText id="ingredients.scanBarcode" className="text-base font-semibold text-app-text dark:text-text-dark" />
+        <Pressable onPress={onCancel} className="p-1 active:opacity-70" accessibilityLabel="Close">
+          <X size={18} className="text-app-text dark:text-text-dark" />
+        </Pressable>
+      </View>
 
-      {(state === 'starting' || state === 'scanning') && (
-        <div className="barcode-scanner__viewport">
-          <video ref={videoRef} className="barcode-scanner__video" muted playsInline />
-          <div className="barcode-scanner__overlay">
-            <div className="barcode-scanner__scan-line" />
-          </div>
-          {state === 'starting' && (
-            <div className="barcode-scanner__loading">
-              <TranslatedText id="common.loading" />
-            </div>
-          )}
-        </div>
-      )}
-
-      <div className="barcode-scanner__manual">
-        <label htmlFor="barcode-manual" className="barcode-scanner__manual-label">
-          <TranslatedText id="ingredients.enterBarcodeManual" />
-        </label>
-        <div className="barcode-scanner__manual-row">
-          <input
-            id="barcode-manual"
-            type="text"
-            inputMode="numeric"
-            placeholder="e.g. 8001120988652"
-            value={manualCode}
-            onChange={(e) => setManualCode(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleManualSubmit()}
-            className="barcode-scanner__manual-input"
-          />
-          <Button onClick={handleManualSubmit} disabled={!manualCode.trim()}>
-            OK
-          </Button>
-        </div>
-      </div>
-
+      {/* Camera viewport */}
       {state !== 'manual' && (
-        <button type="button" className="barcode-scanner__switch-manual" onClick={switchToManual}>
-          <TranslatedText id="ingredients.enterBarcodeManual" />
-        </button>
+        <View className="rounded-xl overflow-hidden" style={{ height: 240 }}>
+          <CameraView
+            style={StyleSheet.absoluteFill}
+            facing="back"
+            barcodeScannerSettings={{ barcodeTypes: ['ean13', 'ean8', 'upc_a', 'upc_e', 'qr', 'code128', 'code39'] }}
+            onBarcodeScanned={scanned ? undefined : handleBarcodeScanned}
+          >
+            {/* Scan-line overlay */}
+            <View style={StyleSheet.absoluteFill} className="items-center justify-center">
+              <View className="w-48 h-1 bg-accent dark:bg-accent-dark opacity-80 rounded-full" />
+            </View>
+          </CameraView>
+        </View>
       )}
-    </div>
+
+      {/* Manual entry */}
+      <View className="gap-2">
+        <TranslatedText id="ingredients.enterBarcodeManual" className="text-sm text-text-muted dark:text-text-muted-dark" />
+        <View className="flex-row gap-2">
+          <TextInput
+            className="flex-1 border border-border dark:border-border-dark rounded-lg px-3 py-2 text-base text-app-text dark:text-text-dark bg-bg dark:bg-bg-dark"
+            placeholder="e.g. 8001120988652"
+            placeholderTextColor="#6b6375"
+            value={manualCode}
+            onChangeText={setManualCode}
+            keyboardType="numeric"
+            returnKeyType="done"
+            onSubmitEditing={handleManualSubmit}
+          />
+          <Button onPress={handleManualSubmit} disabled={!manualCode.trim()}>OK</Button>
+        </View>
+      </View>
+
+      {/* Switch between modes */}
+      {state !== 'manual' && (
+        <Pressable
+          onPress={() => setState('manual')}
+          className="items-center active:opacity-70"
+        >
+          <Text className="text-sm text-accent dark:text-accent-dark">
+            Enter barcode manually
+          </Text>
+        </Pressable>
+      )}
+    </View>
   )
 }

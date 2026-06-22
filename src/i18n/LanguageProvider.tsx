@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { NativeModules, Platform } from 'react-native'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { LanguageContext } from './LanguageContext'
 import { availableLanguages, FALLBACK_LANGUAGE, translate, type LanguageCode } from './translate'
 
@@ -9,42 +11,44 @@ function isSupportedLanguage(value: string): value is LanguageCode {
   return availableLanguages.some((language) => language.code === value)
 }
 
-/** Reads the user's previously saved language choice, if any. */
-function getStoredLanguage(): LanguageCode | null {
-  const stored = window.localStorage.getItem(STORAGE_KEY)
-  return stored && isSupportedLanguage(stored) ? stored : null
-}
+/** Reads the device locale to pick a matching supported language. */
+function getDeviceLanguage(): LanguageCode {
+  let deviceLocale = FALLBACK_LANGUAGE
 
-/**
- * Determines the language to start with by checking, in order:
- * 1. A previously saved choice in `localStorage`.
- * 2. The browser's preferred language (`navigator.language`).
- * 3. `FALLBACK_LANGUAGE`.
- */
-function getInitialLanguage(): LanguageCode {
-  const stored = getStoredLanguage()
-  if (stored) return stored
+  if (Platform.OS === 'ios') {
+    deviceLocale =
+      NativeModules.SettingsManager?.settings?.AppleLocale ??
+      NativeModules.SettingsManager?.settings?.AppleLanguages?.[0] ??
+      FALLBACK_LANGUAGE
+  } else if (Platform.OS === 'android') {
+    deviceLocale = NativeModules.I18nManager?.localeIdentifier ?? FALLBACK_LANGUAGE
+  } else if (Platform.OS === 'web' && typeof navigator !== 'undefined') {
+    deviceLocale = navigator.language ?? FALLBACK_LANGUAGE
+  }
 
-  const browserLanguage = window.navigator.language.split('-')[0]
-  if (isSupportedLanguage(browserLanguage)) return browserLanguage
-
-  return FALLBACK_LANGUAGE
+  const code = deviceLocale.split(/[-_]/)[0]
+  return isSupportedLanguage(code) ? code : FALLBACK_LANGUAGE
 }
 
 /**
  * Provides the active language, a `setLanguage` setter, and a `t`
  * translation function (see `useLanguage`) to the component tree.
- * Persists explicit language choices to `localStorage`.
+ * Persists explicit language choices to AsyncStorage.
  */
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguageState] = useState<LanguageCode>(getInitialLanguage)
+  const [language, setLanguageState] = useState<LanguageCode>(getDeviceLanguage)
 
+  // Load persisted preference on mount (async — updates after initial render).
   useEffect(() => {
-    document.documentElement.lang = language
-  }, [language])
+    AsyncStorage.getItem(STORAGE_KEY)
+      .then((stored) => {
+        if (stored && isSupportedLanguage(stored)) setLanguageState(stored)
+      })
+      .catch(() => { /* ignore */ })
+  }, [])
 
   const setLanguage = useCallback((next: LanguageCode) => {
-    window.localStorage.setItem(STORAGE_KEY, next)
+    AsyncStorage.setItem(STORAGE_KEY, next).catch(() => { /* ignore */ })
     setLanguageState(next)
   }, [])
 
